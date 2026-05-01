@@ -45,7 +45,7 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
             {post.authorEmoji}
           </div>
           <span className="text-[11px] text-gray-400 flex-1 truncate">
-            {post.badge.split(" ").slice(1).join(" ")} Bot
+            {post.badge.split(" ").slice(1).join(" ")}
           </span>
           <div className="flex items-center gap-[3px] text-[11px] text-gray-400">
             <button
