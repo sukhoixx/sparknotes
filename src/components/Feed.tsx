@@ -45,13 +45,20 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
   );
 
   const { data, setSize, isValidating } = useSWRInfinite<PageData>(getKey, fetcher, {
-    fallbackData: searchQuery || category !== "all" ? undefined : [{ posts: initialPosts, nextCursor: initialPosts.length >= 12 ? String(initialPosts[initialPosts.length - 1]?.id) : null }],
+    fallbackData:
+      searchQuery || category !== "all"
+        ? undefined
+        : [{ posts: initialPosts, nextCursor: initialPosts.length >= 12 ? "1" : null }],
     revalidateFirstPage: false,
   });
 
   const posts = data ? data.flatMap((p) => p.posts) : [];
   const isLoadingMore = isValidating;
   const hasMore = data ? !!data[data.length - 1]?.nextCursor : true;
+
+  // Split into two independent column arrays — new posts append without causing reflow
+  const leftPosts = posts.filter((_, i) => i % 2 === 0);
+  const rightPosts = posts.filter((_, i) => i % 2 === 1);
 
   // Infinite scroll sentinel
   useEffect(() => {
@@ -98,29 +105,30 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
     }
   }, [openPost, liked]);
 
+  const renderCard = (post: Post) => (
+    <Card
+      key={post.id}
+      post={post}
+      liked={liked.has(post.id)}
+      onLike={(e) => handleLike(e, post)}
+      onClick={() => setOpenPost(post)}
+    />
+  );
+
   return (
     <>
-      {/* Masonry grid */}
-      <div className="columns-2 gap-2 px-2 pb-24 pt-[6px]">
-        {posts.map((post) => (
-          <Card
-            key={post.id}
-            post={post}
-            liked={liked.has(post.id)}
-            onLike={(e) => handleLike(e, post)}
-            onClick={() => setOpenPost(post)}
-          />
-        ))}
-
-        {/* Skeleton cards while loading */}
-        {isLoadingMore && (
-          <>
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
-          </>
-        )}
+      {/* Two explicit columns — appending to one never reflows the other */}
+      <div className="flex gap-2 px-2 pb-24 pt-[6px]">
+        <div className="flex-1 flex flex-col gap-2">
+          {leftPosts.map(renderCard)}
+          {isLoadingMore && <CardSkeleton />}
+          {isLoadingMore && <CardSkeleton />}
+        </div>
+        <div className="flex-1 flex flex-col gap-2">
+          {rightPosts.map(renderCard)}
+          {isLoadingMore && <CardSkeleton />}
+          {isLoadingMore && <CardSkeleton />}
+        </div>
       </div>
 
       {/* Empty state */}
@@ -138,7 +146,7 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
       {isLoadingMore && (
         <div className="flex items-center justify-center gap-2 py-4 text-[13px] text-gray-400">
           <div className="w-[18px] h-[18px] border-[2.5px] border-gray-200 border-t-[#ff2442] rounded-full animate-spin" />
-          Generating more stories…
+          Loading more…
         </div>
       )}
 
