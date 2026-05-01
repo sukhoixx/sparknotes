@@ -37,20 +37,19 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
         {/* Handle */}
         <div className="w-10 h-1 bg-gray-200 rounded mx-auto mt-3" />
 
-        {/* Hero */}
+        {/* Header strip */}
         <div
-          className="mx-4 mt-3 rounded-2xl overflow-hidden flex items-center justify-center text-[90px]"
-          style={{ background: post.gradient, aspectRatio: "4/3" }}
+          className="mx-4 mt-3 rounded-2xl px-4 pt-6 pb-4"
+          style={{ background: post.gradient }}
         >
-          {post.emoji}
+          <span className="inline-block bg-black/30 text-white text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] backdrop-blur-sm mb-2">
+            {post.badge}
+          </span>
+          <h1 className="text-white text-[18px] font-extrabold leading-[1.3] drop-shadow-sm">{post.title}</h1>
         </div>
 
         {/* Content */}
         <div className="p-4">
-          <span className="inline-block bg-[#fff0f2] text-[#ff2442] text-[11px] font-bold px-[10px] py-[3px] rounded-[10px] mb-[10px]">
-            {post.badge}
-          </span>
-          <h1 className="text-[20px] font-extrabold leading-[1.3] mb-3">{post.title}</h1>
           <span className="inline-flex items-center gap-1 bg-gradient-to-br from-[#6c47ff] to-[#00b4d8] text-white text-[10px] font-bold px-[10px] py-[3px] rounded-[10px] mb-[14px]">
             ✨ AI Summary for Kids
           </span>
@@ -85,7 +84,7 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
               {post.authorEmoji}
             </div>
             <div className="flex-1">
-              <p className="text-[14px] font-bold">{post.badge.split(" ").slice(1).join(" ")} Bot</p>
+              <p className="text-[14px] font-bold">{post.badge.split(" ").slice(1).join(" ")}</p>
               <p className="text-[12px] text-gray-400">AI-generated · AI-verified</p>
             </div>
             {post.sourceUrl && (
