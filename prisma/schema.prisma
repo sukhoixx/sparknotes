@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(500)
+  snippet     String   @db.VarChar(1000)
+  body        String   @db.Text
+  funFact     String   @db.Text
+  tags        Json
+  category    String
+  emoji       String
+  gradient    String
+  badge       String
+  authorEmoji String
+  authorBg    String
+  sourceUrl   String?
+  likes       Int      @default(0)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
