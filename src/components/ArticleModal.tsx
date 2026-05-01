@@ -42,9 +42,6 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
           className="mx-4 mt-3 rounded-2xl px-4 pt-6 pb-4"
           style={{ background: post.gradient }}
         >
-          <span className="inline-block bg-black/30 text-white text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] backdrop-blur-sm mb-2">
-            {post.badge}
-          </span>
           <h1 className="text-white text-[18px] font-extrabold leading-[1.3] drop-shadow-sm">{post.title}</h1>
         </div>
 
