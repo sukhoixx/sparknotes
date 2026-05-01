@@ -7,6 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  text      String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
 model Post {
   id          Int      @id @default(autoincrement())
   title       String   @db.VarChar(500)
@@ -24,4 +33,6 @@ model Post {
   likes       Int      @default(0)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
+
+  comments Comment[]
 }

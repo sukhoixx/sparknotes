@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Post } from "@prisma/client";
 
 interface ArticleModalProps {
@@ -10,19 +10,77 @@ interface ArticleModalProps {
   onLike: () => void;
 }
 
+interface Comment {
+  id: number;
+  text: string;
+  createdAt: string;
+}
+
 function formatNum(n: number): string {
   return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);
 }
 
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 export default function ArticleModal({ post, liked, onClose, onLike }: ArticleModalProps) {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [draft, setDraft] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     if (post) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
+      setShowComments(false);
+      setComments([]);
+      setDraft("");
     }
     return () => { document.body.style.overflow = ""; };
   }, [post]);
+
+  async function loadComments(postId: number) {
+    const res = await fetch(`/api/posts/${postId}/comments`);
+    const data = await res.json();
+    setComments(data.comments ?? []);
+  }
+
+  function toggleComments() {
+    if (!post) return;
+    if (!showComments) {
+      loadComments(post.id);
+      setShowComments(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setShowComments(false);
+    }
+  }
+
+  async function submitComment() {
+    if (!post || !draft.trim() || submitting) return;
+    setSubmitting(true);
+    const res = await fetch(`/api/posts/${post.id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: draft }),
+    });
+    const data = await res.json();
+    if (data.comment) {
+      setComments((prev) => [...prev, data.comment]);
+      setDraft("");
+    }
+    setSubmitting(false);
+  }
 
   if (!post) return null;
 
@@ -47,7 +105,7 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
 
         {/* Content */}
         <div className="p-4">
-          <span className="inline-flex items-center gap-1 bg-gradient-to-br from-[#6c47ff] to-[#00b4d8] text-white text-[10px] font-bold px-[10px] py-[3px] rounded-[10px] mb-[14px]">
+          <span className="inline-flex items-center gap-1 bg-gradient-to-br from-[#6c47ff] to-[#00b4d8] text-white text-[10px] font-bold px-[10px] py-[3px] rounded-[10px] mb-[14px] mt-1">
             ✨ AI Summary for Kids
           </span>
 
@@ -105,9 +163,12 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
               <span className="text-[24px]">{liked ? "❤️" : "🤍"}</span>
               <span>{formatNum(post.likes + (liked ? 1 : 0))}</span>
             </button>
-            <button className="flex flex-col items-center gap-[3px] bg-none border-0 cursor-pointer text-[11px] text-gray-400">
+            <button
+              onClick={toggleComments}
+              className={`flex flex-col items-center gap-[3px] bg-none border-0 cursor-pointer text-[11px] ${showComments ? "text-[#ff2442]" : "text-gray-400"}`}
+            >
               <span className="text-[24px]">💬</span>
-              <span>Comments</span>
+              <span>{comments.length > 0 ? formatNum(comments.length) : "Comments"}</span>
             </button>
             <button className="flex flex-col items-center gap-[3px] bg-none border-0 cursor-pointer text-[11px] text-gray-400">
               <span className="text-[24px]">🔖</span>
@@ -118,6 +179,48 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
               <span>Share</span>
             </button>
           </div>
+
+          {/* Comments section */}
+          {showComments && (
+            <div className="border-t border-gray-100 pt-4">
+              {/* Input */}
+              <div className="flex gap-2 mb-4">
+                <textarea
+                  ref={inputRef}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
+                  placeholder="Write a comment…"
+                  rows={2}
+                  className="flex-1 bg-gray-100 rounded-[14px] px-[14px] py-2 text-[14px] text-gray-800 resize-none outline-none border-0"
+                />
+                <button
+                  onClick={submitComment}
+                  disabled={!draft.trim() || submitting}
+                  className="self-end bg-[#ff2442] text-white border-0 rounded-[14px] px-4 py-2 text-[13px] font-bold cursor-pointer disabled:opacity-40"
+                >
+                  Post
+                </button>
+              </div>
+
+              {/* List */}
+              {comments.length === 0 ? (
+                <p className="text-center text-gray-400 text-[13px] py-4">No comments yet — be the first!</p>
+              ) : (
+                <div className="flex flex-col gap-3 pb-4">
+                  {comments.map((c) => (
+                    <div key={c.id} className="flex gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[16px] shrink-0">👤</div>
+                      <div className="flex-1">
+                        <div className="bg-gray-100 rounded-[14px] px-[12px] py-[8px] text-[14px] text-gray-800">{c.text}</div>
+                        <p className="text-[11px] text-gray-400 mt-1 ml-[4px]">{timeAgo(c.createdAt)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
