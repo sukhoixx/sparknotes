@@ -24,7 +24,10 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
         className="w-full relative px-3 pt-8 pb-4"
         style={{ background: post.gradient }}
       >
-<p className="text-white font-bold text-[15px] leading-[1.4] drop-shadow-sm">
+        <span className="absolute top-2 left-2 bg-black/40 text-white text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] backdrop-blur-sm">
+          {post.badge}
+        </span>
+        <p className="text-white font-bold text-[15px] leading-[1.4] drop-shadow-sm">
           {post.title}
         </p>
       </div>
@@ -41,9 +44,7 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
           >
             {post.authorEmoji}
           </div>
-          <span className="text-[11px] text-gray-400 flex-1 truncate">
-            {post.badge.split(" ").slice(1).join(" ")}
-          </span>
+          <span className="text-[11px] text-gray-400 flex-1 truncate" />
           <div className="flex items-center gap-[3px] text-[11px] text-gray-400">
             <button
               className="bg-transparent border-0 cursor-pointer text-base p-0"
