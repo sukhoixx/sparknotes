@@ -24,10 +24,7 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
         className="w-full relative px-3 pt-8 pb-4"
         style={{ background: post.gradient }}
       >
-        <span className="absolute top-2 left-2 bg-black/40 text-white text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] backdrop-blur-sm">
-          {post.badge}
-        </span>
-        <p className="text-white font-bold text-[15px] leading-[1.4] drop-shadow-sm">
+<p className="text-white font-bold text-[15px] leading-[1.4] drop-shadow-sm">
           {post.title}
         </p>
       </div>
