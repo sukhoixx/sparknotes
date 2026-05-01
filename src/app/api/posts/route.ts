@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
           orderBy: { id: "desc" },
           take: PER_CATEGORY,
           skip: page * PER_CATEGORY,
+          include: { _count: { select: { comments: true } } },
         });
         if (todayPosts.length === PER_CATEGORY) return todayPosts;
 
@@ -61,6 +62,7 @@ export async function GET(req: NextRequest) {
           orderBy: { id: "desc" },
           take: PER_CATEGORY - todayPosts.length,
           skip: olderPage * (PER_CATEGORY - todayPosts.length),
+          include: { _count: { select: { comments: true } } },
         });
         return [...todayPosts, ...older];
       })
@@ -78,6 +80,7 @@ export async function GET(req: NextRequest) {
         orderBy: { id: "desc" },
         take: LIMIT,
         skip: page * LIMIT,
+        include: { _count: { select: { comments: true } } },
       });
     } else {
       const olderPage = page - todayPages;
@@ -86,6 +89,7 @@ export async function GET(req: NextRequest) {
         orderBy: { id: "desc" },
         take: LIMIT,
         skip: olderPage * LIMIT,
+        include: { _count: { select: { comments: true } } },
       });
     }
 

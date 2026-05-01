@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     orderBy: { id: "desc" },
     take: LIMIT,
     skip: page * LIMIT,
+    include: { _count: { select: { comments: true } } },
   });
 
   const shuffled = posts.sort(() => Math.random() - 0.5);

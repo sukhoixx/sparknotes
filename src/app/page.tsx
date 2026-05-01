@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import Feed from "@/components/Feed";
-import type { Post } from "@prisma/client";
+import type { PostWithCount } from "@/components/Feed";
 
 export default function HomePage() {
   const [category, setCategory] = useState("all");
@@ -22,7 +22,7 @@ export default function HomePage() {
       <Feed
         category={category}
         searchQuery={searchQuery}
-        initialPosts={[] as Post[]}
+        initialPosts={[] as PostWithCount[]}
       />
     </>
   );

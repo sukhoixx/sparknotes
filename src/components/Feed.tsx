@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import type { Post } from "@prisma/client";
+
+export type PostWithCount = Post & { _count: { comments: number } };
+
 import Card, { CardSkeleton } from "./Card";
 import ArticleModal from "./ArticleModal";
 
 interface PageData {
-  posts: Post[];
+  posts: PostWithCount[];
   nextCursor: string | null;
 }
 
@@ -27,11 +30,11 @@ function buildUrl(category: string, searchQuery: string, cursor: string | null) 
 interface FeedProps {
   category: string;
   searchQuery: string;
-  initialPosts: Post[];
+  initialPosts: PostWithCount[];
 }
 
 export default function Feed({ category, searchQuery, initialPosts }: FeedProps) {
-  const [openPost, setOpenPost] = useState<Post | null>(null);
+  const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +55,7 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
     revalidateFirstPage: false,
   });
 
-  const posts = data ? data.flatMap((p) => p.posts) : [];
+  const posts: PostWithCount[] = data ? data.flatMap((p) => p.posts) : [];
   const isLoadingMore = isValidating;
   const hasMore = data ? !!data[data.length - 1]?.nextCursor : true;
 
@@ -101,7 +104,7 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
     fetch(`/api/posts/${openPost.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
   }, [openPost, liked]);
 
-  const renderCard = (post: Post) => (
+  const renderCard = (post: PostWithCount) => (
     <Card
       key={post.id}
       post={post}

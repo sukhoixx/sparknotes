@@ -1,9 +1,9 @@
 "use client";
 
-import type { Post } from "@prisma/client";
+import type { PostWithCount } from "./Feed";
 
 interface CardProps {
-  post: Post;
+  post: PostWithCount;
   liked: boolean;
   onLike: (e: React.MouseEvent) => void;
   onClick: () => void;
@@ -38,7 +38,9 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
           {post.snippet}
         </p>
         <div className="flex items-center gap-[6px]">
-          <span className="flex-1" />
+          <span className="text-[11px] text-gray-400 flex-1">
+            {post._count.comments > 0 ? `${post._count.comments} comment${post._count.comments === 1 ? "" : "s"}` : ""}
+          </span>
           <div className="flex items-center gap-[3px] text-[11px] text-gray-400">
             <button
               className="bg-transparent border-0 cursor-pointer text-base p-0"

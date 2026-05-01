@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Post } from "@prisma/client";
+import type { PostWithCount } from "./Feed";
 
 interface ArticleModalProps {
-  post: Post | null;
+  post: PostWithCount | null;
   liked: boolean;
   onClose: () => void;
   onLike: () => void;
