@@ -38,13 +38,7 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
           {post.snippet}
         </p>
         <div className="flex items-center gap-[6px]">
-          <div
-            className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] shrink-0"
-            style={{ background: post.authorBg }}
-          >
-            {post.authorEmoji}
-          </div>
-          <span className="text-[11px] text-gray-400 flex-1 truncate" />
+          <span className="flex-1" />
           <div className="flex items-center gap-[3px] text-[11px] text-gray-400">
             <button
               className="bg-transparent border-0 cursor-pointer text-base p-0"
