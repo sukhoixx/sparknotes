@@ -85,9 +85,7 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
         wasLiked ? next.delete(post.id) : next.add(post.id);
         return next;
       });
-      if (!wasLiked) {
-        await fetch(`/api/posts/${post.id}/like`, { method: "POST" }).catch(() => {});
-      }
+      fetch(`/api/posts/${post.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
     },
     [liked]
   );
@@ -100,9 +98,7 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
       wasLiked ? next.delete(openPost.id) : next.add(openPost.id);
       return next;
     });
-    if (!wasLiked) {
-      fetch(`/api/posts/${openPost.id}/like`, { method: "POST" }).catch(() => {});
-    }
+    fetch(`/api/posts/${openPost.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
   }, [openPost, liked]);
 
   const renderCard = (post: Post) => (
