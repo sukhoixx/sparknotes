@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Header from "@/components/Header";
-import StoryRow from "@/components/StoryRow";
 import Feed from "@/components/Feed";
 import BottomNav from "@/components/BottomNav";
 import type { Post } from "@prisma/client";
@@ -21,7 +20,6 @@ export default function HomePage() {
         }}
         onSearch={setSearchQuery}
       />
-      {!searchQuery && <StoryRow />}
       <Feed
         category={category}
         searchQuery={searchQuery}

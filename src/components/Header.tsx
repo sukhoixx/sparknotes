@@ -2,6 +2,14 @@
 
 import { useCallback, useRef, useState } from "react";
 
+const TABS = [
+  { id: "all",           label: "✨ For You" },
+  { id: "news",          label: "📰 News" },
+  { id: "science",       label: "🔬 Science" },
+  { id: "technology",    label: "💻 Technology" },
+  { id: "entertainment", label: "🎬 Entertainment" },
+];
+
 interface HeaderProps {
   category: string;
   onCategoryChange: (cat: string) => void;
@@ -69,6 +77,24 @@ export default function Header({ category, onCategoryChange, onSearch }: HeaderP
           )}
         </div>
 
+        {/* Category tabs */}
+        {!searchOpen && (
+          <div className="flex gap-1 overflow-x-auto scrollbar-none pb-3">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => onCategoryChange(tab.id)}
+                className={`px-4 py-[6px] rounded-[20px] border-0 text-[14px] font-medium whitespace-nowrap cursor-pointer transition-all ${
+                  category === tab.id
+                    ? "bg-[#ff2442] text-white font-bold"
+                    : "bg-transparent text-gray-400"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </header>
   );
