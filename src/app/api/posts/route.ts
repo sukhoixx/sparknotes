@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const LIMIT = 12;
-const LOW_THRESHOLD = 8;
+const LOW_THRESHOLD = 15; // trigger generation if total posts < this
 
-// Fire-and-forget background generation
 function triggerGeneration() {
-  const base = process.env.NEXTAUTH_URL ?? process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
+  const base = process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
     : "http://localhost:3000";
 
   fetch(`${base}/api/generate`, {
@@ -26,14 +25,10 @@ export async function GET(req: NextRequest) {
 
   const where = category !== "all" ? { category } : {};
 
-  // Check if we should generate more posts (only on first page)
+  // On first page, check if we need more posts
   if (!cursor) {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const todayCount = await prisma.post.count({
-      where: { publishedAt: { gte: startOfToday } },
-    });
-    if (todayCount < LOW_THRESHOLD) {
+    const total = await prisma.post.count({ where });
+    if (total < LOW_THRESHOLD) {
       triggerGeneration();
     }
   }

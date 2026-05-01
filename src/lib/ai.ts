@@ -1,17 +1,14 @@
 import OpenAI from "openai";
 import type { RawArticle } from "./rss";
 
-const CATEGORIES = ["science", "nature", "space", "sports", "tech", "world", "arts"] as const;
-type Category = (typeof CATEGORIES)[number];
+export const CATEGORIES = ["news", "science", "technology", "entertainment"] as const;
+export type Category = (typeof CATEGORIES)[number];
 
-const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
-  science: { badge: "🔬 Science", authorEmoji: "🧪", authorBg: "linear-gradient(135deg,#11998e,#38ef7d)", emoji: "🔬", gradient: "linear-gradient(135deg,#11998e,#38ef7d)" },
-  nature:  { badge: "🌿 Nature",  authorEmoji: "🌿", authorBg: "linear-gradient(135deg,#134e5e,#71b280)", emoji: "🌿", gradient: "linear-gradient(135deg,#134e5e,#71b280)" },
-  space:   { badge: "🚀 Space",   authorEmoji: "🔭", authorBg: "linear-gradient(135deg,#0f0c29,#302b63)", emoji: "🚀", gradient: "linear-gradient(135deg,#0f0c29,#302b63,#24243e)" },
-  sports:  { badge: "⚽ Sports",  authorEmoji: "🏆", authorBg: "linear-gradient(135deg,#43e97b,#38f9d7)", emoji: "⚽", gradient: "linear-gradient(135deg,#43e97b,#38f9d7)" },
-  tech:    { badge: "🤖 Tech",    authorEmoji: "🤖", authorBg: "linear-gradient(135deg,#6c47ff,#00b4d8)", emoji: "🤖", gradient: "linear-gradient(135deg,#6c47ff,#00b4d8)" },
-  world:   { badge: "🌍 World",   authorEmoji: "🌍", authorBg: "linear-gradient(135deg,#fc4a1a,#f7b733)", emoji: "🌍", gradient: "linear-gradient(135deg,#fc4a1a,#f7b733)" },
-  arts:    { badge: "🎨 Arts",    authorEmoji: "🖌️", authorBg: "linear-gradient(135deg,#a18cd1,#fbc2eb)", emoji: "🎨", gradient: "linear-gradient(135deg,#a18cd1,#fbc2eb)" },
+export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
+  news:          { badge: "📰 News",          authorEmoji: "📰", authorBg: "linear-gradient(135deg,#1a1a2e,#16213e)",      emoji: "📰", gradient: "linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)" },
+  science:       { badge: "🔬 Science",       authorEmoji: "🧪", authorBg: "linear-gradient(135deg,#11998e,#38ef7d)",      emoji: "🔬", gradient: "linear-gradient(135deg,#11998e,#38ef7d)" },
+  technology:    { badge: "💻 Technology",    authorEmoji: "🤖", authorBg: "linear-gradient(135deg,#6c47ff,#00b4d8)",      emoji: "💻", gradient: "linear-gradient(135deg,#6c47ff,#00b4d8)" },
+  entertainment: { badge: "🎬 Entertainment", authorEmoji: "🎭", authorBg: "linear-gradient(135deg,#f953c6,#b91d73)",      emoji: "🎬", gradient: "linear-gradient(135deg,#f953c6,#b91d73)" },
 };
 
 export interface GeneratedPost {
@@ -43,27 +40,26 @@ Rules:
 - Use simple words (no jargon). If you must use a technical term, explain it immediately.
 - Keep sentences short. Write like you're telling a friend.
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
-- Classify into exactly one category: science, nature, space, sports, tech, world, arts
-- Pick a single relevant emoji for the card image
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
 
-Respond ONLY with valid JSON matching this exact schema:
+Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
   "title": "Exciting kid-friendly headline (max 80 chars)",
   "snippet": "One-sentence hook that makes kids want to read more (max 150 chars)",
   "body": "<p>HTML body...</p>",
-  "funFact": "🦋 <strong>Fun Fact:</strong> ...",
-  "tags": ["#Tag1", "#Tag2"],
-  "category": "science|nature|space|sports|tech|world|arts"
+  "funFact": "🔥 <strong>Fun Fact:</strong> ...",
+  "tags": ["#Tag1", "#Tag2"]
 }`;
 
-export async function summarizeArticle(article: RawArticle): Promise<GeneratedPost | null> {
+export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
   const client = getClient();
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  const meta = CATEGORY_META[category];
 
-  const userPrompt = `Source: ${article.source}
+  const userPrompt = `Category: ${category}
+Source: ${article.source}
 Title: ${article.title}
 Content: ${article.content.slice(0, 1500)}
 URL: ${article.link}`;
@@ -87,14 +83,7 @@ URL: ${article.link}`;
       body: string;
       funFact: string;
       tags: string[];
-      category: string;
     };
-
-    const category = CATEGORIES.includes(parsed.category as Category)
-      ? (parsed.category as Category)
-      : "world";
-
-    const meta = CATEGORY_META[category];
 
     return {
       title: parsed.title,

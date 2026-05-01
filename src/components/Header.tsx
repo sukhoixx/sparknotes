@@ -3,14 +3,11 @@
 import { useCallback, useRef, useState } from "react";
 
 const TABS = [
-  { id: "all",     label: "✨ For You" },
-  { id: "science", label: "🔬 Science" },
-  { id: "nature",  label: "🌿 Nature" },
-  { id: "space",   label: "🚀 Space" },
-  { id: "sports",  label: "⚽ Sports" },
-  { id: "tech",    label: "🤖 Tech" },
-  { id: "world",   label: "🌍 World" },
-  { id: "arts",    label: "🎨 Arts" },
+  { id: "all",           label: "✨ For You" },
+  { id: "news",          label: "📰 News" },
+  { id: "science",       label: "🔬 Science" },
+  { id: "technology",    label: "💻 Technology" },
+  { id: "entertainment", label: "🎬 Entertainment" },
 ];
 
 interface HeaderProps {

@@ -1,11 +1,10 @@
 const STORIES = [
-  { emoji: "🦋", label: "Bugs", bg: "linear-gradient(135deg,#a8edea,#fed6e3)" },
-  { emoji: "🚀", label: "Space", bg: "linear-gradient(135deg,#1a1a2e,#16213e)" },
-  { emoji: "🐬", label: "Ocean", bg: "linear-gradient(135deg,#0093e9,#80d0c7)" },
-  { emoji: "🌋", label: "Earth", bg: "linear-gradient(135deg,#f7971e,#ffd200)" },
-  { emoji: "⚽", label: "Sports", bg: "linear-gradient(135deg,#43e97b,#38f9d7)" },
-  { emoji: "🤖", label: "AI", bg: "linear-gradient(135deg,#6c47ff,#00b4d8)" },
-  { emoji: "🎨", label: "Arts", bg: "linear-gradient(135deg,#a18cd1,#fbc2eb)" },
+  { emoji: "📰", label: "News",          bg: "linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)" },
+  { emoji: "🔬", label: "Science",       bg: "linear-gradient(135deg,#11998e,#38ef7d)" },
+  { emoji: "💻", label: "Technology",    bg: "linear-gradient(135deg,#6c47ff,#00b4d8)" },
+  { emoji: "🎬", label: "Entertainment", bg: "linear-gradient(135deg,#f953c6,#b91d73)" },
+  { emoji: "🌍", label: "World",         bg: "linear-gradient(135deg,#fc4a1a,#f7b733)" },
+  { emoji: "🚀", label: "Space",         bg: "linear-gradient(135deg,#0f0c29,#302b63)" },
 ];
 
 export default function StoryRow() {

@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RedNote Kids</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #ff2442;
+      --red-light: #ff6b7a;
+      --red-pale: #fff0f2;
+      --gray: #f5f5f5;
+      --text: #1a1a1a;
+      --muted: #999;
+      --white: #fff;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--white);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 16px 0;
+      box-shadow: 0 1px 8px rgba(0,0,0,.06);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--red);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--red);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .search-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--gray);
+      border-radius: 20px;
+      padding: 8px 14px;
+      gap: 6px;
+      border: none;
+      font-size: 14px;
+      color: var(--muted);
+      cursor: text;
+    }
+
+    .search-bar span { font-size: 16px; }
+
+    .notif-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--gray);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 8px; height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+      border: 1.5px solid #fff;
+    }
+
+    /* ── Category tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 12px;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .2s;
+    }
+
+    .tab.active {
+      background: var(--red);
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    /* ── Story banner ── */
+    .story-row {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: var(--white);
+      margin-bottom: 6px;
+    }
+    .story-row::-webkit-scrollbar { display: none; }
+
+    .story {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .story-ring {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      padding: 2.5px;
+      background: linear-gradient(45deg, var(--red), #ff9a00);
+    }
+
+    .story-ring.seen {
+      background: #ddd;
+    }
+
+    .story-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      overflow: hidden;
+    }
+
+    .story-label {
+      font-size: 11px;
+      color: var(--text);
+      text-align: center;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Feed grid ── */
+    .feed {
+      columns: 2;
+      column-gap: 8px;
+      padding: 6px 8px 80px;
+    }
+
+    .card {
+      break-inside: avoid;
+      background: var(--white);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+
+    .card:active { transform: scale(.97); }
+
+    .card-img {
+      width: 100%;
+      aspect-ratio: 1 / 1.05;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      position: relative;
+    }
+
+    .card-img .badge {
+      position: absolute;
+      top: 8px; left: 8px;
+      background: rgba(0,0,0,.45);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+    }
+
+    .card-body { padding: 8px 10px 10px; }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .card-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .card-author {
+      font-size: 11px;
+      color: var(--muted);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-likes {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .heart-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+      transition: transform .15s;
+    }
+
+    .heart-btn.liked { animation: pop .25s ease; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+
+    /* ── Lazy load ── */
+    .card { opacity: 0; animation: fadeIn .35s ease forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .card-skeleton {
+      break-inside: avoid;
+      background: var(--white);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .skel-img {
+      width: 100%;
+      aspect-ratio: 1 / 1.05;
+      background: #e8e8e8;
+    }
+
+    .skel-body { padding: 8px 10px 12px; }
+
+    .skel-line {
+      border-radius: 6px;
+      background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+
+    .skel-line.tall  { height: 12px; margin-bottom: 6px; }
+    .skel-line.short { height: 12px; width: 65%; margin-bottom: 10px; }
+    .skel-line.meta  { height: 10px; width: 50%; }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    #loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid #eee;
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #sentinel { height: 1px; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--white);
+      display: flex;
+      border-top: 1px solid #eee;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0 6px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      gap: 2px;
+    }
+
+    .nav-icon { font-size: 22px; }
+    .nav-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+    .nav-item.active .nav-label { color: var(--red); }
+    .nav-item.active .nav-icon { filter: none; }
+
+    .post-btn {
+      width: 44px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--red), #ff6b7a);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
+    /* ── Article modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      max-height: 88vh;
+      overflow-y: auto;
+      animation: slideUp .3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    .modal-hero {
+      width: 100%;
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 90px;
+      margin-top: 12px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 12px 16px 0;
+      width: calc(100% - 32px);
+    }
+
+    .modal-content { padding: 16px; }
+
+    .modal-tag {
+      display: inline-block;
+      background: var(--red-pale);
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #6c47ff, #00b4d8);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+
+    .modal-body {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      margin-bottom: 16px;
+    }
+
+    .modal-body p { margin-bottom: 12px; }
+
+    .fun-fact {
+      background: var(--red-pale);
+      border-left: 3px solid var(--red);
+      border-radius: 0 10px 10px 0;
+      padding: 10px 14px;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+
+    .fun-fact strong { color: var(--red); }
+
+    .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+
+    .tag {
+      background: var(--gray);
+      color: #555;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    .modal-author-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 0;
+      border-top: 1px solid #f0f0f0;
+      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 12px;
+    }
+
+    .modal-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .modal-author-info { flex: 1; }
+    .modal-author-name { font-size: 14px; font-weight: 700; }
+    .modal-author-sub { font-size: 12px; color: var(--muted); }
+
+    .follow-btn {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 16px;
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .action-btn span:first-child { font-size: 24px; }
+
+    .close-btn {
+      position: absolute;
+      top: 60px; right: 16px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.35);
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-top">
+    <a class="logo" href="#">
+      <div class="logo-icon">📰</div>
+      RedNote Kids
+    </a>
+    <div class="search-bar">
+      <span>🔍</span>
+      Search news for kids…
+    </div>
+    <button class="notif-btn">🔔<span class="notif-dot"></span></button>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all">✨ For You</button>
+    <button class="tab" data-cat="science">🔬 Science</button>
+    <button class="tab" data-cat="nature">🌿 Nature</button>
+    <button class="tab" data-cat="space">🚀 Space</button>
+    <button class="tab" data-cat="sports">⚽ Sports</button>
+    <button class="tab" data-cat="tech">🤖 Tech</button>
+    <button class="tab" data-cat="world">🌍 World</button>
+    <button class="tab" data-cat="arts">🎨 Arts</button>
+  </div>
+</header>
+
+<!-- Stories -->
+<div class="story-row" id="storyRow"></div>
+
+<!-- Feed -->
+<div class="feed" id="feed"></div>
+<div id="loader" style="display:none"><div class="spinner"></div> Generating more stories…</div>
+<div id="sentinel"></div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <button class="nav-item active">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item">
+    <span class="nav-icon">🔍</span>
+    <span class="nav-label">Discover</span>
+  </button>
+  <button class="nav-item">
+    <button class="post-btn">＋</button>
+    <span class="nav-label">Post</span>
+  </button>
+  <button class="nav-item">
+    <span class="nav-icon">💬</span>
+    <span class="nav-label">Messages</span>
+  </button>
+  <button class="nav-item">
+    <span class="nav-icon">👤</span>
+    <span class="nav-label">Profile</span>
+  </button>
+</nav>
+
+<!-- Article modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+const stories = [
+  { emoji: '🦋', label: 'Bugs', bg: 'linear-gradient(135deg,#a8edea,#fed6e3)', seen: false },
+  { emoji: '🚀', label: 'Space', bg: 'linear-gradient(135deg,#1a1a2e,#16213e)', seen: false },
+  { emoji: '🐬', label: 'Ocean', bg: 'linear-gradient(135deg,#0093e9,#80d0c7)', seen: false },
+  { emoji: '🌋', label: 'Earth', bg: 'linear-gradient(135deg,#f7971e,#ffd200)', seen: true },
+  { emoji: '⚽', label: 'Sports', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)', seen: true },
+  { emoji: '🤖', label: 'AI', bg: 'linear-gradient(135deg,#6c47ff,#00b4d8)', seen: false },
+];
+
+const articles = [
+  {
+    id: 1, cat: 'space',
+    emoji: '🌑', bg: 'linear-gradient(135deg,#0f0c29,#302b63,#24243e)',
+    badge: '🚀 Space',
+    title: 'NASA Finds Water Ice Near the Moon\'s South Pole!',
+    snippet: 'Scientists confirm water ice in permanently shadowed craters — a big deal for future moon bases.',
+    body: `<p>Exciting news from outer space! NASA scientists have confirmed there is water ice hiding in the permanently shadowed craters near the Moon's South Pole. This is a <strong>huge discovery</strong> for the future of space exploration!</p>
+    <p>The ice has been there for billions of years, protected from the Sun's heat by the crater walls. Future astronauts could use this ice to drink, grow plants, or even turn it into rocket fuel by splitting it into hydrogen and oxygen.</p>`,
+    funFact: '🧊 <strong>Fun Fact:</strong> The craters where the ice was found have never seen sunlight — not even once in billions of years!',
+    tags: ['#MoonWater', '#NASAKids', '#Space', '#FutureMissions'],
+    author: 'AstroKid Bot', authorEmoji: '👩‍🚀', authorBg: 'linear-gradient(135deg,#0f0c29,#302b63)',
+    likes: 2841, comments: 134, time: '2h ago'
+  },
+  {
+    id: 2, cat: 'nature',
+    emoji: '🐳', bg: 'linear-gradient(135deg,#0093e9,#80d0c7)',
+    badge: '🌊 Ocean',
+    title: 'Baby Blue Whale Spotted Off California Coast!',
+    snippet: 'Researchers captured rare footage of a newborn blue whale — the largest animal on Earth.',
+    body: `<p>Marine biologists off the coast of California had the surprise of a lifetime — they spotted a <strong>newborn blue whale</strong> swimming alongside its mother! Baby blue whales are incredibly rare to observe in the wild.</p>
+    <p>The calf was estimated to be just a few days old but was already about 7 meters long — that's bigger than most cars! Blue whale calves drink up to 400 liters of milk per day and gain around 90 kilograms every single day.</p>`,
+    funFact: '🐳 <strong>Fun Fact:</strong> A blue whale\'s heart is so big that a small child could crawl through its arteries!',
+    tags: ['#BlueWhale', '#OceanLife', '#BabyAnimals', '#MarineScience'],
+    author: 'Ocean Explorer', authorEmoji: '🐠', authorBg: 'linear-gradient(135deg,#0093e9,#80d0c7)',
+    likes: 5120, comments: 289, time: '4h ago'
+  },
+  {
+    id: 3, cat: 'science',
+    emoji: '🦕', bg: 'linear-gradient(135deg,#f7971e,#ffd200)',
+    badge: '🔬 Science',
+    title: 'New Dinosaur Species Discovered in Argentina!',
+    snippet: 'Paleontologists unearthed fossils of a never-before-seen long-necked giant in Patagonia.',
+    body: `<p>Dinosaur hunters have done it again! Scientists in Argentina's Patagonia region have uncovered the fossils of a brand-new dinosaur species — a massive <strong>sauropod</strong> (the long-necked kind) that lived around 98 million years ago.</p>
+    <p>The new dino, nicknamed "Patagonotitan II" by researchers, could have stretched up to 35 metres long — about as long as four school buses parked end to end! It likely weighed as much as 10 African elephants.</p>`,
+    funFact: '🦕 <strong>Fun Fact:</strong> Its neck alone was longer than a giraffe\'s entire body!',
+    tags: ['#Dinosaurs', '#FossilFriday', '#Paleontology', '#Argentina'],
+    author: 'Fossil Finder', authorEmoji: '🦴', authorBg: 'linear-gradient(135deg,#f7971e,#ffd200)',
+    likes: 3456, comments: 201, time: '6h ago'
+  },
+  {
+    id: 4, cat: 'tech',
+    emoji: '🤖', bg: 'linear-gradient(135deg,#6c47ff,#00b4d8)',
+    badge: '🤖 Tech',
+    title: 'AI Robot Learns to Paint Like a Real Artist',
+    snippet: 'A new AI-powered robot arm can now create unique paintings by mixing colours on a real canvas.',
+    body: `<p>An AI robot has learned to <strong>paint real pictures</strong> on canvas, mixing colours and using a brush just like a human artist would! Scientists at a robotics lab unveiled the system, which uses cameras and AI to create original artwork — no two paintings are ever the same.</p>
+    <p>The robot watches videos of human painters to learn brush techniques like blending, stippling, and layering. It even makes "happy accidents" the way famous painter Bob Ross used to! Some of its paintings have already been displayed in a small gallery.</p>`,
+    funFact: '🎨 <strong>Fun Fact:</strong> The robot can produce one full painting in about 12 minutes — most humans take hours!',
+    tags: ['#AIArt', '#Robots', '#Technology', '#ArtKids'],
+    author: 'TechBot News', authorEmoji: '🤖', authorBg: 'linear-gradient(135deg,#6c47ff,#00b4d8)',
+    likes: 4210, comments: 317, time: '1h ago'
+  },
+  {
+    id: 5, cat: 'sports',
+    emoji: '⚽', bg: 'linear-gradient(135deg,#43e97b,#38f9d7)',
+    badge: '⚽ Sports',
+    title: '12-Year-Old Girl Becomes Youngest Chess Grandmaster Ever!',
+    snippet: 'Anika Patel from India broke the world record set in 1991, earning her grandmaster title at just 12.',
+    body: `<p>History has been made on the chess board! Anika Patel, a 12-year-old from Mumbai, India, has become the <strong>youngest chess grandmaster in history</strong>, breaking a record that stood for over 30 years.</p>
+    <p>Anika started playing chess at age 4, taught by her grandfather. She practiced 4 hours every day before school, studying legendary matches from players like Garry Kasparov and Magnus Carlsen. Her winning move in the title-deciding game left her opponents stunned.</p>`,
+    funFact: '♟️ <strong>Fun Fact:</strong> There are more possible chess game combinations than there are atoms in the observable universe!',
+    tags: ['#Chess', '#Grandmaster', '#KidsAchieve', '#India'],
+    author: 'Sports Buzz', authorEmoji: '🏆', authorBg: 'linear-gradient(135deg,#43e97b,#38f9d7)',
+    likes: 7832, comments: 542, time: '3h ago'
+  },
+  {
+    id: 6, cat: 'nature',
+    emoji: '🌺', bg: 'linear-gradient(135deg,#f093fb,#f5576c)',
+    badge: '🌿 Nature',
+    title: 'Rare Pink Dolphin Seen Swimming in Louisiana!',
+    snippet: 'A bubblegum-pink dolphin nicknamed "Pinky" has returned to the Calcasieu River — and she brought a baby!',
+    body: `<p>Nature has its own wonders! A famous <strong>pink bottlenose dolphin</strong> nicknamed "Pinky" has been spotted again in Louisiana's Calcasieu River — and this time she brought her young calf! Pinky's pink colour comes from a condition called albinism, which reduces the amount of dark pigment in her skin.</p>
+    <p>Pinky was first spotted in 2007 and has become a local celebrity. Scientists say her calf appears to have inherited some of her pinkish colouring — making it even rarer. Onlookers on a boat tour were stunned when the two dolphins leaped alongside their vessel!</p>`,
+    funFact: '🐬 <strong>Fun Fact:</strong> Amazon river dolphins (called boto) are also naturally pink — they live in the rainforest rivers of South America!',
+    tags: ['#PinkDolphin', '#WildLife', '#Nature', '#Dolphins'],
+    author: 'Wild World', authorEmoji: '🌊', authorBg: 'linear-gradient(135deg,#f093fb,#f5576c)',
+    likes: 6390, comments: 401, time: '5h ago'
+  },
+  {
+    id: 7, cat: 'science',
+    emoji: '🧬', bg: 'linear-gradient(135deg,#11998e,#38ef7d)',
+    badge: '🔬 Science',
+    title: 'Scientists Grow a Tiny "Mini-Brain" in a Lab!',
+    snippet: 'Researchers created a pea-sized brain organoid that can respond to light — helping study brain diseases.',
+    body: `<p>Scientists have grown a tiny brain in a laboratory! Don't worry — it's not a real thinking brain, but a <strong>brain organoid</strong>, which is a small cluster of brain cells that behaves a bit like a mini brain. It's about the size of a pea.</p>
+    <p>The exciting part? This organoid can actually <strong>respond to light</strong>! Researchers shone lights at it and saw electrical signals fire — similar to what happens in a real eye-brain connection. This could help scientists understand diseases like Alzheimer's and find better medicines.</p>`,
+    funFact: '🧠 <strong>Fun Fact:</strong> Your brain has about 86 billion neurons — more neurons than there are stars in the Milky Way galaxy!',
+    tags: ['#BrainScience', '#Organoid', '#MedKids', '#FutureScience'],
+    author: 'Lab Report', authorEmoji: '🧪', authorBg: 'linear-gradient(135deg,#11998e,#38ef7d)',
+    likes: 2907, comments: 178, time: '8h ago'
+  },
+  {
+    id: 8, cat: 'world',
+    emoji: '🏫', bg: 'linear-gradient(135deg,#fc4a1a,#f7b733)',
+    badge: '🌍 World',
+    title: 'This Country Just Made School Lunches Free for Every Kid!',
+    snippet: 'Finland expanded its free school meal programme — now every student from age 6 to 18 gets a hot lunch daily.',
+    body: `<p>Great news from Finland! The Nordic country has <strong>expanded its free school meal programme</strong> to cover every student from age 6 all the way to 18. That means no child has to worry about being hungry during the school day.</p>
+    <p>Finland has offered free school lunches since 1948, but the new programme now includes upper secondary school students too. The meals are nutritionist-approved, and students even help choose the weekly menu. Experts say well-fed kids concentrate better and get higher grades!</p>`,
+    funFact: '🍎 <strong>Fun Fact:</strong> Finland is consistently ranked as one of the happiest countries on Earth — partly because they look after everyone, including kids!',
+    tags: ['#FreeSchoolLunch', '#Finland', '#KidsRights', '#WorldNews'],
+    author: 'Global Kids', authorEmoji: '🌍', authorBg: 'linear-gradient(135deg,#fc4a1a,#f7b733)',
+    likes: 9104, comments: 623, time: '7h ago'
+  },
+  {
+    id: 9, cat: 'arts',
+    emoji: '🎭', bg: 'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+    badge: '🎨 Arts',
+    title: '10-Year-Old\'s Drawing Goes Viral — Now a Children\'s Book!',
+    snippet: 'Maya\'s crayon drawing of a dragon went viral on social media and caught the eye of a major publisher.',
+    body: `<p>From classroom to bookshelf! 10-year-old Maya Chen from Toronto drew a picture of a dragon named "Zigzag" for her school art project — but when her teacher posted it online, it went massively viral, racking up over <strong>3 million likes</strong> in one week!</p>
+    <p>The artwork caught the attention of a major children's book publisher, who reached out to Maya's family. Now Maya has teamed up with a professional author to turn her drawings into a full illustrated children's book, set to be published later this year. Maya says she draws every single day after school.</p>`,
+    funFact: '✏️ <strong>Fun Fact:</strong> Famous artist Pablo Picasso sold his first painting when he was just 13 years old!',
+    tags: ['#KidsArt', '#ChildArtist', '#DragonBook', '#DrawingKids'],
+    author: 'Arts & Crafts', authorEmoji: '🖌️', authorBg: 'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+    likes: 11250, comments: 874, time: '12h ago'
+  },
+  {
+    id: 10, cat: 'space',
+    emoji: '☄️', bg: 'linear-gradient(135deg,#2d3561,#c05c7e)',
+    badge: '🚀 Space',
+    title: 'James Webb Telescope Spots Possible Signs of Life on Faraway Planet!',
+    snippet: 'Scientists detected a chemical in the atmosphere of K2-18b that on Earth is only made by living things.',
+    body: `<p>The James Webb Space Telescope may have just made the most exciting discovery in human history! Scientists have detected a chemical called <strong>dimethyl sulphide (DMS)</strong> in the atmosphere of a planet called K2-18b — and on Earth, this chemical is <em>only produced by living organisms</em>, like ocean algae.</p>
+    <p>K2-18b is about 120 light-years away from Earth — that's incredibly far. Scientists are careful to say this is not definite proof of alien life yet, but it's the strongest hint we've ever found. More observations are planned to confirm the finding!</p>`,
+    funFact: '👽 <strong>Fun Fact:</strong> If aliens on K2-18b sent us a radio signal today, we wouldn\'t receive it for another 120 years!',
+    tags: ['#JamesWebb', '#AlienLife', '#ExoPlanet', '#Astronomy'],
+    author: 'Space Watch', authorEmoji: '🔭', authorBg: 'linear-gradient(135deg,#2d3561,#c05c7e)',
+    likes: 15304, comments: 1204, time: '1d ago'
+  },
+  {
+    id: 11, cat: 'tech',
+    emoji: '🌱', bg: 'linear-gradient(135deg,#134e5e,#71b280)',
+    badge: '🤖 Tech',
+    title: 'Kids in Kenya Build Solar Lamps From Old Bottles!',
+    snippet: 'A school project turned into a community movement — 500+ homes now have light thanks to young inventors.',
+    body: `<p>Young inventors in Kenya are changing their community one bottle at a time! A group of students aged 10–14 at a rural school learned how to make <strong>solar-powered lamps from recycled plastic bottles</strong>, and their project has now lit up over 500 homes in their region.</p>
+    <p>The design is simple: a clear bottle is filled with water and a tiny amount of bleach, then mounted in a roof panel. During the day, sunlight refracts through the bottle and lights up a dark room — no electricity needed! The students are now teaching other schools how to build them.</p>`,
+    funFact: '☀️ <strong>Fun Fact:</strong> One hour of sunlight hitting Earth contains enough energy to power all of humanity for a whole year!',
+    tags: ['#SolarKids', '#GreenTech', '#Kenya', '#YoungInventors'],
+    author: 'Green Future', authorEmoji: '♻️', authorBg: 'linear-gradient(135deg,#134e5e,#71b280)',
+    likes: 8621, comments: 507, time: '9h ago'
+  },
+  {
+    id: 12, cat: 'nature',
+    emoji: '🐺', bg: 'linear-gradient(135deg,#606c88,#3f4c6b)',
+    badge: '🌿 Nature',
+    title: 'Wolf Pack Returns to Colorado After 100 Years!',
+    snippet: 'Grey wolves are back in the Rocky Mountains — camera traps just confirmed a pack of 8 with new pups!',
+    body: `<p>After almost 100 years, grey wolves have returned to Colorado's Rocky Mountains! Wildlife cameras have confirmed a healthy pack of <strong>8 wolves — including 3 new pups</strong> born this spring. Wolves were hunted out of Colorado in the 1940s, and conservationists have been working for years to bring them back.</p>
+    <p>Wolves are what scientists call a <strong>keystone species</strong> — they help keep ecosystems healthy by controlling deer and elk populations, which then lets plants and trees grow back along riverbanks. This helps fish, beavers, and hundreds of other animals too!</p>`,
+    funFact: '🐺 <strong>Fun Fact:</strong> Wolf packs don\'t follow an "alpha" — they\'re actually just a family group led by the parents!',
+    tags: ['#Wolves', '#WildLife', '#Colorado', '#NatureIsBack'],
+    author: 'Wild World', authorEmoji: '🌿', authorBg: 'linear-gradient(135deg,#606c88,#3f4c6b)',
+    likes: 4875, comments: 298, time: '11h ago'
+  },
+];
+
+// ── Extra article pool for infinite scroll ────────────────────────────────────
+const MORE_POOL = [
+  { cat:'science', emoji:'🦠', bg:'linear-gradient(135deg,#11998e,#38ef7d)', badge:'🔬 Science',
+    title:'Tiny Tardigrades Survive in Outer Space — Scientists Are Stunned',
+    snippet:'These microscopic "water bears" can withstand radiation, vacuum, and extreme cold.',
+    body:`<p>Scientists were shocked to find that <strong>tardigrades</strong> — microscopic animals also called "water bears" — can survive the harsh vacuum of outer space! These creatures are only 0.5mm long but are practically indestructible.</p><p>Tardigrades can survive being frozen, boiled, dried out completely, and even blasted with radiation that would kill a human instantly. Researchers sent some to the International Space Station and found many survived exposure to open space for 10 days!</p>`,
+    funFact:'🐻 <strong>Fun Fact:</strong> There are more tardigrades living in your backyard moss than people on Earth!',
+    tags:['#Tardigrade','#SpaceAnimals','#MicroLife','#Survival'], author:'Micro World', authorEmoji:'🔬', authorBg:'linear-gradient(135deg,#11998e,#38ef7d)' },
+  { cat:'tech', emoji:'🕶️', bg:'linear-gradient(135deg,#3a1c71,#d76d77,#ffaf7b)', badge:'🤖 Tech',
+    title:'New AR Glasses Let You See Through Walls Like a Superhero',
+    snippet:'Engineers built glasses that use thermal cameras to show heat signatures through solid objects.',
+    body:`<p>A startup has created augmented reality (AR) glasses that let the wearer see <strong>heat signatures through walls</strong> — just like a superhero's X-ray vision! The glasses use tiny thermal cameras and project coloured outlines onto the lenses.</p><p>The technology was originally designed to help firefighters find people trapped in burning buildings. But now engineers are exploring other uses, like helping rescue teams find missing people during natural disasters.</p>`,
+    funFact:'🔥 <strong>Fun Fact:</strong> Every living thing emits heat — even a sleeping cat creates enough warmth for a thermal camera to detect through a thin door!',
+    tags:['#ARGlasses','#ThermalVision','#SuperheroTech','#Rescue'], author:'TechBot News', authorEmoji:'🤖', authorBg:'linear-gradient(135deg,#3a1c71,#d76d77,#ffaf7b)' },
+  { cat:'nature', emoji:'🌊', bg:'linear-gradient(135deg,#005c97,#363795)', badge:'🌿 Nature',
+    title:'Giant Kelp Forest Returns to California After Years of Damage',
+    snippet:'Thanks to conservation efforts, the towering underwater forests are growing back beautifully.',
+    body:`<p>Great news for California's coastline! After years of being decimated by sea urchin overpopulation, the <strong>giant kelp forests</strong> off the coast of California are making a remarkable comeback. Kelp can grow up to 60cm per day and creates entire underwater ecosystems.</p><p>Conservation groups removed millions of spiny purple sea urchins by hand and helped plant new kelp. The forests now shelter hundreds of species — sea otters, leopard sharks, garibaldi fish, and more. Divers describe it as "swimming in a cathedral."</p>`,
+    funFact:'🌿 <strong>Fun Fact:</strong> Giant kelp is the fastest-growing plant on Earth — it can grow up to 60cm (2 feet) in a single day!',
+    tags:['#KelpForest','#OceanRecovery','#California','#MarineLife'], author:'Ocean Explorer', authorEmoji:'🌊', authorBg:'linear-gradient(135deg,#005c97,#363795)' },
+  { cat:'world', emoji:'🏔️', bg:'linear-gradient(135deg,#16213e,#0f3460,#533483)', badge:'🌍 World',
+    title:'12-Year-Old Becomes Youngest Person to Climb Everest Base Camp Solo',
+    snippet:'Priya hiked 130km through Nepal with only a guide — raising money for clean water projects.',
+    body:`<p>Twelve-year-old Priya Sharma from Nepal has become the <strong>youngest person to complete the Everest Base Camp trek solo</strong> (with a guide for safety), hiking 130km through the Himalayas at altitudes over 5,000 metres above sea level!</p><p>Priya started the journey to raise money for clean water wells in remote villages. She trained for 8 months, running 5km every morning before school. Her fundraiser has now collected over $40,000 and will provide clean water to 3 villages.</p>`,
+    funFact:'🏔️ <strong>Fun Fact:</strong> At Base Camp, the air has about 50% less oxygen than at sea level — every breath gives you half as much oxygen!',
+    tags:['#Everest','#KidsHike','#CleanWater','#Nepal'], author:'Global Kids', authorEmoji:'🌍', authorBg:'linear-gradient(135deg,#16213e,#0f3460,#533483)' },
+  { cat:'arts', emoji:'🎵', bg:'linear-gradient(135deg,#f953c6,#b91d73)', badge:'🎨 Arts',
+    title:'9-Year-Old Composes Symphony That Premieres at Carnegie Hall',
+    snippet:'Leo wrote his first symphony at age 8 and will see it performed by a full orchestra this spring.',
+    body:`<p>Young musical prodigy Leo Tanaka, just 9 years old, will have his <strong>original symphony performed at Carnegie Hall</strong> in New York City this spring — making him one of the youngest composers ever to achieve this honour.</p><p>Leo began playing piano at age 3 and started composing melodies at 5. His 12-minute symphony "Sunrise Over the Mountains" features 4 movements and was written entirely by hand over 6 months. Leo says he hears complete pieces of music in his dreams and rushes to write them down.</p>`,
+    funFact:'🎹 <strong>Fun Fact:</strong> Mozart wrote his first symphony at age 8 — and Leo is just one year older!',
+    tags:['#ChildProdigy','#Carnegie','#ClassicalKids','#YoungComposer'], author:'Arts & Crafts', authorEmoji:'🎵', authorBg:'linear-gradient(135deg,#f953c6,#b91d73)' },
+  { cat:'space', emoji:'🛸', bg:'linear-gradient(135deg,#240b36,#c31432)', badge:'🚀 Space',
+    title:'Scientists Detect Mysterious Radio Burst Repeating Every 16 Days',
+    snippet:'A powerful signal from a distant galaxy pulses with clockwork precision — and no one knows why.',
+    body:`<p>Astronomers have been puzzling over a <strong>mysterious repeating radio burst</strong> coming from a galaxy 500 million light-years away. The signal blasts out intense radio waves for 4 days, then goes silent for 12 days — like a cosmic clock.</p><p>These Fast Radio Bursts (FRBs) release more energy in one millisecond than the Sun does in a year. Scientists have proposed many explanations: a pulsar orbiting a companion star, a precessing star, or even (though very unlikely) some form of super-advanced technology.</p>`,
+    funFact:'📡 <strong>Fun Fact:</strong> In a single millisecond, one FRB releases more energy than the Sun will produce in 1,000 years!',
+    tags:['#FRB','#MysterySignal','#DeepSpace','#Astronomy'], author:'Space Watch', authorEmoji:'🔭', authorBg:'linear-gradient(135deg,#240b36,#c31432)' },
+  { cat:'science', emoji:'🌡️', bg:'linear-gradient(135deg,#f7971e,#ffd200)', badge:'🔬 Science',
+    title:'Scientists Invent Paint That Keeps Buildings Cool Without Air Conditioning',
+    snippet:'The whitest paint ever made reflects 98.1% of sunlight — making surfaces cooler than the air around them.',
+    body:`<p>Engineers at Purdue University have created <strong>the whitest paint ever made</strong>, and it's a game-changer for the climate! This special white paint reflects 98.1% of sunlight — so much that coated surfaces actually become cooler than the surrounding air temperature.</p><p>Normal white paint only reflects about 80–90% of sunlight and still absorbs heat. This new paint uses barium sulphate particles of different sizes to scatter all wavelengths of light. A roof painted with it could reduce the need for air conditioning by up to 70%!</p>`,
+    funFact:'❄️ <strong>Fun Fact:</strong> If this paint were applied to rooftops worldwide it could reduce the effects of global warming more than any single technology currently available!',
+    tags:['#CoolPaint','#ClimateKids','#GreenScience','#Innovation'], author:'Lab Report', authorEmoji:'🧪', authorBg:'linear-gradient(135deg,#f7971e,#ffd200)' },
+  { cat:'nature', emoji:'🦅', bg:'linear-gradient(135deg,#4e54c8,#8f94fb)', badge:'🌿 Nature',
+    title:'Condor Chick Hatches in Grand Canyon for First Time in a Century',
+    snippet:'A California Condor — one of the rarest birds on Earth — successfully raised a chick in the wild.',
+    body:`<p>For the first time in over 100 years, a <strong>California Condor chick has hatched in the Grand Canyon wilderness</strong>! This is an incredible conservation success story — in 1987 there were only 27 condors left in the entire world.</p><p>Thanks to breeding programmes and decades of work by conservationists, there are now over 500 condors. The new chick, spotted by a wildlife camera, was seen taking its first wobbly steps at the edge of a cliff-face nest. Condors have wingspans of nearly 3 metres — the largest of any North American bird.</p>`,
+    funFact:'🦅 <strong>Fun Fact:</strong> Condors can soar for hours without flapping their wings, using warm air currents called thermals — they can cover 250km in a single day!',
+    tags:['#Condor','#GrandCanyon','#Endangered','#WildlifeWin'], author:'Wild World', authorEmoji:'🌿', authorBg:'linear-gradient(135deg,#4e54c8,#8f94fb)' },
+  { cat:'tech', emoji:'⚡', bg:'linear-gradient(135deg,#f7971e,#ffd200)', badge:'🤖 Tech',
+    title:'New Battery Charges From 0 to 100% in Just 5 Minutes!',
+    snippet:'Chinese scientists developed a battery that charges 10x faster than today\'s best phones.',
+    body:`<p>Imagine charging your phone completely in the time it takes to brush your teeth! Scientists in China have developed a <strong>new type of battery</strong> that can fully charge in just 5 minutes — about 10 times faster than the best batteries in today's smartphones.</p><p>The secret is a new electrode material made from graphene and lithium that allows electricity to flow in and out much faster than normal. The batteries also last for over 10,000 charge cycles without losing capacity — most phone batteries start degrading after just 500 cycles.</p>`,
+    funFact:'🔋 <strong>Fun Fact:</strong> The first batteries were invented in 1799 by Alessandro Volta — he stacked zinc and copper discs to make electricity for the first time!',
+    tags:['#FastCharge','#Battery','#GreenTech','#FuturePhones'], author:'TechBot News', authorEmoji:'⚡', authorBg:'linear-gradient(135deg,#f7971e,#ffd200)' },
+  { cat:'sports', emoji:'🏊', bg:'linear-gradient(135deg,#0052d4,#4364f7,#6fb1fc)', badge:'⚽ Sports',
+    title:'11-Year-Old Swims Across Lake Tahoe — Longest Open Water Swim for a Child',
+    snippet:'Kai swam 35km non-stop to break the record and raise awareness for lake conservation.',
+    body:`<p>Eleven-year-old Kai Watanabe from California has just completed a <strong>non-stop 35km swim across Lake Tahoe</strong> — the longest open water swim ever recorded for a child his age! The swim took 12 hours and 20 minutes in water that was just 14°C.</p><p>Kai trained for two years, swimming in open water every weekend. He wore no wetsuit and was accompanied by a support kayak. He says he thought about his favourite video games to pass the time. Kai swam to raise awareness for Lake Tahoe's water quality, which is threatened by pollution and algae growth.</p>`,
+    funFact:'🌊 <strong>Fun Fact:</strong> Lake Tahoe holds enough water to cover the entire state of California 14 inches deep — it\'s one of the clearest lakes in the world!',
+    tags:['#OpenWaterSwim','#LakeTahoe','#KidAthlete','#Conservation'], author:'Sports Buzz', authorEmoji:'🏆', authorBg:'linear-gradient(135deg,#0052d4,#4364f7,#6fb1fc)' },
+  { cat:'world', emoji:'🌱', bg:'linear-gradient(135deg,#134e5e,#71b280)', badge:'🌍 World',
+    title:'Students Plant 1 Million Trees in One Day Across 50 Countries',
+    snippet:'Youth climate action groups coordinated the global planting event on Earth Day.',
+    body:`<p>In an incredible act of teamwork, <strong>students from 50 countries planted one million trees in a single day</strong>! The event was organised by youth climate groups who coordinated planting locations, donated saplings, and trained volunteers — many as young as 7 years old.</p><p>The trees include native species chosen specifically for each region, from mangroves in coastal Asia to oak trees in Europe to baobabs in Africa. Scientists say the trees will absorb millions of tonnes of CO₂ over their lifetimes and restore habitats for thousands of animal species.</p>`,
+    funFact:'🌳 <strong>Fun Fact:</strong> A single mature tree absorbs about 22kg of CO₂ per year — your breathing produces about 200kg of CO₂ per year, so you need about 9 trees just for yourself!',
+    tags:['#PlantATtree','#EarthDay','#ClimateKids','#OneMillionTrees'], author:'Green Future', authorEmoji:'♻️', authorBg:'linear-gradient(135deg,#134e5e,#71b280)' },
+  { cat:'science', emoji:'🧲', bg:'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)', badge:'🔬 Science',
+    title:'Scientists Make Objects Float Using Only Sound Waves',
+    snippet:'Acoustic levitation can now lift and move small objects without touching them — like magic.',
+    body:`<p>It sounds like science fiction, but it's totally real! Scientists have perfected <strong>acoustic levitation</strong> — a technique that uses focused sound waves to make objects float in mid-air, move around, and even spin without touching them at all.</p><p>The technology uses ultrasonic speakers (too high-pitched for humans to hear) that create patterns of pressure in the air. These pressure patterns can trap small objects like water droplets, insects, or tiny balls and hold them perfectly still or guide them through the air. It could be used to move delicate materials in factories without contaminating them.</p>`,
+    funFact:'🎵 <strong>Fun Fact:</strong> The sound waves used are too high for humans to hear, but dogs and bats can detect them — they would hear an extremely loud, annoying buzz!',
+    tags:['#AcousticLev','#SoundScience','#Physics','#MindBlown'], author:'Lab Report', authorEmoji:'🧪', authorBg:'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)' },
+  { cat:'arts', emoji:'🪄', bg:'linear-gradient(135deg,#6a11cb,#2575fc)', badge:'🎨 Arts',
+    title:'Kids Create Stop-Motion Film That Wins International Animation Award',
+    snippet:'A class of 10-year-olds spent 6 months making a 7-minute film using clay and old cardboard boxes.',
+    body:`<p>A class of 10-year-olds from a small primary school in Wales just won a prestigious <strong>international children's animation award</strong> for their stop-motion film "The Great Snail Race"! The 7-minute film took 6 months to make and required over 12,000 individual photographs.</p><p>The students built the sets from recycled cardboard boxes and modelled the characters from clay. They did everything themselves — writing the script, building sets, animating, and recording the voice-overs. Their teacher says the project transformed the class's confidence.</p>`,
+    funFact:'🎬 <strong>Fun Fact:</strong> The classic stop-motion film "Wallace & Gromit: The Wrong Trousers" took a team of 30 people over a year to make — about 4 minutes of film per week!',
+    tags:['#StopMotion','#KidsFilm','#Animation','#Wales'], author:'Arts & Crafts', authorEmoji:'🖌️', authorBg:'linear-gradient(135deg,#6a11cb,#2575fc)' },
+  { cat:'nature', emoji:'🐝', bg:'linear-gradient(135deg,#f6d365,#fda085)', badge:'🌿 Nature',
+    title:'Bees Are Back! UK Reports Highest Bee Population in 20 Years',
+    snippet:'Wildflower planting initiatives and reduced pesticide use have led to a remarkable bee recovery.',
+    body:`<p>Buzzing good news from the UK! Conservationists have reported the <strong>highest bee population count in over 20 years</strong>, with wildflower meadows spreading across roadsides, parks, and even city rooftops. The recovery is being called one of Britain's biggest wildlife success stories.</p><p>Over 100,000 km of wildflower strips have been planted since 2015. Many farmers have also switched to bee-friendly pest management. Schools across the country have turned their playing fields' edges into mini wildflower meadows — with students monitoring the bee populations as science projects.</p>`,
+    funFact:'🍯 <strong>Fun Fact:</strong> A single bee visits up to 5,000 flowers per day and a hive of bees would need to fly the equivalent of three times around the world to make one jar of honey!',
+    tags:['#BeesBack','#Wildflowers','#UK','#Pollinators'], author:'Wild World', authorEmoji:'🌿', authorBg:'linear-gradient(135deg,#f6d365,#fda085)' },
+  { cat:'space', emoji:'🌌', bg:'linear-gradient(135deg,#0f0c29,#302b63)', badge:'🚀 Space',
+    title:'Astronomers Photograph a Star Being Born for the First Time',
+    snippet:'Webb telescope captured stunning images of gas and dust collapsing to form a brand new star.',
+    body:`<p>The James Webb Space Telescope has delivered another jaw-dropping image — the very first clear photograph of a <strong>star in the process of being born</strong>! The newborn star, called a protostar, sits inside a swirling cloud of gas and dust called a nebula.</p><p>The image shows brilliant jets of material shooting outwards as the star grows, like a spinning top spraying mist. This protostar is estimated to be only about 100,000 years old — which in star terms is practically a newborn baby. For comparison, our Sun is 4.6 billion years old.</p>`,
+    funFact:'⭐ <strong>Fun Fact:</strong> Every atom in your body — the carbon, oxygen, iron — was forged inside a star that exploded long before our Sun was born. You are literally made of stars!',
+    tags:['#StarBirth','#JamesWebb','#Nebula','#Astronomy'], author:'Space Watch', authorEmoji:'🔭', authorBg:'linear-gradient(135deg,#0f0c29,#302b63)' },
+];
+
+// ── Liked state ───────────────────────────────────────────────────────────────
+const liked = new Set();
+
+// ── Render stories ─────────────────────────────────────────────────────────────
+function renderStories() {
+  const row = document.getElementById('storyRow');
+  row.innerHTML = stories.map(s => `
+    <div class="story" onclick="alert('${s.label} stories coming soon! 🎉')">
+      <div class="story-ring ${s.seen ? 'seen' : ''}">
+        <div class="story-avatar" style="background:${s.bg}">${s.emoji}</div>
+      </div>
+      <span class="story-label">${s.label}</span>
+    </div>
+  `).join('');
+}
+
+// ── Render feed ───────────────────────────────────────────────────────────────
+let currentCat = 'all';
+let nextId = 1000;
+let isLoading = false;
+let poolIndex = 0;       // cycles through MORE_POOL
+
+function cardHTML(a) {
+  return `
+    <div class="card" onclick="openArticle(${a.id})" style="animation-delay:${Math.random()*0.15}s">
+      <div class="card-img" style="background:${a.bg}">
+        <span>${a.emoji}</span>
+        <span class="badge">${a.badge}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${a.title}</div>
+        <div class="card-meta">
+          <div class="card-avatar" style="background:${a.authorBg}">${a.authorEmoji}</div>
+          <span class="card-author">${a.author}</span>
+          <div class="card-likes">
+            <button class="heart-btn ${liked.has(a.id) ? 'liked' : ''}"
+              onclick="toggleLike(event,${a.id})">${liked.has(a.id) ? '❤️' : '🤍'}</button>
+            <span id="likes-${a.id}">${formatNum(a.likes + (liked.has(a.id) ? 1 : 0))}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function skeletonHTML() {
+  return `
+    <div class="card-skeleton">
+      <div class="skel-img"></div>
+      <div class="skel-body">
+        <div class="skel-line tall"></div>
+        <div class="skel-line short"></div>
+        <div class="skel-line meta"></div>
+      </div>
+    </div>`;
+}
+
+function renderFeed(cat) {
+  currentCat = cat;
+  poolIndex = 0;
+  const feed = document.getElementById('feed');
+  const filtered = cat === 'all' ? articles : articles.filter(a => a.cat === cat);
+  feed.innerHTML = filtered.map(cardHTML).join('');
+}
+
+// Pick next batch from MORE_POOL (cycles infinitely), filtered by cat
+function generateBatch(cat, count = 4) {
+  const pool = cat === 'all' ? MORE_POOL : MORE_POOL.filter(t => t.cat === cat);
+  if (pool.length === 0) return [];
+  const batch = [];
+  for (let i = 0; i < count; i++) {
+    const template = pool[poolIndex % pool.length];
+    poolIndex++;
+    const id = ++nextId;
+    batch.push({
+      ...template,
+      id,
+      likes: Math.floor(Math.random() * 12000) + 500,
+      comments: Math.floor(Math.random() * 800) + 20,
+      time: ['just now','1h ago','2h ago','3h ago','5h ago','8h ago'][Math.floor(Math.random()*6)],
+    });
+    articles.push(batch[batch.length - 1]);   // register so modal works
+  }
+  return batch;
+}
+
+// Show skeletons, then replace with real cards after delay
+async function loadMoreCards() {
+  if (isLoading) return;
+  isLoading = true;
+  const feed = document.getElementById('feed');
+  const loader = document.getElementById('loader');
+  loader.style.display = 'flex';
+
+  // Insert 4 skeleton placeholders
+  const skelContainer = document.createElement('div');
+  skelContainer.id = 'skeletons';
+  skelContainer.style.cssText = 'columns:2;column-gap:8px;padding:0 8px';
+  skelContainer.innerHTML = Array(4).fill(skeletonHTML()).join('');
+  feed.parentNode.insertBefore(skelContainer, loader);
+
+  await new Promise(r => setTimeout(r, 750));
+
+  const batch = generateBatch(currentCat, 4);
+  skelContainer.remove();
+  loader.style.display = 'none';
+
+  if (batch.length) {
+    const frag = document.createElement('div');
+    frag.innerHTML = batch.map(cardHTML).join('');
+    while (frag.firstChild) feed.appendChild(frag.firstChild);
+  }
+
+  isLoading = false;
+}
+
+function formatNum(n) {
+  return n >= 1000 ? (n/1000).toFixed(1) + 'k' : n;
+}
+
+// ── Toggle like ───────────────────────────────────────────────────────────────
+function toggleLike(e, id) {
+  e.stopPropagation();
+  const article = articles.find(a => a.id === id);
+  if (liked.has(id)) {
+    liked.delete(id);
+  } else {
+    liked.add(id);
+    e.currentTarget.classList.add('liked');
+  }
+  renderFeed(currentCat);
+}
+
+// ── Open article modal ────────────────────────────────────────────────────────
+function openArticle(id) {
+  const a = articles.find(x => x.id === id);
+  const overlay = document.getElementById('modalOverlay');
+  const body = document.getElementById('modalBody');
+
+  body.innerHTML = `
+    <div class="modal-hero" style="background:${a.bg}">${a.emoji}</div>
+    <div class="modal-content">
+      <span class="modal-tag">${a.badge}</span>
+      <h1 class="modal-title">${a.title}</h1>
+      <span class="ai-badge">✨ AI Summary for Kids</span>
+      <div class="modal-body">
+        ${a.body}
+        <div class="fun-fact">${a.funFact}</div>
+      </div>
+      <div class="tags-row">${a.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      <div class="modal-author-row">
+        <div class="modal-avatar" style="background:${a.authorBg}">${a.authorEmoji}</div>
+        <div class="modal-author-info">
+          <div class="modal-author-name">${a.author}</div>
+          <div class="modal-author-sub">${a.time} · AI-verified</div>
+        </div>
+        <button class="follow-btn">Follow</button>
+      </div>
+      <div class="modal-actions">
+        <button class="action-btn" onclick="toggleLike2(${a.id})">
+          <span id="modal-heart-${a.id}">${liked.has(a.id) ? '❤️' : '🤍'}</span>
+          <span>${formatNum(a.likes + (liked.has(a.id) ? 1 : 0))}</span>
+        </button>
+        <button class="action-btn">
+          <span>💬</span><span>${formatNum(a.comments)}</span>
+        </button>
+        <button class="action-btn">
+          <span>🔖</span><span>Save</span>
+        </button>
+        <button class="action-btn">
+          <span>📤</span><span>Share</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function toggleLike2(id) {
+  const article = articles.find(a => a.id === id);
+  if (liked.has(id)) { liked.delete(id); } else { liked.add(id); }
+  document.getElementById('modal-heart-' + id).textContent = liked.has(id) ? '❤️' : '🤍';
+  renderFeed(currentCat);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+document.getElementById('tabs').addEventListener('click', function(e) {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed(btn.dataset.cat);
+});
+
+// ── Nav items ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', function() {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ── Infinite scroll via IntersectionObserver ──────────────────────────────────
+const sentinel = document.getElementById('sentinel');
+const observer = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) loadMoreCards();
+}, { rootMargin: '200px' });
+observer.observe(sentinel);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderStories();
+renderFeed('all');
+</script>
+</body>
+</html>

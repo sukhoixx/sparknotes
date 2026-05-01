@@ -1,4 +1,5 @@
 import Parser from "rss-parser";
+import type { Category } from "./ai";
 
 export interface RawArticle {
   title: string;
@@ -10,35 +11,61 @@ export interface RawArticle {
 
 const parser = new Parser({ timeout: 8000 });
 
-const FEEDS = [
-  { url: "https://feeds.bbci.co.uk/news/rss.xml", source: "BBC News" },
-  { url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", source: "BBC Science" },
-  { url: "https://feeds.bbci.co.uk/news/technology/rss.xml", source: "BBC Tech" },
-  { url: "https://feeds.bbci.co.uk/sport/rss.xml", source: "BBC Sport" },
-  { url: "https://feeds.npr.org/1001/rss.xml", source: "NPR" },
-  { url: "https://www.nasa.gov/rss/dyn/breaking_news.rss", source: "NASA" },
-  { url: "https://www.theguardian.com/world/rss", source: "The Guardian" },
-];
+const FEEDS: Record<Category, { url: string; source: string }[]> = {
+  news: [
+    { url: "https://feeds.bbci.co.uk/news/rss.xml",             source: "BBC News" },
+    { url: "https://feeds.npr.org/1001/rss.xml",                source: "NPR" },
+    { url: "https://www.theguardian.com/world/rss",             source: "The Guardian" },
+    { url: "https://feeds.bbci.co.uk/news/world/rss.xml",       source: "BBC World" },
+    { url: "https://rss.nytimes.com/services/xml/rss/nf/HomePage.xml", source: "NYT" },
+  ],
+  science: [
+    { url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", source: "BBC Science" },
+    { url: "https://www.nasa.gov/rss/dyn/breaking_news.rss",    source: "NASA" },
+    { url: "https://www.sciencedaily.com/rss/all.xml",          source: "ScienceDaily" },
+    { url: "https://www.newscientist.com/feed/home/",           source: "New Scientist" },
+    { url: "https://feeds.bbci.co.uk/news/health/rss.xml",      source: "BBC Health" },
+  ],
+  technology: [
+    { url: "https://feeds.bbci.co.uk/news/technology/rss.xml",  source: "BBC Tech" },
+    { url: "https://techcrunch.com/feed/",                      source: "TechCrunch" },
+    { url: "https://www.wired.com/feed/rss",                    source: "Wired" },
+    { url: "https://www.theverge.com/rss/index.xml",            source: "The Verge" },
+    { url: "https://www.theguardian.com/us/technology/rss",     source: "Guardian Tech" },
+  ],
+  entertainment: [
+    { url: "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", source: "BBC Entertainment" },
+    { url: "https://www.theguardian.com/culture/rss",           source: "Guardian Culture" },
+    { url: "https://variety.com/feed/",                         source: "Variety" },
+    { url: "https://www.hollywoodreporter.com/feed/",           source: "Hollywood Reporter" },
+    { url: "https://pitchfork.com/rss/news/feed.xml",           source: "Pitchfork" },
+  ],
+};
 
-export async function fetchRecentArticles(): Promise<RawArticle[]> {
-  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+async function fetchFeed(url: string, source: string, cutoff: Date): Promise<RawArticle[]> {
+  try {
+    const feed = await parser.parseURL(url);
+    return feed.items
+      .filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff)
+      .map((item) => ({
+        title: item.title ?? "",
+        content: item.contentSnippet ?? item.summary ?? item.title ?? "",
+        link: item.link ?? "",
+        pubDate: new Date(item.pubDate!),
+        source,
+      }))
+      .filter((a) => a.title.length > 10 && a.link);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchArticlesByCategory(category: Category, days = 3): Promise<RawArticle[]> {
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const feeds = FEEDS[category];
 
   const results = await Promise.allSettled(
-    FEEDS.map(async ({ url, source }) => {
-      const feed = await parser.parseURL(url);
-      return feed.items
-        .filter((item) => {
-          if (!item.pubDate) return false;
-          return new Date(item.pubDate) >= cutoff;
-        })
-        .map((item) => ({
-          title: item.title ?? "",
-          content: item.contentSnippet ?? item.summary ?? item.title ?? "",
-          link: item.link ?? "",
-          pubDate: new Date(item.pubDate!),
-          source,
-        }));
-    })
+    feeds.map(({ url, source }) => fetchFeed(url, source, cutoff))
   );
 
   const articles: RawArticle[] = [];
@@ -47,7 +74,7 @@ export async function fetchRecentArticles(): Promise<RawArticle[]> {
   for (const result of results) {
     if (result.status === "fulfilled") {
       for (const article of result.value) {
-        if (article.link && !seenUrls.has(article.link) && article.title.length > 10) {
+        if (!seenUrls.has(article.link)) {
           seenUrls.add(article.link);
           articles.push(article);
         }
@@ -55,6 +82,5 @@ export async function fetchRecentArticles(): Promise<RawArticle[]> {
     }
   }
 
-  // Shuffle so we don't always take BBC articles first
   return articles.sort(() => Math.random() - 0.5);
 }
