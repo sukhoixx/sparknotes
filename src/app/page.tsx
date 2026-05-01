@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import Feed from "@/components/Feed";
-import BottomNav from "@/components/BottomNav";
 import type { Post } from "@prisma/client";
 
 export default function HomePage() {
@@ -25,7 +24,6 @@ export default function HomePage() {
         searchQuery={searchQuery}
         initialPosts={[] as Post[]}
       />
-      <BottomNav />
     </>
   );
 }
