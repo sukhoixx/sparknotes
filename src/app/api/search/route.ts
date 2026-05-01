@@ -6,7 +6,7 @@ const LIMIT = 12;
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim();
-  const cursor = searchParams.get("cursor");
+  const page = parseInt(searchParams.get("cursor") ?? "0");
 
   if (!q) return NextResponse.json({ posts: [], nextCursor: null });
 
@@ -19,12 +19,13 @@ export async function GET(req: NextRequest) {
 
   const posts = await prisma.post.findMany({
     where,
-    orderBy: { publishedAt: "desc" },
+    orderBy: { id: "desc" },
     take: LIMIT,
-    ...(cursor ? { skip: 1, cursor: { id: parseInt(cursor) } } : {}),
+    skip: page * LIMIT,
   });
 
-  const nextCursor = posts.length === LIMIT ? String(posts[posts.length - 1].id) : null;
+  const shuffled = posts.sort(() => Math.random() - 0.5);
+  const nextCursor = posts.length === LIMIT ? String(page + 1) : null;
 
-  return NextResponse.json({ posts, nextCursor });
+  return NextResponse.json({ posts: shuffled, nextCursor });
 }

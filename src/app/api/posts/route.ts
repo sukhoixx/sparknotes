@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const LIMIT = 12;
-const LOW_THRESHOLD = 15; // trigger generation if total posts < this
+const LOW_THRESHOLD = 15;
 
 function triggerGeneration() {
   const base = process.env.RAILWAY_PUBLIC_DOMAIN
@@ -20,27 +20,26 @@ function triggerGeneration() {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const cursor = searchParams.get("cursor");
+  const page = parseInt(searchParams.get("cursor") ?? "0");
   const category = searchParams.get("category") ?? "all";
 
   const where = category !== "all" ? { category } : {};
 
-  // On first page, check if we need more posts
-  if (!cursor) {
+  if (page === 0) {
     const total = await prisma.post.count({ where });
-    if (total < LOW_THRESHOLD) {
-      triggerGeneration();
-    }
+    if (total < LOW_THRESHOLD) triggerGeneration();
   }
 
   const posts = await prisma.post.findMany({
     where,
-    orderBy: { publishedAt: "desc" },
+    orderBy: { id: "desc" },
     take: LIMIT,
-    ...(cursor ? { skip: 1, cursor: { id: parseInt(cursor) } } : {}),
+    skip: page * LIMIT,
   });
 
-  const nextCursor = posts.length === LIMIT ? String(posts[posts.length - 1].id) : null;
+  // Shuffle within each page for a randomized feel
+  const shuffled = posts.sort(() => Math.random() - 0.5);
+  const nextCursor = posts.length === LIMIT ? String(page + 1) : null;
 
-  return NextResponse.json({ posts, nextCursor });
+  return NextResponse.json({ posts: shuffled, nextCursor });
 }
