@@ -40,7 +40,20 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("cursor") ?? "0");
   const category = searchParams.get("category") ?? "all";
   const catsParam = searchParams.get("cats");
+  const q = searchParams.get("q")?.trim() ?? "";
   const today = startOfToday();
+
+  // Search path — simple full-text filter across all posts
+  if (q) {
+    const posts = applyMeta(await prisma.post.findMany({
+      where: { OR: [{ title: { contains: q } }, { snippet: { contains: q } }] },
+      orderBy: { id: "desc" },
+      take: LIMIT,
+      skip: page * LIMIT,
+      include: { _count: { select: { comments: true } } },
+    }));
+    return NextResponse.json({ posts, nextCursor: posts.length > 0 ? String(page + 1) : null });
+  }
 
   if (page === 0) {
     const total = await prisma.post.count();
