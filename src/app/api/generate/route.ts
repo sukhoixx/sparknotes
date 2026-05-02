@@ -25,7 +25,7 @@ async function runGeneration() {
 
       console.log(`[generate] ${category}: have ${have}, need ${needed} more`);
 
-      const articles = await fetchArticlesByCategory(category as Category, 7);
+      const articles = await fetchArticlesByCategory(category as Category, 14);
       const fresh = articles.filter((a) => !existingUrls.has(a.link));
 
       let generated = 0;

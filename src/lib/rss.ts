@@ -62,11 +62,11 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.rockpapershotgun.com/feed",             source: "Rock Paper Shotgun" },
   ],
   health: [
-    { url: "https://feeds.bbci.co.uk/news/health/rss.xml",      source: "BBC Health" },
     { url: "https://www.theguardian.com/society/health/rss",    source: "Guardian Health" },
-    { url: "https://rss.medicalnewstoday.com/featurednews.xml", source: "Medical News Today" },
-    { url: "https://www.webmd.com/rss/webmd.xml",               source: "WebMD" },
-    { url: "https://www.healthline.com/rss/health-news",        source: "Healthline" },
+    { url: "https://newsnetwork.mayoclinic.org/feed/",          source: "Mayo Clinic" },
+    { url: "https://www.nih.gov/rss/news/news.xml",             source: "NIH" },
+    { url: "https://www.who.int/rss-feeds/news-english.xml",    source: "WHO" },
+    { url: "https://www.theguardian.com/science/medical-research/rss", source: "Guardian Medical" },
   ],
 };
 
