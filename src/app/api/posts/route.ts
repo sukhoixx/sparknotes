@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CATEGORIES } from "@/lib/ai";
+import { CATEGORIES, CATEGORY_META } from "@/lib/ai";
+import type { Category } from "@/lib/ai";
+
+function applyMeta<T extends { category: string }>(posts: T[]): T[] {
+  return posts.map((p) => {
+    const meta = CATEGORY_META[p.category as Category];
+    if (!meta) return p;
+    return { ...p, gradient: meta.gradient, badge: meta.badge, authorEmoji: meta.authorEmoji, authorBg: meta.authorBg };
+  });
+}
 
 const LIMIT = 12;
 const PER_CATEGORY = 2; // 2 × 8 categories = 16 per page
@@ -97,6 +106,7 @@ export async function GET(req: NextRequest) {
   }
 
   const nextCursor = posts.length > 0 ? String(page + 1) : null;
+  posts = applyMeta(posts);
 
   return NextResponse.json({ posts, nextCursor });
 }
