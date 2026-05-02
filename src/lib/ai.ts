@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { RawArticle } from "./rss";
 
-export const CATEGORIES = ["news", "science", "technology", "entertainment", "sports", "business", "gaming", "health"] as const;
+export const CATEGORIES = ["news", "science", "technology", "entertainment", "sports", "business", "gaming", "travel", "animals", "inventions"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
@@ -12,7 +12,9 @@ export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: strin
   sports:        { badge: "🏅 Sports",        authorEmoji: "⚽", authorBg: "linear-gradient(135deg,#f7971e,#ffd200)",      emoji: "🏅", gradient: "linear-gradient(135deg,#f7971e,#ffd200)" },
   business:      { badge: "💼 Business",      authorEmoji: "📈", authorBg: "linear-gradient(135deg,#134e5e,#71b280)",      emoji: "💼", gradient: "linear-gradient(135deg,#134e5e,#71b280)" },
   gaming:        { badge: "🎮 Gaming",        authorEmoji: "🕹️", authorBg: "linear-gradient(135deg,#4b1248,#f10711)",      emoji: "🎮", gradient: "linear-gradient(135deg,#4b1248,#f10711)" },
-  health:        { badge: "🏥 Health",        authorEmoji: "💊", authorBg: "linear-gradient(135deg,#56ccf2,#2f80ed)",      emoji: "🏥", gradient: "linear-gradient(135deg,#56ccf2,#2f80ed)" },
+  travel:        { badge: "✈️ Travel",        authorEmoji: "🗺️", authorBg: "linear-gradient(135deg,#f093fb,#f5576c)",      emoji: "✈️", gradient: "linear-gradient(135deg,#f093fb,#f5576c)" },
+  animals:       { badge: "🐾 Animals",       authorEmoji: "🦁", authorBg: "linear-gradient(135deg,#78c850,#3c8a2e)",      emoji: "🐾", gradient: "linear-gradient(135deg,#78c850,#3c8a2e)" },
+  inventions:    { badge: "💡 Inventions",    authorEmoji: "🔧", authorBg: "linear-gradient(135deg,#f6d365,#fda085)",      emoji: "💡", gradient: "linear-gradient(135deg,#f6d365,#fda085)" },
 };
 
 export interface GeneratedPost {

@@ -11,7 +11,9 @@ const TABS = [
   { id: "sports",        label: "🏅 Sports" },
   { id: "business",      label: "💼 Business" },
   { id: "gaming",        label: "🎮 Gaming" },
-  { id: "health",        label: "🏥 Health" },
+  { id: "travel",        label: "✈️ Travel" },
+  { id: "animals",       label: "🐾 Animals" },
+  { id: "inventions",    label: "💡 Inventions" },
 ];
 
 interface HeaderProps {

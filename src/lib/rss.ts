@@ -9,7 +9,7 @@ export interface RawArticle {
   source: string;
 }
 
-const parser = new Parser({ timeout: 8000 });
+const parser = new Parser({ timeout: 6000 });
 
 const FEEDS: Record<Category, { url: string; source: string }[]> = {
   news: [
@@ -61,18 +61,39 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.eurogamer.net/feed",                    source: "Eurogamer" },
     { url: "https://www.rockpapershotgun.com/feed",             source: "Rock Paper Shotgun" },
   ],
-  health: [
-    { url: "https://www.statnews.com/feed/",                    source: "STAT News" },
-    { url: "https://www.theguardian.com/society/health/rss",    source: "Guardian Health" },
-    { url: "https://www.npr.org/rss/rss.php?id=1027",           source: "NPR Health" },
-    { url: "https://consumer.healthday.com/rss.xml",            source: "HealthDay" },
-    { url: "https://rss.medicalnewstoday.com/featurednews.xml", source: "Medical News Today" },
+  travel: [
+    { url: "https://www.theguardian.com/travel/rss",            source: "Guardian Travel" },
+    { url: "https://www.lonelyplanet.com/news/feed/",           source: "Lonely Planet" },
+    { url: "https://feeds.feedburner.com/travelchannel/news",   source: "Travel Channel" },
+    { url: "https://www.atlasobscura.com/feeds/latest",         source: "Atlas Obscura" },
+    { url: "https://www.nationalgeographic.com/travel/feed/",   source: "Nat Geo Travel" },
+  ],
+  animals: [
+    { url: "https://www.theguardian.com/environment/animals/rss", source: "Guardian Animals" },
+    { url: "https://www.smithsonianmag.com/rss/",               source: "Smithsonian" },
+    { url: "https://www.iflscience.com/rss",                    source: "IFLScience" },
+    { url: "https://www.zmescience.com/feed/",                  source: "ZME Science" },
+    { url: "https://feeds.bbci.co.uk/earth/rss.xml",            source: "BBC Earth" },
+  ],
+  inventions: [
+    { url: "https://www.popularmechanics.com/rss/all.xml/",     source: "Popular Mechanics" },
+    { url: "https://hackaday.com/blog/feed/",                   source: "Hackaday" },
+    { url: "https://interestingengineering.com/feed",           source: "Interesting Engineering" },
+    { url: "https://spectrum.ieee.org/feeds/feed.rss",          source: "IEEE Spectrum" },
+    { url: "https://makezine.com/feed/",                        source: "Make Magazine" },
   ],
 };
 
+const FEED_TIMEOUT_MS = 6000;
+
 async function fetchFeed(url: string, source: string, cutoff: Date): Promise<RawArticle[]> {
   try {
-    const feed = await parser.parseURL(url);
+    const feed = await Promise.race([
+      parser.parseURL(url),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("feed timeout")), FEED_TIMEOUT_MS)
+      ),
+    ]);
     return feed.items
       .filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff)
       .map((item) => ({
@@ -88,7 +109,7 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
   }
 }
 
-export async function fetchArticlesByCategory(category: Category, days = 3): Promise<RawArticle[]> {
+export async function fetchArticlesByCategory(category: Category, days = 14): Promise<RawArticle[]> {
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const feeds = FEEDS[category];
 
