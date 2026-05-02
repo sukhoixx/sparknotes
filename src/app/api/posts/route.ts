@@ -70,6 +70,9 @@ export async function GET(req: NextRequest) {
   let posts;
 
   if (category === "all") {
+    // Scale per-category count so sparse selections still hit LIMIT
+    const perCat = Math.max(2, Math.ceil(LIMIT / activeCats.length));
+
     // Fetch proportionally from each category to guarantee a mixed feed
     const perCatResults = await Promise.all(
       activeCats.map(async (cat) => {
@@ -77,21 +80,21 @@ export async function GET(req: NextRequest) {
         const todayPosts = await prisma.post.findMany({
           where: { category: cat, publishedAt: { gte: today } },
           orderBy: { id: "desc" },
-          take: PER_CATEGORY,
-          skip: page * PER_CATEGORY,
+          take: perCat,
+          skip: page * perCat,
           include: { _count: { select: { comments: true } } },
         });
-        if (todayPosts.length === PER_CATEGORY) return todayPosts;
+        if (todayPosts.length === perCat) return todayPosts;
 
         // Fill remainder from older posts
         const todayCount = await prisma.post.count({ where: { category: cat, publishedAt: { gte: today } } });
-        const todayPages = Math.ceil(todayCount / PER_CATEGORY);
+        const todayPages = Math.ceil(todayCount / perCat);
         const olderPage = Math.max(0, page - todayPages);
         const older = await prisma.post.findMany({
           where: { category: cat, publishedAt: { lt: today } },
           orderBy: { id: "desc" },
-          take: PER_CATEGORY - todayPosts.length,
-          skip: olderPage * (PER_CATEGORY - todayPosts.length),
+          take: perCat - todayPosts.length,
+          skip: olderPage * (perCat - todayPosts.length),
           include: { _count: { select: { comments: true } } },
         });
         return [...todayPosts, ...older];
@@ -99,6 +102,18 @@ export async function GET(req: NextRequest) {
     );
 
     posts = perCatResults.flat().sort(() => Math.random() - 0.5);
+
+    // If sparse categories still left us short, fill up to LIMIT from any post
+    if (posts.length < LIMIT) {
+      const seenIds = posts.map((p) => p.id);
+      const extra = await prisma.post.findMany({
+        where: { id: { notIn: seenIds } },
+        orderBy: { id: "desc" },
+        take: LIMIT - posts.length,
+        include: { _count: { select: { comments: true } } },
+      });
+      posts = [...posts, ...extra].sort(() => Math.random() - 0.5);
+    }
   } else {
     // Single category — today first, then older
     const todayCount = await prisma.post.count({ where: { category, publishedAt: { gte: today } } });
