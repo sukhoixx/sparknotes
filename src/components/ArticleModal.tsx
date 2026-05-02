@@ -95,7 +95,7 @@ export default function ArticleModal({ post, liked, likeCount, onClose, onLike, 
         {/* Content */}
         <div className="p-4">
           <span className="inline-flex items-center gap-1 bg-gradient-to-br from-[#6c47ff] to-[#00b4d8] text-white text-[10px] font-bold px-[10px] py-[3px] rounded-[10px] mb-[14px] mt-1">
-            ✨ AI Summary for Kids
+            ✨ AI Summary
           </span>
 
           {/* Body */}

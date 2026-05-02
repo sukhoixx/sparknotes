@@ -39,11 +39,10 @@ function getClient() {
   });
 }
 
-const SYSTEM_PROMPT = `You are a kids' news editor writing for high schoolers (ages 13–18).
-Your job is to take a raw news article and rewrite it so it's exciting, easy to understand, and educational.
+const SYSTEM_PROMPT = `You are a news editor who rewrites articles to be exciting, clear, and easy to understand.
 
 Rules:
-- Use high school appropriate words (no jargon). If you must use a technical term or abbreviations, explain it immediately.
+- Use plain language. If you must use a technical term or abbreviation, explain it immediately.
 - Keep sentences short to moderate. Write like you're telling a friend.
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
@@ -53,8 +52,8 @@ Rules:
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
-  "title": "Exciting kid-friendly headline (max 80 chars)",
-  "snippet": "One-sentence hook that makes kids want to read more (max 150 chars)",
+  "title": "Exciting headline (max 80 chars)",
+  "snippet": "One-sentence hook that makes the reader want more (max 150 chars)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
   "tags": ["#Tag1", "#Tag2"],

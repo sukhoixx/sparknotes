@@ -75,7 +75,7 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
                 }}
               >
                 <span>🔍</span>
-                Search news for kids…
+                Search the latest news…
               </button>
               <button
                 onClick={onProfileClick}
@@ -101,7 +101,7 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
                 autoFocus
                 className="flex-1 bg-transparent border-0 outline-none text-[14px]"
                 style={{ color: dark ? "#ffffff" : "#1f2937" }}
-                placeholder="Search news for kids…"
+                placeholder="Search the latest news…"
                 value={query}
                 onChange={handleInput}
               />
