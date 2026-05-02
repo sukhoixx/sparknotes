@@ -9,6 +9,7 @@ export type PostWithCount = Post & { _count: { comments: number } };
 import Card, { CardSkeleton } from "./Card";
 import ArticleModal from "./ArticleModal";
 import type { UserProfile } from "@/hooks/useProfile";
+import { useAbVariant } from "@/hooks/useAbVariant";
 
 interface PageData {
   posts: PostWithCount[];
@@ -37,6 +38,7 @@ interface FeedProps {
 }
 
 export default function Feed({ category, searchQuery, initialPosts, profile }: FeedProps) {
+  const variant = useAbVariant();
   const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
@@ -136,6 +138,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
       post={post}
       liked={liked.has(post.id)}
       likeCount={getLikeCount(post)}
+      variant={variant}
       onLike={(e) => handleLike(e, post)}
       onClick={() => setOpenPost(post)}
     />
