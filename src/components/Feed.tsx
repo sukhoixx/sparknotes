@@ -9,7 +9,7 @@ export type PostWithCount = Post & { _count: { comments: number } };
 import Card, { CardSkeleton } from "./Card";
 import ArticleModal from "./ArticleModal";
 import type { UserProfile } from "@/hooks/useProfile";
-import { useAbVariant } from "@/hooks/useAbVariant";
+import type { AbVariant } from "@/hooks/useAbVariant";
 
 interface PageData {
   posts: PostWithCount[];
@@ -35,10 +35,10 @@ interface FeedProps {
   searchQuery: string;
   initialPosts: PostWithCount[];
   profile?: UserProfile | null;
+  variant?: AbVariant;
 }
 
-export default function Feed({ category, searchQuery, initialPosts, profile }: FeedProps) {
-  const variant = useAbVariant();
+export default function Feed({ category, searchQuery, initialPosts, profile, variant = "A" }: FeedProps) {
   const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
@@ -162,7 +162,10 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
 
       {/* Empty state */}
       {!isLoadingMore && posts.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400 text-[14px] gap-2">
+        <div
+          className="flex flex-col items-center justify-center py-20 text-[14px] gap-2"
+          style={{ color: variant === "A" ? "#6b6b6b" : "#9ca3af" }}
+        >
           <span className="text-[48px]">📭</span>
           {searchQuery ? `No results for "${searchQuery}"` : "No posts yet — check back soon!"}
         </div>

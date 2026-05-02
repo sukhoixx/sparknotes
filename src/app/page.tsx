@@ -6,6 +6,7 @@ import Feed from "@/components/Feed";
 import ProfileModal from "@/components/ProfileModal";
 import SignInModal from "@/components/SignInModal";
 import { useProfile } from "@/hooks/useProfile";
+import { useAbVariant } from "@/hooks/useAbVariant";
 import type { PostWithCount } from "@/components/Feed";
 
 export default function HomePage() {
@@ -14,6 +15,7 @@ export default function HomePage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const { profile, loading, isAuthenticated, saveProfile } = useProfile();
+  const variant = useAbVariant();
 
   // Auto-open profile setup after first sign-in
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function HomePage() {
   }
 
   return (
-    <>
+    <div className={variant === "A" ? "min-h-screen bg-[#111111]" : "min-h-screen bg-white"}>
       <Header
         category={category}
         onCategoryChange={(cat) => {
@@ -36,12 +38,14 @@ export default function HomePage() {
         onSearch={setSearchQuery}
         profile={profile}
         onProfileClick={handleProfileClick}
+        variant={variant}
       />
       <Feed
         category={category}
         searchQuery={searchQuery}
         initialPosts={[] as PostWithCount[]}
         profile={profile}
+        variant={variant}
       />
       {signInOpen && (
         <SignInModal onClose={() => setSignInOpen(false)} />
@@ -53,6 +57,6 @@ export default function HomePage() {
           onClose={() => setProfileOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 }

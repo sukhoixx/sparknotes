@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import type { AbVariant } from "@/hooks/useAbVariant";
 
 const TABS = [
   { id: "all",           label: "✨ For You" },
@@ -22,9 +23,11 @@ interface HeaderProps {
   onSearch: (q: string) => void;
   profile?: { screenName: string } | null;
   onProfileClick?: () => void;
+  variant?: AbVariant;
 }
 
-export default function Header({ category, onCategoryChange, onSearch, profile, onProfileClick }: HeaderProps) {
+export default function Header({ category, onCategoryChange, onSearch, profile, onProfileClick, variant }: HeaderProps) {
+  const dark = variant === "A";
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,7 +49,14 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
   };
 
   return (
-    <header className="bg-white sticky top-0 z-[100] shadow-[0_1px_8px_rgba(0,0,0,.06)]">
+    <header
+      className="sticky top-0 z-[100]"
+      style={{
+        background: dark ? "#1c1c1e" : "#ffffff",
+        borderBottom: dark ? "1px solid #2c2c2e" : undefined,
+        boxShadow: dark ? "none" : "0 1px 8px rgba(0,0,0,.06)",
+      }}
+    >
       <div className="px-4 pt-3">
         {/* Top row */}
         <div className="flex items-center gap-[10px] mb-3">
@@ -58,7 +68,11 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
               </a>
               <button
                 onClick={() => setSearchOpen(true)}
-                className="flex-1 flex items-center bg-gray-100 rounded-[20px] px-[14px] py-2 gap-[6px] border-0 text-[14px] text-gray-400 cursor-text"
+                className="flex-1 flex items-center rounded-[20px] px-[14px] py-2 gap-[6px] border-0 text-[14px] cursor-text"
+                style={{
+                  background: dark ? "#2c2c2e" : "#f3f4f6",
+                  color: dark ? "#8e8e93" : "#9ca3af",
+                }}
               >
                 <span>🔍</span>
                 Search news for kids…
@@ -66,7 +80,7 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
               <button
                 onClick={onProfileClick}
                 className="w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer shrink-0 overflow-hidden"
-                style={profile ? { background: "#ff2442" } : { background: "#f3f4f6" }}
+                style={profile ? { background: "#ff2442" } : { background: dark ? "#2c2c2e" : "#f3f4f6" }}
               >
                 {profile ? (
                   <span className="text-white text-[15px] font-bold leading-none">
@@ -78,16 +92,24 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
               </button>
             </>
           ) : (
-            <div className="flex-1 flex items-center bg-gray-100 rounded-[20px] px-[14px] py-2 gap-[6px]">
+            <div
+              className="flex-1 flex items-center rounded-[20px] px-[14px] py-2 gap-[6px]"
+              style={{ background: dark ? "#2c2c2e" : "#f3f4f6" }}
+            >
               <span>🔍</span>
               <input
                 autoFocus
-                className="flex-1 bg-transparent border-0 outline-none text-[14px] text-gray-800"
+                className="flex-1 bg-transparent border-0 outline-none text-[14px]"
+                style={{ color: dark ? "#ffffff" : "#1f2937" }}
                 placeholder="Search news for kids…"
                 value={query}
                 onChange={handleInput}
               />
-              <button onClick={clearSearch} className="text-gray-400 border-0 bg-transparent cursor-pointer text-[18px]">
+              <button
+                onClick={clearSearch}
+                className="border-0 bg-transparent cursor-pointer text-[18px]"
+                style={{ color: dark ? "#8e8e93" : "#9ca3af" }}
+              >
                 ✕
               </button>
             </div>
@@ -101,11 +123,12 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
               <button
                 key={tab.id}
                 onClick={() => onCategoryChange(tab.id)}
-                className={`px-4 py-[6px] rounded-[20px] border-0 text-[14px] font-medium whitespace-nowrap cursor-pointer transition-all ${
+                className="px-4 py-[6px] rounded-[20px] border-0 text-[14px] font-medium whitespace-nowrap cursor-pointer transition-all"
+                style={
                   category === tab.id
-                    ? "bg-[#ff2442] text-white font-bold"
-                    : "bg-transparent text-gray-400"
-                }`}
+                    ? { background: "#ff2442", color: "#ffffff", fontWeight: 700 }
+                    : { background: "transparent", color: dark ? "#8e8e93" : "#9ca3af" }
+                }
               >
                 {tab.label}
               </button>
