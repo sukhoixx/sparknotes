@@ -39,7 +39,12 @@ interface FeedProps {
 export default function Feed({ category, searchQuery, initialPosts, profile }: FeedProps) {
   const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  function getLikeCount(post: PostWithCount) {
+    return likeCounts[post.id] ?? post.likes;
+  }
 
   // Load liked post IDs from server on mount so likes persist across reloads
   useEffect(() => {
@@ -93,7 +98,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
   }, [isLoadingMore, hasMore, setSize]);
 
   const handleLike = useCallback(
-    async (e: React.MouseEvent, post: Post) => {
+    async (e: React.MouseEvent, post: PostWithCount) => {
       e.stopPropagation();
       const wasLiked = liked.has(post.id);
       setLiked((prev) => {
@@ -101,6 +106,10 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
         wasLiked ? next.delete(post.id) : next.add(post.id);
         return next;
       });
+      setLikeCounts((prev) => ({
+        ...prev,
+        [post.id]: (prev[post.id] ?? post.likes) + (wasLiked ? -1 : 1),
+      }));
       fetch(`/api/posts/${post.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
     },
     [liked]
@@ -114,6 +123,10 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
       wasLiked ? next.delete(openPost.id) : next.add(openPost.id);
       return next;
     });
+    setLikeCounts((prev) => ({
+      ...prev,
+      [openPost.id]: (prev[openPost.id] ?? openPost.likes) + (wasLiked ? -1 : 1),
+    }));
     fetch(`/api/posts/${openPost.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
   }, [openPost, liked]);
 
@@ -122,6 +135,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
       key={post.id}
       post={post}
       liked={liked.has(post.id)}
+      likeCount={getLikeCount(post)}
       onLike={(e) => handleLike(e, post)}
       onClick={() => setOpenPost(post)}
     />
@@ -166,6 +180,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
       <ArticleModal
         post={openPost}
         liked={openPost ? liked.has(openPost.id) : false}
+        likeCount={openPost ? getLikeCount(openPost) : 0}
         onClose={() => setOpenPost(null)}
         onLike={handleModalLike}
         profile={profile}

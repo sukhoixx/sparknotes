@@ -7,6 +7,7 @@ import type { UserProfile } from "@/hooks/useProfile";
 interface ArticleModalProps {
   post: PostWithCount | null;
   liked: boolean;
+  likeCount: number;
   onClose: () => void;
   onLike: () => void;
   profile?: UserProfile | null;
@@ -34,7 +35,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function ArticleModal({ post, liked, onClose, onLike, profile, onProfileNeeded }: ArticleModalProps) {
+export default function ArticleModal({ post, liked, likeCount, onClose, onLike, profile, onProfileNeeded }: ArticleModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -149,7 +150,7 @@ export default function ArticleModal({ post, liked, onClose, onLike, profile, on
               className="flex flex-col items-center gap-[3px] bg-none border-0 cursor-pointer text-[11px] text-gray-400"
             >
               <span className="text-[24px]">{liked ? "❤️" : "🤍"}</span>
-              <span>{formatNum(post.likes + (liked ? 1 : 0))}</span>
+              <span>{formatNum(likeCount)}</span>
             </button>
             <button
               onClick={() => inputRef.current?.focus()}

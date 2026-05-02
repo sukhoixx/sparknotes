@@ -5,6 +5,7 @@ import type { PostWithCount } from "./Feed";
 interface CardProps {
   post: PostWithCount;
   liked: boolean;
+  likeCount: number;
   onLike: (e: React.MouseEvent) => void;
   onClick: () => void;
 }
@@ -13,7 +14,7 @@ function formatNum(n: number): string {
   return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);
 }
 
-export default function Card({ post, liked, onLike, onClick }: CardProps) {
+export default function Card({ post, liked, likeCount, onLike, onClick }: CardProps) {
   return (
     <div
       className="card break-inside-avoid bg-white rounded-[14px] overflow-hidden mb-2 cursor-pointer shadow-sm transition-transform active:scale-[.97]"
@@ -42,7 +43,7 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
             >
               {liked ? "❤️" : "🤍"}
             </button>
-            <span>{formatNum(post.likes + (liked ? 1 : 0))}</span>
+            <span>{formatNum(likeCount)}</span>
           </div>
         </div>
       </div>
