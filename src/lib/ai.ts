@@ -39,16 +39,17 @@ function getClient() {
   });
 }
 
-const SYSTEM_PROMPT = `You are a kids' news editor writing for middle schoolers (ages 11–14).
+const SYSTEM_PROMPT = `You are a kids' news editor writing for high schoolers (ages 13–18).
 Your job is to take a raw news article and rewrite it so it's exciting, easy to understand, and educational.
 
 Rules:
-- Use simple words (no jargon). If you must use a technical term, explain it immediately.
-- Keep sentences short. Write like you're telling a friend.
+- Use high school appropriate words (no jargon). If you must use a technical term or abbreviations, explain it immediately.
+- Keep sentences short to moderate. Write like you're telling a friend.
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
+- Pick the most accurate category for the article's actual content, regardless of the source feed it came from. Choose from: news, science, technology, entertainment, sports, business, gaming, travel, animals, inventions
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
@@ -56,13 +57,13 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
   "snippet": "One-sentence hook that makes kids want to read more (max 150 chars)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
-  "tags": ["#Tag1", "#Tag2"]
+  "tags": ["#Tag1", "#Tag2"],
+  "category": "one of: news, science, technology, entertainment, sports, business, gaming, travel, animals, inventions"
 }`;
 
 export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
   const client = getClient();
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
-  const meta = CATEGORY_META[category];
 
   const userPrompt = `Category: ${category}
 Source: ${article.source}
@@ -89,7 +90,14 @@ URL: ${article.link}`;
       body: string;
       funFact: string;
       tags: string[];
+      category?: string;
     };
+
+    const resolvedCategory: Category =
+      parsed.category && (CATEGORIES as readonly string[]).includes(parsed.category)
+        ? (parsed.category as Category)
+        : category;
+    const meta = CATEGORY_META[resolvedCategory];
 
     return {
       title: parsed.title,
@@ -97,7 +105,7 @@ URL: ${article.link}`;
       body: parsed.body,
       funFact: parsed.funFact,
       tags: parsed.tags,
-      category,
+      category: resolvedCategory,
       emoji: meta.emoji,
       gradient: meta.gradient,
       badge: meta.badge,
