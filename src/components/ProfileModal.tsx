@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { signOut } from "next-auth/react";
 import { CATEGORY_LIST } from "@/lib/categories";
 import type { UserProfile } from "@/hooks/useProfile";
 
@@ -155,10 +156,13 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
             {saving ? "Saving…" : isFirstTime ? "Create Profile" : "Save Changes"}
           </button>
 
-          {isFirstTime && (
-            <p className="text-center text-[12px] text-gray-400 mt-3">
-              Your profile is saved to this device. Screen names are public.
-            </p>
+          {!isFirstTime && (
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full mt-3 bg-transparent border-0 cursor-pointer text-[13px] text-gray-400 hover:text-[#ff2442] transition-colors py-2"
+            >
+              Sign out
+            </button>
           )}
         </div>
       </div>
