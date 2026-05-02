@@ -34,10 +34,7 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
 
       {/* Snippet + meta */}
       <div className="px-[10px] pb-[10px] pt-2">
-        <p className="text-[12px] text-gray-500 leading-[1.4] line-clamp-2 mb-2">
-          {post.snippet}
-        </p>
-        <div className="flex items-center gap-[6px]">
+<div className="flex items-center gap-[6px]">
           <span className="text-[11px] text-gray-400 flex-1">
             {post._count.comments > 0 ? `${post._count.comments} comment${post._count.comments === 1 ? "" : "s"}` : ""}
           </span>
