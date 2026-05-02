@@ -19,8 +19,13 @@ function formatNum(n: number): string {
 
 export default function Card({ post, liked, likeCount, variant, onLike, onClick }: CardProps) {
   const isLight = variant === "B";
-  const catMeta = isLight ? CATEGORY_LIST.find((c) => c.id === post.category) : null;
-  const gradient = catMeta?.lightGradient ?? post.gradient;
+  const isDark = variant === "A";
+  const catMeta = CATEGORY_LIST.find((c) => c.id === post.category);
+  const gradient = isLight
+    ? (catMeta?.lightGradient ?? post.gradient)
+    : isDark
+    ? (catMeta?.darkGradient ?? post.gradient)
+    : post.gradient;
 
   return (
     <div

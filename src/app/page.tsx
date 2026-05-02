@@ -17,6 +17,17 @@ export default function HomePage() {
   const { profile, loading, isAuthenticated, saveProfile } = useProfile();
   const variant = useAbVariant();
 
+  // Paint the full browser chrome (overscroll area, html/body) to match the variant
+  useEffect(() => {
+    const color = variant === "A" ? "#111111" : "#ffffff";
+    document.documentElement.style.background = color;
+    document.body.style.background = color;
+    return () => {
+      document.documentElement.style.background = "";
+      document.body.style.background = "";
+    };
+  }, [variant]);
+
   // Auto-open profile setup after first sign-in
   useEffect(() => {
     if (!loading && isAuthenticated && !profile) setProfileOpen(true);
