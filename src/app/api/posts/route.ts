@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/ai";
 
 const LIMIT = 12;
-const PER_CATEGORY = 3; // 3 × 4 categories = 12 per page
+const PER_CATEGORY = 2; // 2 × 8 categories = 16 per page
 const LOW_THRESHOLD = 15;
 
 function triggerGeneration() {

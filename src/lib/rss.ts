@@ -40,6 +40,34 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.hollywoodreporter.com/feed/",           source: "Hollywood Reporter" },
     { url: "https://pitchfork.com/rss/news/feed.xml",           source: "Pitchfork" },
   ],
+  sports: [
+    { url: "https://feeds.bbci.co.uk/sport/rss.xml",            source: "BBC Sport" },
+    { url: "https://www.theguardian.com/sport/rss",             source: "Guardian Sport" },
+    { url: "https://www.espn.com/espn/rss/news",                source: "ESPN" },
+    { url: "https://theathletic.com/rss/news/",                 source: "The Athletic" },
+    { url: "https://feeds.skysports.com/skysports/home",        source: "Sky Sports" },
+  ],
+  business: [
+    { url: "https://feeds.bbci.co.uk/news/business/rss.xml",    source: "BBC Business" },
+    { url: "https://feeds.reuters.com/reuters/businessNews",    source: "Reuters Business" },
+    { url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", source: "CNBC" },
+    { url: "https://www.theguardian.com/business/rss",          source: "Guardian Business" },
+    { url: "https://feeds.ft.com/rss/home/uk",                  source: "Financial Times" },
+  ],
+  gaming: [
+    { url: "https://www.ign.com/rss/articles",                  source: "IGN" },
+    { url: "https://kotaku.com/rss",                            source: "Kotaku" },
+    { url: "https://www.pcgamer.com/rss/",                      source: "PC Gamer" },
+    { url: "https://www.eurogamer.net/feed",                    source: "Eurogamer" },
+    { url: "https://www.rockpapershotgun.com/feed",             source: "Rock Paper Shotgun" },
+  ],
+  health: [
+    { url: "https://feeds.bbci.co.uk/news/health/rss.xml",      source: "BBC Health" },
+    { url: "https://www.theguardian.com/society/health/rss",    source: "Guardian Health" },
+    { url: "https://rss.medicalnewstoday.com/featurednews.xml", source: "Medical News Today" },
+    { url: "https://www.webmd.com/rss/webmd.xml",               source: "WebMD" },
+    { url: "https://www.healthline.com/rss/health-news",        source: "Healthline" },
+  ],
 };
 
 async function fetchFeed(url: string, source: string, cutoff: Date): Promise<RawArticle[]> {
