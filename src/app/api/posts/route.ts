@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
     const todayCount = await prisma.post.count({ where: { category, publishedAt: { gte: today } } });
     const todayPages = Math.ceil(todayCount / LIMIT) || 0;
 
-    if (page < todayPages || todayCount === 0) {
+    if (todayCount > 0 && page < todayPages) {
       posts = await prisma.post.findMany({
         where: { category, publishedAt: { gte: today } },
         orderBy: { id: "desc" },
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
         include: { _count: { select: { comments: true } } },
       });
     } else {
-      const olderPage = page - todayPages;
+      const olderPage = todayCount > 0 ? page - todayPages : page;
       posts = await prisma.post.findMany({
         where: { category, publishedAt: { lt: today } },
         orderBy: { id: "desc" },
