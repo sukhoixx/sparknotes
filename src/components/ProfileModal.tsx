@@ -6,12 +6,11 @@ import type { UserProfile } from "@/hooks/useProfile";
 
 interface ProfileModalProps {
   profile: UserProfile | null;
-  deviceId: string | null;
   onSave: (screenName: string, categories: string[]) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
 }
 
-export default function ProfileModal({ profile, deviceId, onSave, onClose }: ProfileModalProps) {
+export default function ProfileModal({ profile, onSave, onClose }: ProfileModalProps) {
   const [name, setName] = useState(profile?.screenName ?? "");
   const [selectedCats, setSelectedCats] = useState<Set<string>>(
     new Set(profile?.categories ?? [])
@@ -23,22 +22,17 @@ export default function ProfileModal({ profile, deviceId, onSave, onClose }: Pro
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstTime = !profile;
 
-  const checkName = useCallback(
-    (value: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (value.trim().length < 2) { setNameAvailable(null); return; }
-      setChecking(true);
-      debounceRef.current = setTimeout(async () => {
-        const res = await fetch(
-          `/api/profile/check?name=${encodeURIComponent(value.trim())}&deviceId=${deviceId ?? ""}`
-        );
-        const d = await res.json();
-        setNameAvailable(d.available);
-        setChecking(false);
-      }, 400);
-    },
-    [deviceId]
-  );
+  const checkName = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length < 2) { setNameAvailable(null); return; }
+    setChecking(true);
+    debounceRef.current = setTimeout(async () => {
+      const res = await fetch(`/api/profile/check?name=${encodeURIComponent(value.trim())}`);
+      const d = await res.json();
+      setNameAvailable(d.available);
+      setChecking(false);
+    }, 400);
+  }, []);
 
   const toggleCat = (id: string) => {
     setSelectedCats((prev) => {

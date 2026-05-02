@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Feed from "@/components/Feed";
 import ProfileModal from "@/components/ProfileModal";
+import SignInModal from "@/components/SignInModal";
 import { useProfile } from "@/hooks/useProfile";
 import type { PostWithCount } from "@/components/Feed";
 
@@ -11,7 +12,18 @@ export default function HomePage() {
   const [category, setCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
-  const { profile, loading, deviceId, saveProfile } = useProfile();
+  const [signInOpen, setSignInOpen] = useState(false);
+  const { profile, loading, isAuthenticated, saveProfile } = useProfile();
+
+  // Auto-open profile setup after first sign-in
+  useEffect(() => {
+    if (!loading && isAuthenticated && !profile) setProfileOpen(true);
+  }, [loading, isAuthenticated, profile]);
+
+  function handleProfileClick() {
+    if (!isAuthenticated) setSignInOpen(true);
+    else setProfileOpen(true);
+  }
 
   return (
     <>
@@ -23,7 +35,7 @@ export default function HomePage() {
         }}
         onSearch={setSearchQuery}
         profile={profile}
-        onProfileClick={() => setProfileOpen(true)}
+        onProfileClick={handleProfileClick}
       />
       <Feed
         category={category}
@@ -31,10 +43,12 @@ export default function HomePage() {
         initialPosts={[] as PostWithCount[]}
         profile={profile}
       />
-      {profileOpen && !loading && (
+      {signInOpen && (
+        <SignInModal onClose={() => setSignInOpen(false)} />
+      )}
+      {profileOpen && isAuthenticated && (
         <ProfileModal
           profile={profile}
-          deviceId={deviceId}
           onSave={saveProfile}
           onClose={() => setProfileOpen(false)}
         />

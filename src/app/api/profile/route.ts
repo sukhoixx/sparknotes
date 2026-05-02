@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUserId } from "@/lib/getAuthUserId";
 
-export async function GET(req: NextRequest) {
-  const deviceId = req.nextUrl.searchParams.get("deviceId");
-  if (!deviceId) return NextResponse.json({ profile: null });
+export async function GET() {
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ profile: null });
 
   const row = await prisma.userProfile.findUnique({
-    where: { id: deviceId },
+    where: { id: userId },
     select: { screenName: true, categories: true },
   });
 
@@ -14,28 +15,27 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { deviceId, screenName, categories } = await req.json();
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!deviceId || typeof screenName !== "string" || !Array.isArray(categories)) {
-    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
-  }
+  const { screenName, categories } = await req.json();
 
-  const trimmed = screenName.trim().slice(0, 50);
+  const trimmed = (screenName ?? "").trim().slice(0, 50);
   if (trimmed.length < 2) {
     return NextResponse.json({ error: "Screen name must be at least 2 characters" }, { status: 400 });
   }
-  if (categories.length < 3) {
+  if (!Array.isArray(categories) || categories.length < 3) {
     return NextResponse.json({ error: "Select at least 3 categories" }, { status: 400 });
   }
 
   const existing = await prisma.userProfile.findUnique({ where: { screenName: trimmed } });
-  if (existing && existing.id !== deviceId) {
+  if (existing && existing.id !== userId) {
     return NextResponse.json({ error: "Screen name already taken" }, { status: 409 });
   }
 
   const profile = await prisma.userProfile.upsert({
-    where: { id: deviceId },
-    create: { id: deviceId, screenName: trimmed, categories },
+    where: { id: userId },
+    create: { id: userId, screenName: trimmed, categories },
     update: { screenName: trimmed, categories },
     select: { screenName: true, categories: true },
   });
