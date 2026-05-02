@@ -75,7 +75,7 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
       className="fixed inset-0 bg-black/50 z-[200] flex items-end"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-t-[24px] w-full max-w-[480px] mx-auto max-h-[88vh] overflow-y-auto animate-slide-up">
+      <div className="bg-white rounded-t-[24px] w-full max-w-[480px] mx-auto max-h-[88vh] overflow-y-auto scrollbar-none animate-slide-up">
         {/* Handle */}
         <div className="w-10 h-1 bg-gray-200 rounded mx-auto mt-3" />
 

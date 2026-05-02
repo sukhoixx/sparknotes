@@ -19,26 +19,22 @@ export default function Card({ post, liked, onLike, onClick }: CardProps) {
       className="card break-inside-avoid bg-white rounded-[14px] overflow-hidden mb-2 cursor-pointer shadow-sm transition-transform active:scale-[.97]"
       onClick={onClick}
     >
-      {/* Title banner — variable height drives the masonry stagger */}
+      {/* Full-card gradient */}
       <div
-        className="w-full relative px-3 pt-8 pb-4"
+        className="w-full relative px-3 pt-8 pb-3 flex flex-col"
         style={{ background: post.gradient }}
       >
         <span className="absolute top-2 left-2 bg-black/40 text-white text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] backdrop-blur-sm">
           {post.badge}
         </span>
-        <p className="text-white font-bold text-[15px] leading-[1.4] drop-shadow-sm">
+        <p className="text-white font-bold text-[15px] leading-[1.4] drop-shadow-sm mb-3">
           {post.title}
         </p>
-      </div>
-
-      {/* Snippet + meta */}
-      <div className="px-[10px] pb-[10px] pt-2">
-<div className="flex items-center gap-[6px]">
-          <span className="text-[11px] text-gray-400 flex-1">
+        <div className="flex items-center gap-[6px]">
+          <span className="text-[11px] text-white/70 flex-1">
             {post._count.comments > 0 ? `${post._count.comments} comment${post._count.comments === 1 ? "" : "s"}` : ""}
           </span>
-          <div className="flex items-center gap-[3px] text-[11px] text-gray-400">
+          <div className="flex items-center gap-[3px] text-[11px] text-white/70">
             <button
               className="bg-transparent border-0 cursor-pointer text-base p-0"
               onClick={onLike}
