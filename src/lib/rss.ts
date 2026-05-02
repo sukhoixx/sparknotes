@@ -63,10 +63,10 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
   ],
   health: [
     { url: "https://www.theguardian.com/society/health/rss",    source: "Guardian Health" },
-    { url: "https://newsnetwork.mayoclinic.org/feed/",          source: "Mayo Clinic" },
-    { url: "https://www.nih.gov/rss/news/news.xml",             source: "NIH" },
-    { url: "https://www.who.int/rss-feeds/news-english.xml",    source: "WHO" },
-    { url: "https://www.theguardian.com/science/medical-research/rss", source: "Guardian Medical" },
+    { url: "https://feeds.bbci.co.uk/news/health/rss.xml",      source: "BBC Health" },
+    { url: "https://www.npr.org/rss/rss.php?id=1027",           source: "NPR Health" },
+    { url: "https://feeds.reuters.com/reuters/healthNews",      source: "Reuters Health" },
+    { url: "https://www.statnews.com/feed/",                    source: "STAT News" },
   ],
 };
 
