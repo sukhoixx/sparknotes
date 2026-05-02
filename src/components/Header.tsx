@@ -20,9 +20,11 @@ interface HeaderProps {
   category: string;
   onCategoryChange: (cat: string) => void;
   onSearch: (q: string) => void;
+  profile?: { screenName: string } | null;
+  onProfileClick?: () => void;
 }
 
-export default function Header({ category, onCategoryChange, onSearch }: HeaderProps) {
+export default function Header({ category, onCategoryChange, onSearch, profile, onProfileClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,9 +63,18 @@ export default function Header({ category, onCategoryChange, onSearch }: HeaderP
                 <span>🔍</span>
                 Search news for kids…
               </button>
-              <button className="w-9 h-9 rounded-full bg-gray-100 border-0 flex items-center justify-center text-[18px] cursor-pointer relative">
-                🔔
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#ff2442] rounded-full border-[1.5px] border-white" />
+              <button
+                onClick={onProfileClick}
+                className="w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer shrink-0 overflow-hidden"
+                style={profile ? { background: "#ff2442" } : { background: "#f3f4f6" }}
+              >
+                {profile ? (
+                  <span className="text-white text-[15px] font-bold leading-none">
+                    {profile.screenName[0].toUpperCase()}
+                  </span>
+                ) : (
+                  <span className="text-[18px]">👤</span>
+                )}
               </button>
             </>
           ) : (

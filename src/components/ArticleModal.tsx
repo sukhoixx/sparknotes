@@ -2,17 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PostWithCount } from "./Feed";
+import type { UserProfile } from "@/hooks/useProfile";
 
 interface ArticleModalProps {
   post: PostWithCount | null;
   liked: boolean;
   onClose: () => void;
   onLike: () => void;
+  profile?: UserProfile | null;
+  onProfileNeeded?: () => void;
 }
 
 interface Comment {
   id: number;
   text: string;
+  screenName: string;
   createdAt: string;
 }
 
@@ -30,7 +34,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function ArticleModal({ post, liked, onClose, onLike }: ArticleModalProps) {
+export default function ArticleModal({ post, liked, onClose, onLike, profile, onProfileNeeded }: ArticleModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +60,7 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
     const res = await fetch(`/api/posts/${post.id}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: draft }),
+      body: JSON.stringify({ text: draft, screenName: profile?.screenName }),
     });
     const data = await res.json();
     if (data.comment) {
@@ -165,10 +169,16 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
           </div>
 
           {/* Comments section */}
-          {(
-            <div className="border-t border-gray-100 pt-4">
-              {/* Input */}
+          <div className="border-t border-gray-100 pt-4">
+            {/* Input or prompt */}
+            {profile ? (
               <div className="flex gap-2 mb-4">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
+                  style={{ background: "#ff2442" }}
+                >
+                  {profile.screenName[0].toUpperCase()}
+                </div>
                 <textarea
                   ref={inputRef}
                   value={draft}
@@ -186,25 +196,35 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
                   Post
                 </button>
               </div>
+            ) : (
+              <button
+                onClick={onProfileNeeded}
+                className="w-full mb-4 bg-gray-100 rounded-[14px] px-[14px] py-3 text-[14px] text-gray-400 border-0 cursor-pointer text-left"
+              >
+                👤 Create a profile to comment…
+              </button>
+            )}
 
-              {/* List */}
-              {comments.length === 0 ? (
-                <p className="text-center text-gray-400 text-[13px] py-4">No comments yet — be the first!</p>
-              ) : (
-                <div className="flex flex-col gap-3 pb-4">
-                  {comments.map((c) => (
-                    <div key={c.id} className="flex gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[16px] shrink-0">👤</div>
-                      <div className="flex-1">
-                        <div className="bg-gray-100 rounded-[14px] px-[12px] py-[8px] text-[14px] text-gray-800">{c.text}</div>
-                        <p className="text-[11px] text-gray-400 mt-1 ml-[4px]">{timeAgo(c.createdAt)}</p>
-                      </div>
+            {/* List */}
+            {comments.length === 0 ? (
+              <p className="text-center text-gray-400 text-[13px] py-4">No comments yet — be the first!</p>
+            ) : (
+              <div className="flex flex-col gap-3 pb-4">
+                {comments.map((c) => (
+                  <div key={c.id} className="flex gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[#ff2442] flex items-center justify-center text-white text-[13px] font-bold shrink-0">
+                      {c.screenName[0].toUpperCase()}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    <div className="flex-1">
+                      <p className="text-[12px] font-semibold text-gray-600 mb-[2px] ml-[4px]">{c.screenName}</p>
+                      <div className="bg-gray-100 rounded-[14px] px-[12px] py-[8px] text-[14px] text-gray-800">{c.text}</div>
+                      <p className="text-[11px] text-gray-400 mt-1 ml-[4px]">{timeAgo(c.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

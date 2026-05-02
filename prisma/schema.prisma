@@ -7,11 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model UserProfile {
+  id         String   @id
+  screenName String   @unique @db.VarChar(50)
+  categories Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model Comment {
-  id        Int      @id @default(autoincrement())
-  postId    Int
-  text      String   @db.VarChar(500)
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  text       String   @db.VarChar(500)
+  screenName String   @db.VarChar(50) @default("Anonymous")
+  createdAt  DateTime @default(now())
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }

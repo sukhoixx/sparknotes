@@ -8,6 +8,7 @@ export type PostWithCount = Post & { _count: { comments: number } };
 
 import Card, { CardSkeleton } from "./Card";
 import ArticleModal from "./ArticleModal";
+import type { UserProfile } from "@/hooks/useProfile";
 
 interface PageData {
   posts: PostWithCount[];
@@ -16,7 +17,7 @@ interface PageData {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-function buildUrl(category: string, searchQuery: string, cursor: string | null) {
+function buildUrl(category: string, searchQuery: string, cursor: string | null, cats?: string) {
   if (searchQuery) {
     const params = new URLSearchParams({ q: searchQuery });
     if (cursor) params.set("cursor", cursor);
@@ -24,6 +25,7 @@ function buildUrl(category: string, searchQuery: string, cursor: string | null) 
   }
   const params = new URLSearchParams({ category });
   if (cursor) params.set("cursor", cursor);
+  if (category === "all" && cats) params.set("cats", cats);
   return `/api/posts?${params}`;
 }
 
@@ -31,20 +33,23 @@ interface FeedProps {
   category: string;
   searchQuery: string;
   initialPosts: PostWithCount[];
+  profile?: UserProfile | null;
 }
 
-export default function Feed({ category, searchQuery, initialPosts }: FeedProps) {
+export default function Feed({ category, searchQuery, initialPosts, profile }: FeedProps) {
   const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const cats = profile?.categories?.length ? profile.categories.join(",") : undefined;
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: PageData | null): string | null => {
       if (previousPageData && !previousPageData.nextCursor) return null;
       const cursor = pageIndex === 0 ? null : (previousPageData?.nextCursor ?? null);
-      return buildUrl(category, searchQuery, cursor);
+      return buildUrl(category, searchQuery, cursor, cats);
     },
-    [category, searchQuery]
+    [category, searchQuery, cats]
   );
 
   const { data, setSize, isValidating } = useSWRInfinite<PageData>(getKey, fetcher, {
@@ -155,6 +160,7 @@ export default function Feed({ category, searchQuery, initialPosts }: FeedProps)
         liked={openPost ? liked.has(openPost.id) : false}
         onClose={() => setOpenPost(null)}
         onLike={handleModalLike}
+        profile={profile}
       />
     </>
   );

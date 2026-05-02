@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("cursor") ?? "0");
   const category = searchParams.get("category") ?? "all";
+  const catsParam = searchParams.get("cats");
   const today = startOfToday();
 
   if (page === 0) {
@@ -46,12 +47,19 @@ export async function GET(req: NextRequest) {
     if (total < LOW_THRESHOLD) triggerGeneration();
   }
 
+  // Preferred categories for personalised "For You" feed
+  const activeCats: Category[] = (
+    catsParam
+      ? catsParam.split(",").filter((c) => (CATEGORIES as readonly string[]).includes(c)) as Category[]
+      : [...CATEGORIES]
+  );
+
   let posts;
 
   if (category === "all") {
     // Fetch proportionally from each category to guarantee a mixed feed
     const perCatResults = await Promise.all(
-      CATEGORIES.map(async (cat) => {
+      activeCats.map(async (cat) => {
         // Today's posts first
         const todayPosts = await prisma.post.findMany({
           where: { category: cat, publishedAt: { gte: today } },
