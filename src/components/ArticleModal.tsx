@@ -31,7 +31,6 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ArticleModal({ post, liked, onClose, onLike }: ArticleModalProps) {
-  const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -40,31 +39,16 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
   useEffect(() => {
     if (post) {
       document.body.style.overflow = "hidden";
+      fetch(`/api/posts/${post.id}/comments`)
+        .then((r) => r.json())
+        .then((d) => setComments(d.comments ?? []));
     } else {
       document.body.style.overflow = "";
-      setShowComments(false);
       setComments([]);
       setDraft("");
     }
     return () => { document.body.style.overflow = ""; };
   }, [post]);
-
-  async function loadComments(postId: number) {
-    const res = await fetch(`/api/posts/${postId}/comments`);
-    const data = await res.json();
-    setComments(data.comments ?? []);
-  }
-
-  function toggleComments() {
-    if (!post) return;
-    if (!showComments) {
-      loadComments(post.id);
-      setShowComments(true);
-      setTimeout(() => inputRef.current?.focus(), 100);
-    } else {
-      setShowComments(false);
-    }
-  }
 
   async function submitComment() {
     if (!post || !draft.trim() || submitting) return;
@@ -164,8 +148,8 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
               <span>{formatNum(post.likes + (liked ? 1 : 0))}</span>
             </button>
             <button
-              onClick={toggleComments}
-              className={`flex flex-col items-center gap-[3px] bg-none border-0 cursor-pointer text-[11px] ${showComments ? "text-[#ff2442]" : "text-gray-400"}`}
+              onClick={() => inputRef.current?.focus()}
+              className="flex flex-col items-center gap-[3px] bg-none border-0 cursor-pointer text-[11px] text-gray-400"
             >
               <span className="text-[24px]">💬</span>
               <span>{comments.length > 0 ? formatNum(comments.length) : "Comments"}</span>
@@ -181,7 +165,7 @@ export default function ArticleModal({ post, liked, onClose, onLike }: ArticleMo
           </div>
 
           {/* Comments section */}
-          {showComments && (
+          {(
             <div className="border-t border-gray-100 pt-4">
               {/* Input */}
               <div className="flex gap-2 mb-4">
