@@ -89,4 +89,13 @@ model Post {
   createdAt   DateTime @default(now())
 
   comments Comment[]
+  likedBy  Like[]
+}
+
+model Like {
+  userId String
+  postId Int
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
 }

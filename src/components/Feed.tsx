@@ -41,6 +41,14 @@ export default function Feed({ category, searchQuery, initialPosts, profile }: F
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // Load liked post IDs from server on mount so likes persist across reloads
+  useEffect(() => {
+    fetch("/api/me/likes")
+      .then((r) => r.json())
+      .then((d) => { if (d.likedPostIds?.length) setLiked(new Set(d.likedPostIds)); })
+      .catch(() => {});
+  }, []);
+
   const cats = profile?.categories?.length ? profile.categories.join(",") : undefined;
 
   const getKey = useCallback(
