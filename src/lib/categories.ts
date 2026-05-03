@@ -1,7 +1,9 @@
 export const CATEGORY_LIST = [
   { id: "news",          label: "News",          emoji: "📰", gradient: "linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)", darkGradient: "linear-gradient(135deg,#0a0a1a,#0a1428,#061830)", lightGradient: "linear-gradient(135deg,#d4eef7,#ddd8f5)" },
   { id: "us",            label: "US",            emoji: "🇺🇸", gradient: "linear-gradient(135deg,#b22234,#3c3b6e)",          darkGradient: "linear-gradient(135deg,#8a1020,#2a2550)",       lightGradient: "linear-gradient(135deg,#fde8e8,#dde4f5)" },
+  { id: "world",         label: "World",         emoji: "🌍", gradient: "linear-gradient(135deg,#0f3460,#533483)",          darkGradient: "linear-gradient(135deg,#081e40,#32205a)",       lightGradient: "linear-gradient(135deg,#d6e4f7,#e8d6f7)" },
   { id: "politics",      label: "Politics",      emoji: "🏛️", gradient: "linear-gradient(135deg,#2c3e50,#4ca1af)",          darkGradient: "linear-gradient(135deg,#1a2a38,#2a7888)",       lightGradient: "linear-gradient(135deg,#dce8f5,#d8eae8)" },
+  { id: "military",      label: "Military",      emoji: "🪖", gradient: "linear-gradient(135deg,#373b44,#4286f4)",          darkGradient: "linear-gradient(135deg,#1e2028,#2050c0)",       lightGradient: "linear-gradient(135deg,#d8dce8,#d6e4f7)" },
   { id: "science",       label: "Science",       emoji: "🔬", gradient: "linear-gradient(135deg,#11998e,#38ef7d)",          darkGradient: "linear-gradient(135deg,#0a7068,#22b85a)",       lightGradient: "linear-gradient(135deg,#d4f5e9,#eafcd2)" },
   { id: "technology",    label: "Technology",    emoji: "💻", gradient: "linear-gradient(135deg,#6c47ff,#00b4d8)",          darkGradient: "linear-gradient(135deg,#4a28dd,#0088b0)",       lightGradient: "linear-gradient(135deg,#e5dcf7,#d6eaff)" },
   { id: "entertainment", label: "Entertainment", emoji: "🎬", gradient: "linear-gradient(135deg,#f953c6,#b91d73)",          darkGradient: "linear-gradient(135deg,#c020a0,#8a0f58)",       lightGradient: "linear-gradient(135deg,#ffe4f0,#ffd6eb)" },
@@ -11,6 +13,9 @@ export const CATEGORY_LIST = [
   { id: "travel",        label: "Travel",        emoji: "✈️", gradient: "linear-gradient(135deg,#f093fb,#f5576c)",          darkGradient: "linear-gradient(135deg,#c058d8,#c82848)",       lightGradient: "linear-gradient(135deg,#feeee0,#fffde0)" },
   { id: "animals",       label: "Animals",       emoji: "🐾", gradient: "linear-gradient(135deg,#78c850,#3c8a2e)",          darkGradient: "linear-gradient(135deg,#509830,#286018)",       lightGradient: "linear-gradient(135deg,#dcf5e5,#d0f0e0)" },
   { id: "inventions",    label: "Inventions",    emoji: "💡", gradient: "linear-gradient(135deg,#f6d365,#fda085)",          darkGradient: "linear-gradient(135deg,#c8a030,#d86040)",       lightGradient: "linear-gradient(135deg,#fff8c0,#fde8cc)" },
+  { id: "finance",       label: "Finance",       emoji: "💰", gradient: "linear-gradient(135deg,#1a472a,#c9a84c)",          darkGradient: "linear-gradient(135deg,#0e2a18,#9a7830)",       lightGradient: "linear-gradient(135deg,#d4f0d4,#f7e8c0)" },
+  { id: "health",        label: "Health",        emoji: "💊", gradient: "linear-gradient(135deg,#56ab2f,#a8e063)",          darkGradient: "linear-gradient(135deg,#347a1a,#70b840)",       lightGradient: "linear-gradient(135deg,#d8f5d8,#eafcd4)" },
+  { id: "beauty",        label: "Beauty",        emoji: "💄", gradient: "linear-gradient(135deg,#ee9ca7,#ffdde1)",          darkGradient: "linear-gradient(135deg,#c06070,#d8a8b0)",       lightGradient: "linear-gradient(135deg,#ffe4e8,#ffd6f0)" },
 ] as const;
 
 export type CategoryId = (typeof CATEGORY_LIST)[number]["id"];

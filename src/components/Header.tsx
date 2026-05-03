@@ -7,7 +7,9 @@ const TABS = [
   { id: "all",           label: "✨ For You" },
   { id: "news",          label: "📰 News" },
   { id: "us",            label: "🇺🇸 US" },
+  { id: "world",         label: "🌍 World" },
   { id: "politics",      label: "🏛️ Politics" },
+  { id: "military",      label: "🪖 Military" },
   { id: "science",       label: "🔬 Science" },
   { id: "technology",    label: "💻 Technology" },
   { id: "entertainment", label: "🎬 Entertainment" },
@@ -17,6 +19,9 @@ const TABS = [
   { id: "travel",        label: "✈️ Travel" },
   { id: "animals",       label: "🐾 Animals" },
   { id: "inventions",    label: "💡 Inventions" },
+  { id: "finance",       label: "💰 Finance" },
+  { id: "health",        label: "💊 Health" },
+  { id: "beauty",        label: "💄 Beauty" },
 ];
 
 interface HeaderProps {

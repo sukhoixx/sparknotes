@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { RawArticle } from "./rss";
 
-export const CATEGORIES = ["news", "us", "politics", "science", "technology", "entertainment", "sports", "business", "gaming", "travel", "animals", "inventions"] as const;
+export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
@@ -17,6 +17,11 @@ export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: strin
   travel:        { badge: "✈️ Travel",        authorEmoji: "🗺️", authorBg: "linear-gradient(135deg,#f093fb,#f5576c)",      emoji: "✈️", gradient: "linear-gradient(135deg,#f093fb,#f5576c)" },
   animals:       { badge: "🐾 Animals",       authorEmoji: "🦁", authorBg: "linear-gradient(135deg,#78c850,#3c8a2e)",      emoji: "🐾", gradient: "linear-gradient(135deg,#78c850,#3c8a2e)" },
   inventions:    { badge: "💡 Inventions",    authorEmoji: "🔧", authorBg: "linear-gradient(135deg,#f6d365,#fda085)",      emoji: "💡", gradient: "linear-gradient(135deg,#f6d365,#fda085)" },
+  world:         { badge: "🌍 World",         authorEmoji: "🌍", authorBg: "linear-gradient(135deg,#0f3460,#533483)",      emoji: "🌍", gradient: "linear-gradient(135deg,#0f3460,#533483)" },
+  military:      { badge: "🪖 Military",      authorEmoji: "🪖", authorBg: "linear-gradient(135deg,#373b44,#4286f4)",      emoji: "🪖", gradient: "linear-gradient(135deg,#373b44,#4286f4)" },
+  finance:       { badge: "💰 Finance",       authorEmoji: "💰", authorBg: "linear-gradient(135deg,#1a472a,#c9a84c)",      emoji: "💰", gradient: "linear-gradient(135deg,#1a472a,#c9a84c)" },
+  health:        { badge: "💊 Health",        authorEmoji: "💊", authorBg: "linear-gradient(135deg,#56ab2f,#a8e063)",      emoji: "💊", gradient: "linear-gradient(135deg,#56ab2f,#a8e063)" },
+  beauty:        { badge: "💄 Beauty",        authorEmoji: "💄", authorBg: "linear-gradient(135deg,#ee9ca7,#ffdde1)",      emoji: "💄", gradient: "linear-gradient(135deg,#ee9ca7,#ffdde1)" },
 };
 
 export interface GeneratedPost {
@@ -50,7 +55,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
-- Pick the most accurate category for the article's actual content, regardless of the source feed it came from. Choose from: news, us, politics, science, technology, entertainment, sports, business, gaming, travel, animals, inventions
+- Pick the most accurate category for the article's actual content, regardless of the source feed it came from. Choose from: news, us, world, politics, military, science, technology, finance, entertainment, sports, business, gaming, travel, animals, inventions, health, beauty
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
@@ -59,7 +64,7 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
   "tags": ["#Tag1", "#Tag2"],
-  "category": "one of: news, us, politics, science, technology, entertainment, sports, business, gaming, travel, animals, inventions"
+  "category": "one of: news, us, world, politics, military, science, technology, finance, entertainment, sports, business, gaming, travel, animals, inventions, health, beauty"
 }`;
 
 export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
