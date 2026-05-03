@@ -13,6 +13,7 @@ const TABS = [
   { id: "science",       label: "🔬 Science" },
   { id: "technology",    label: "💻 Technology" },
   { id: "entertainment", label: "🎬 Entertainment" },
+  { id: "celebrity",     label: "⭐ Celebrity" },
   { id: "sports",        label: "🏅 Sports" },
   { id: "business",      label: "💼 Business" },
   { id: "gaming",        label: "🎮 Gaming" },

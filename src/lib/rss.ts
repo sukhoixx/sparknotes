@@ -96,6 +96,18 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.zdnet.com/news/rss.xml",                     source: "ZDNet" },
     { url: "https://www.theguardian.com/us/technology/rss",          source: "Guardian Tech" },
   ],
+  celebrity: [
+    { url: "https://people.com/feed/",                                 source: "People" },
+    { url: "https://www.eonline.com/syndication/feeds/rssfeeds/news.xml", source: "E! News" },
+    { url: "https://www.tmz.com/rss.xml",                              source: "TMZ" },
+    { url: "https://pagesix.com/feed/",                                source: "Page Six" },
+    { url: "https://www.justjared.com/feed/",                          source: "Just Jared" },
+    { url: "https://hollywoodlife.com/feed/",                          source: "Hollywood Life" },
+    { url: "https://www.etonline.com/rss/all_content.rss",            source: "Entertainment Tonight" },
+    { url: "https://www.usmagazine.com/rss/",                         source: "Us Weekly" },
+    { url: "https://www.celebitchy.com/feed/",                        source: "Celebitchy" },
+    { url: "https://perezhilton.com/feed/",                           source: "Perez Hilton" },
+  ],
   entertainment: [
     { url: "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", source: "BBC Entertainment" },
     { url: "https://www.theguardian.com/culture/rss",                source: "Guardian Culture" },

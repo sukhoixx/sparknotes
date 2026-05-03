@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { RawArticle } from "./rss";
 
-export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty"] as const;
+export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
@@ -22,6 +22,7 @@ export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: strin
   finance:       { badge: "💰 Finance",       authorEmoji: "💰", authorBg: "linear-gradient(135deg,#1a472a,#c9a84c)",      emoji: "💰", gradient: "linear-gradient(135deg,#1a472a,#c9a84c)" },
   health:        { badge: "💊 Health",        authorEmoji: "💊", authorBg: "linear-gradient(135deg,#56ab2f,#a8e063)",      emoji: "💊", gradient: "linear-gradient(135deg,#56ab2f,#a8e063)" },
   beauty:        { badge: "💄 Beauty",        authorEmoji: "💄", authorBg: "linear-gradient(135deg,#ee9ca7,#ffdde1)",      emoji: "💄", gradient: "linear-gradient(135deg,#ee9ca7,#ffdde1)" },
+  celebrity:     { badge: "⭐ Celebrity",     authorEmoji: "⭐", authorBg: "linear-gradient(135deg,#c471ed,#f64f59)",      emoji: "⭐", gradient: "linear-gradient(135deg,#c471ed,#f64f59)" },
 };
 
 export interface GeneratedPost {
@@ -55,7 +56,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
-- Pick the most accurate category for the article's actual content, regardless of the source feed it came from. Choose from: news, us, world, politics, military, science, technology, finance, entertainment, sports, business, gaming, travel, animals, inventions, health, beauty
+- Pick the most accurate category for the article's actual content, regardless of the source feed it came from. Choose from: news, us, world, politics, military, science, technology, finance, entertainment, celebrity, sports, business, gaming, travel, animals, inventions, health, beauty
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
@@ -64,7 +65,7 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
   "tags": ["#Tag1", "#Tag2"],
-  "category": "one of: news, us, world, politics, military, science, technology, finance, entertainment, sports, business, gaming, travel, animals, inventions, health, beauty"
+  "category": "one of: news, us, world, politics, military, science, technology, finance, entertainment, celebrity, sports, business, gaming, travel, animals, inventions, health, beauty"
 }`;
 
 export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
