@@ -6,6 +6,8 @@ import type { AbVariant } from "@/hooks/useAbVariant";
 const TABS = [
   { id: "all",           label: "✨ For You" },
   { id: "news",          label: "📰 News" },
+  { id: "us",            label: "🇺🇸 US" },
+  { id: "politics",      label: "🏛️ Politics" },
   { id: "science",       label: "🔬 Science" },
   { id: "technology",    label: "💻 Technology" },
   { id: "entertainment", label: "🎬 Entertainment" },
