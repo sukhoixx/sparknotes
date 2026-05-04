@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Newsblock",
+  title: "NewsBlock",
   description: "Today's news, explained simply",
 };
 

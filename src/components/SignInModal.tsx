@@ -15,7 +15,7 @@ export default function SignInModal({ onClose }: SignInModalProps) {
       <div className="bg-white rounded-t-[24px] w-full max-w-[480px] mx-auto animate-slide-up">
         <div className="w-10 h-1 bg-gray-200 rounded mx-auto mt-3" />
         <div className="px-5 pt-4 pb-8">
-          <h2 className="text-[18px] font-extrabold text-gray-900 mb-1">Join Newsblock</h2>
+          <h2 className="text-[18px] font-extrabold text-gray-900 mb-1">Join NewsBlock</h2>
           <p className="text-[13px] text-gray-400 mb-6">Sign in to personalize your feed and comment on stories.</p>
 
           <button
