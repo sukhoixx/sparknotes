@@ -83,7 +83,7 @@ model Post {
   badge       String
   authorEmoji String
   authorBg    String
-  sourceUrl   String?
+  sourceUrl   String?  @db.Text
   likes       Int      @default(0)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
