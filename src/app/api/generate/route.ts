@@ -4,33 +4,25 @@ import { fetchArticlesByCategory } from "@/lib/rss";
 import { summarizeArticle, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
-const TARGET_PER_CATEGORY = 20;
+const NEW_PER_RUN = 20;
 
 let isRunning = false;
 
 async function runGeneration() {
   try {
     // Get existing source URLs to avoid duplicates
-    const existing = await prisma.post.findMany({ select: { sourceUrl: true, category: true } });
+    const existing = await prisma.post.findMany({ select: { sourceUrl: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
 
-    // Count existing posts per category
-    const countByCategory: Record<string, number> = {};
-    for (const row of existing) countByCategory[row.category] = (countByCategory[row.category] ?? 0) + 1;
-
     for (const category of CATEGORIES) {
-      const have = countByCategory[category] ?? 0;
-      const needed = Math.max(0, TARGET_PER_CATEGORY - have);
-      if (needed === 0) continue;
-
-      console.log(`[generate] ${category}: have ${have}, need ${needed} more`);
+      console.log(`[generate] ${category}: generating ${NEW_PER_RUN} new posts`);
 
       const articles = await fetchArticlesByCategory(category as Category, 14);
       const fresh = articles.filter((a) => !existingUrls.has(a.link));
 
       let generated = 0;
       for (const article of fresh) {
-        if (generated >= needed) break;
+        if (generated >= NEW_PER_RUN) break;
 
         const post = await summarizeArticle(article, category as Category);
         if (!post) continue;
@@ -54,8 +46,10 @@ async function runGeneration() {
 
         existingUrls.add(article.link);
         generated++;
-        console.log(`[generate] ${category}: +1 (${generated}/${needed})`);
+        console.log(`[generate] ${category}: +1 (${generated}/${NEW_PER_RUN})`);
       }
+
+      console.log(`[generate] ${category}: done (${generated} generated)`);
     }
   } catch (err) {
     console.error("[generate] error:", err);
