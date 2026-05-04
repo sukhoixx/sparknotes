@@ -72,7 +72,7 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
             <>
               <a className="flex items-center gap-[6px] text-[20px] font-extrabold text-[#ff2442] no-underline whitespace-nowrap" href="#">
                 <div className="w-8 h-8 bg-[#ff2442] rounded-lg flex items-center justify-center text-[18px]">📰</div>
-                SparkNotes
+                Newsblock
               </a>
               <button
                 onClick={() => setSearchOpen(true)}

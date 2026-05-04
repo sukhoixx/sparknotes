@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "SparkNotes",
+  title: "Newsblock",
   description: "Today's news, explained simply",
 };
 
