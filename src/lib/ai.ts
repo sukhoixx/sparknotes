@@ -120,7 +120,8 @@ URL: ${article.link}`;
       authorBg: meta.authorBg,
       sourceUrl: article.link,
     };
-  } catch {
+  } catch (err) {
+    console.error("[summarize] error:", err);
     return null;
   }
 }
