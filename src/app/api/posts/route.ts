@@ -15,6 +15,17 @@ const LIMIT = 12;
 const PER_CATEGORY = 2; // 2 × 8 categories = 16 per page
 const LOW_THRESHOLD = 15;
 
+// Backfill categories for posts that predate multi-category support — runs once per process
+let backfillDone = false;
+async function ensureCategoriesBackfill() {
+  if (backfillDone) return;
+  backfillDone = true;
+  await prisma.$executeRaw`
+    UPDATE \`Post\` SET categories = JSON_ARRAY(category)
+    WHERE categories IS NULL OR JSON_LENGTH(categories) = 0
+  `;
+}
+
 function triggerGeneration() {
   const base = process.env.RAILWAY_PUBLIC_DOMAIN
     ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
@@ -36,6 +47,7 @@ function startOfToday() {
 }
 
 export async function GET(req: NextRequest) {
+  ensureCategoriesBackfill().catch(() => {});
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("cursor") ?? "0");
   const category = searchParams.get("category") ?? "all";
