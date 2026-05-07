@@ -86,62 +86,37 @@ export async function GET(req: NextRequest) {
       id: number; title: string; snippet: string; body: string; funFact: string;
       tags: unknown; category: string; emoji: string; gradient: string; badge: string;
       authorEmoji: string; authorBg: string; sourceUrl: string | null;
-      likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint;
+      likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint; rn: bigint;
     };
 
     const catsJson = JSON.stringify(activeCats);
+    const perCat = Math.max(2, Math.ceil(LIMIT / activeCats.length));
+    const rnFrom = page * perCat + 1;
+    const rnTo = (page + 1) * perCat;
 
-    const mapRaw = (rows: RawRow[]) => rows.map(({ commentCount, ...p }) => ({
-      ...p,
-      tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
-      _count: { comments: Number(commentCount) },
-    }));
-
-    // Today's matching posts first
-    const todayRaw = await prisma.$queryRaw<RawRow[]>`
-      SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.category,
-             p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-             p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
-             (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
-      FROM \`Post\` p
-      WHERE p.publishedAt >= ${today}
-        AND JSON_OVERLAPS(
-          IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
-          CAST(${catsJson} AS JSON))
-      ORDER BY p.id DESC
-      LIMIT ${LIMIT} OFFSET ${page * LIMIT}
-    `;
-    const todayMapped = mapRaw(todayRaw);
-
-    if (todayMapped.length >= LIMIT) {
-      posts = todayMapped;
-    } else {
-      const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
-        SELECT COUNT(*) AS n FROM \`Post\` p
-        WHERE p.publishedAt >= ${today}
-          AND JSON_OVERLAPS(
-            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
-            CAST(${catsJson} AS JSON))
-      `;
-      const todayPages = Math.ceil(Number(todayCount) / LIMIT) || 0;
-      const olderPage = Math.max(0, page - todayPages);
-      const olderLimit = LIMIT - todayMapped.length;
-
-      const olderRaw = await prisma.$queryRaw<RawRow[]>`
+    // Window function: take perCat most-recent posts per category, deduplicated naturally
+    const raw = await prisma.$queryRaw<RawRow[]>`
+      WITH ranked AS (
         SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.category,
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
                p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
-               (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+               (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
+               ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
-        WHERE p.publishedAt < ${today}
-          AND JSON_OVERLAPS(
-            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
-            CAST(${catsJson} AS JSON))
-        ORDER BY p.id DESC
-        LIMIT ${olderLimit} OFFSET ${olderPage * olderLimit}
-      `;
-      posts = [...todayMapped, ...mapRaw(olderRaw)];
-    }
+        WHERE JSON_OVERLAPS(
+          IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+          CAST(${catsJson} AS JSON))
+      )
+      SELECT * FROM ranked WHERE rn BETWEEN ${rnFrom} AND ${rnTo}
+    `;
+
+    posts = raw
+      .map(({ commentCount, rn: _rn, ...p }) => ({
+        ...p,
+        tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
+        _count: { comments: Number(commentCount) },
+      }))
+      .sort(() => Math.random() - 0.5);
 
     // Fill up to LIMIT from any post if personalized results are sparse
     if (posts.length < LIMIT) {
@@ -152,7 +127,7 @@ export async function GET(req: NextRequest) {
         take: LIMIT - posts.length,
         include: { _count: { select: { comments: true } } },
       });
-      posts = [...posts, ...extra];
+      posts = [...posts, ...extra].sort(() => Math.random() - 0.5);
     }
   } else {
     // Single category — today first, then older
