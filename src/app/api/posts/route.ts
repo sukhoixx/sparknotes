@@ -96,10 +96,10 @@ export async function GET(req: NextRequest) {
       LIMIT ${LIMIT} OFFSET ${offset}
     `;
 
-    posts = raw.map((p) => ({
+    posts = raw.map(({ commentCount, ...p }) => ({
       ...p,
       tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
-      _count: { comments: Number(p.commentCount) },
+      _count: { comments: Number(commentCount) },
     }));
 
     // Fill up to LIMIT from any post if personalized results are sparse
