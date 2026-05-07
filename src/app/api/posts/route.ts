@@ -90,29 +90,58 @@ export async function GET(req: NextRequest) {
     };
 
     const catsJson = JSON.stringify(activeCats);
-    const offset = page * LIMIT;
 
-    const raw = await prisma.$queryRaw<RawRow[]>`
+    const mapRaw = (rows: RawRow[]) => rows.map(({ commentCount, ...p }) => ({
+      ...p,
+      tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
+      _count: { comments: Number(commentCount) },
+    }));
+
+    // Today's matching posts first
+    const todayRaw = await prisma.$queryRaw<RawRow[]>`
       SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.category,
              p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
              p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
              (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
       FROM \`Post\` p
-      WHERE JSON_OVERLAPS(
-        IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0,
-           JSON_ARRAY(p.category),
-           p.categories),
-        CAST(${catsJson} AS JSON)
-      )
-      ORDER BY p.publishedAt DESC, p.id DESC
-      LIMIT ${LIMIT} OFFSET ${offset}
+      WHERE p.publishedAt >= ${today}
+        AND JSON_OVERLAPS(
+          IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+          CAST(${catsJson} AS JSON))
+      ORDER BY p.id DESC
+      LIMIT ${LIMIT} OFFSET ${page * LIMIT}
     `;
+    const todayMapped = mapRaw(todayRaw);
 
-    posts = raw.map(({ commentCount, ...p }) => ({
-      ...p,
-      tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
-      _count: { comments: Number(commentCount) },
-    }));
+    if (todayMapped.length >= LIMIT) {
+      posts = todayMapped;
+    } else {
+      const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
+        SELECT COUNT(*) AS n FROM \`Post\` p
+        WHERE p.publishedAt >= ${today}
+          AND JSON_OVERLAPS(
+            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+            CAST(${catsJson} AS JSON))
+      `;
+      const todayPages = Math.ceil(Number(todayCount) / LIMIT) || 0;
+      const olderPage = Math.max(0, page - todayPages);
+      const olderLimit = LIMIT - todayMapped.length;
+
+      const olderRaw = await prisma.$queryRaw<RawRow[]>`
+        SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.category,
+               p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
+               p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+               (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+        FROM \`Post\` p
+        WHERE p.publishedAt < ${today}
+          AND JSON_OVERLAPS(
+            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+            CAST(${catsJson} AS JSON))
+        ORDER BY p.id DESC
+        LIMIT ${olderLimit} OFFSET ${olderPage * olderLimit}
+      `;
+      posts = [...todayMapped, ...mapRaw(olderRaw)];
+    }
 
     // Fill up to LIMIT from any post if personalized results are sparse
     if (posts.length < LIMIT) {
