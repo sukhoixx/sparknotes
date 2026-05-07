@@ -10,6 +10,12 @@ let isRunning = false;
 
 async function runGeneration() {
   try {
+    // Backfill categories for posts created before multi-category support
+    await prisma.$executeRaw`
+      UPDATE \`Post\` SET categories = JSON_ARRAY(category)
+      WHERE JSON_LENGTH(categories) = 0
+    `;
+
     // Get existing source URLs to avoid duplicates
     const existing = await prisma.post.findMany({ select: { sourceUrl: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
@@ -35,6 +41,7 @@ async function runGeneration() {
             funFact: post.funFact,
             tags: post.tags,
             category: post.category,
+            categories: post.categories,
             emoji: post.emoji,
             gradient: post.gradient,
             badge: post.badge,

@@ -32,6 +32,7 @@ export interface GeneratedPost {
   funFact: string;
   tags: string[];
   category: Category;
+  categories: string[];
   emoji: string;
   gradient: string;
   badge: string;
@@ -47,7 +48,9 @@ function getClient() {
   });
 }
 
-const SYSTEM_PROMPT = `You are a news editor who rewrites articles to be exciting, clear, and easy to understand.
+function buildSystemPrompt() {
+  const catList = CATEGORIES.join(", ");
+  return `You are a news editor who rewrites articles to be exciting, clear, and easy to understand.
 
 Rules:
 - Use plain language. If you must use a technical term or abbreviation, explain it immediately.
@@ -56,7 +59,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
-- Pick the most accurate category for the article's actual content, regardless of the source feed it came from. Choose from: news, us, world, politics, military, science, technology, finance, entertainment, celebrity, sports, business, gaming, travel, animals, inventions, health, beauty
+- Pick 1-3 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
@@ -65,8 +68,9 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
   "tags": ["#Tag1", "#Tag2"],
-  "category": "one of: news, us, world, politics, military, science, technology, finance, entertainment, celebrity, sports, business, gaming, travel, animals, inventions, health, beauty"
+  "categories": ["primary_category", "optional_second_category"]
 }`;
+}
 
 export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
   const client = getClient();
@@ -84,7 +88,7 @@ URL: ${article.link}`;
       max_tokens: 1200,
       temperature: 0.7,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt() },
         { role: "user", content: userPrompt },
       ],
     });
@@ -97,14 +101,15 @@ URL: ${article.link}`;
       body: string;
       funFact: string;
       tags: string[];
-      category?: string;
+      categories?: string[];
     };
 
+    const rawCats: string[] = Array.isArray(parsed.categories) ? parsed.categories : [category];
     const resolvedCategory: Category =
-      parsed.category && (CATEGORIES as readonly string[]).includes(parsed.category)
-        ? (parsed.category as Category)
+      rawCats.length > 0 && (CATEGORIES as readonly string[]).includes(rawCats[0])
+        ? (rawCats[0] as Category)
         : category;
-    const meta = CATEGORY_META[resolvedCategory];
+    const meta = CATEGORY_META[resolvedCategory] ?? CATEGORY_META["news"];
 
     return {
       title: parsed.title,
@@ -113,6 +118,7 @@ URL: ${article.link}`;
       funFact: parsed.funFact,
       tags: parsed.tags,
       category: resolvedCategory,
+      categories: rawCats,
       emoji: meta.emoji,
       gradient: meta.gradient,
       badge: meta.badge,

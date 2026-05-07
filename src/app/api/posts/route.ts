@@ -70,40 +70,39 @@ export async function GET(req: NextRequest) {
   let posts;
 
   if (category === "all") {
-    // Scale per-category count so sparse selections still hit LIMIT
-    const perCat = Math.max(2, Math.ceil(LIMIT / activeCats.length));
+    type RawRow = {
+      id: number; title: string; snippet: string; body: string; funFact: string;
+      tags: unknown; category: string; emoji: string; gradient: string; badge: string;
+      authorEmoji: string; authorBg: string; sourceUrl: string | null;
+      likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint;
+    };
 
-    // Fetch proportionally from each category to guarantee a mixed feed
-    const perCatResults = await Promise.all(
-      activeCats.map(async (cat) => {
-        // Today's posts first
-        const todayPosts = await prisma.post.findMany({
-          where: { category: cat, publishedAt: { gte: today } },
-          orderBy: { id: "desc" },
-          take: perCat,
-          skip: page * perCat,
-          include: { _count: { select: { comments: true } } },
-        });
-        if (todayPosts.length === perCat) return todayPosts;
+    const catsJson = JSON.stringify(activeCats);
+    const offset = page * LIMIT;
 
-        // Fill remainder from older posts
-        const todayCount = await prisma.post.count({ where: { category: cat, publishedAt: { gte: today } } });
-        const todayPages = Math.ceil(todayCount / perCat);
-        const olderPage = Math.max(0, page - todayPages);
-        const older = await prisma.post.findMany({
-          where: { category: cat, publishedAt: { lt: today } },
-          orderBy: { id: "desc" },
-          take: perCat - todayPosts.length,
-          skip: olderPage * (perCat - todayPosts.length),
-          include: { _count: { select: { comments: true } } },
-        });
-        return [...todayPosts, ...older];
-      })
-    );
+    const raw = await prisma.$queryRaw<RawRow[]>`
+      SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.category,
+             p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
+             p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+             (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+      FROM \`Post\` p
+      WHERE JSON_OVERLAPS(
+        IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0,
+           JSON_ARRAY(p.category),
+           p.categories),
+        CAST(${catsJson} AS JSON)
+      )
+      ORDER BY p.publishedAt DESC, p.id DESC
+      LIMIT ${LIMIT} OFFSET ${offset}
+    `;
 
-    posts = perCatResults.flat().sort(() => Math.random() - 0.5);
+    posts = raw.map((p) => ({
+      ...p,
+      tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
+      _count: { comments: Number(p.commentCount) },
+    }));
 
-    // If sparse categories still left us short, fill up to LIMIT from any post
+    // Fill up to LIMIT from any post if personalized results are sparse
     if (posts.length < LIMIT) {
       const seenIds = posts.map((p) => p.id);
       const extra = await prisma.post.findMany({
@@ -112,7 +111,7 @@ export async function GET(req: NextRequest) {
         take: LIMIT - posts.length,
         include: { _count: { select: { comments: true } } },
       });
-      posts = [...posts, ...extra].sort(() => Math.random() - 0.5);
+      posts = [...posts, ...extra];
     }
   } else {
     // Single category — today first, then older
