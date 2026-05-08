@@ -4,7 +4,7 @@ import { fetchArticlesByCategory } from "@/lib/rss";
 import { summarizeArticle, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
-const NEW_PER_RUN = 20;
+const NEW_PER_RUN = 5;
 
 let isRunning = false;
 
