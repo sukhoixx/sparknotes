@@ -95,7 +95,9 @@ URL: ${article.link}`;
 
     const raw = res.choices[0]?.message?.content ?? "";
     const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-    const parsed = JSON.parse(stripped) as {
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) { console.error("[summarize] no JSON object in response:", raw); return null; }
+    const parsed = JSON.parse(jsonMatch[0]) as {
       title: string;
       snippet: string;
       body: string;
