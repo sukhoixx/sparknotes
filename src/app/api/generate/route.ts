@@ -20,6 +20,12 @@ async function runGeneration() {
     const existing = await prisma.post.findMany({ select: { sourceUrl: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
 
+    // Sort categories least-to-most populated so the AI prefers thin categories as secondary tags
+    const categoryCounts = await prisma.post.groupBy({ by: ["category"], _count: { _all: true } });
+    const countMap = Object.fromEntries(categoryCounts.map((c) => [c.category, c._count._all]));
+    const categoryFreqOrder = [...CATEGORIES].sort((a, b) => (countMap[a] ?? 0) - (countMap[b] ?? 0));
+    console.log(`[generate] category freq order: ${categoryFreqOrder.join(", ")}`);
+
     for (const category of CATEGORIES) {
       console.log(`[generate] ${category}: generating ${NEW_PER_RUN} new posts`);
 
@@ -30,7 +36,7 @@ async function runGeneration() {
       for (const article of fresh) {
         if (generated >= NEW_PER_RUN) break;
 
-        const post = await summarizeArticle(article, category as Category);
+        const post = await summarizeArticle(article, category as Category, categoryFreqOrder);
         if (!post) continue;
 
         await prisma.post.create({

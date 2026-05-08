@@ -48,8 +48,11 @@ function getClient() {
   });
 }
 
-function buildSystemPrompt() {
+function buildSystemPrompt(categoryFreqOrder?: string[]) {
   const catList = CATEGORIES.join(", ");
+  const freqHint = categoryFreqOrder
+    ? `\n- These categories are underrepresented — strongly prefer adding them as secondary categories when the article is even loosely relevant (listed least-to-most populated): ${categoryFreqOrder.join(", ")}\n- Avoid using news, us, world, politics as secondary categories unless the article is specifically and primarily about those topics`
+    : "";
   return `You are a news editor who rewrites articles to be exciting, clear, and easy to understand.
 
 Rules:
@@ -59,7 +62,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
-- Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}
+- Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
@@ -72,7 +75,7 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
 }`;
 }
 
-export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
+export async function summarizeArticle(article: RawArticle, category: Category, categoryFreqOrder?: string[]): Promise<GeneratedPost | null> {
   const client = getClient();
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
@@ -88,7 +91,7 @@ URL: ${article.link}`;
       max_tokens: 1200,
       temperature: 0.7,
       messages: [
-        { role: "system", content: buildSystemPrompt() },
+        { role: "system", content: buildSystemPrompt(categoryFreqOrder) },
         { role: "user", content: userPrompt },
       ],
     });
