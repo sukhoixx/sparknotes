@@ -59,7 +59,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should start with # and be relevant (3-5 tags)
-- Pick 1-3 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}
+- Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
