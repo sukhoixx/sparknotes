@@ -51,10 +51,11 @@ type RawRow = {
   tags: unknown; categories: unknown; category: string; emoji: string; gradient: string;
   badge: string; authorEmoji: string; authorBg: string; sourceUrl: string | null;
   likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint;
+  rn?: bigint; // present only in window-function queries
 };
 
 function mapRaw(rows: RawRow[], activeCats?: string[]) {
-  return rows.map(({ commentCount, categories: rawCats, ...p }) => {
+  return rows.map(({ commentCount, categories: rawCats, rn: _rn, ...p }) => {
     const cats: string[] = Array.isArray(rawCats)
       ? rawCats
       : typeof rawCats === "string"
