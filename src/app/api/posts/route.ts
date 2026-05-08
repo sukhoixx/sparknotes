@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, CATEGORY_META } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
@@ -89,7 +90,6 @@ export async function GET(req: NextRequest) {
       likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint; rn: bigint;
     };
 
-    const catsJson = JSON.stringify(activeCats);
     const perCat = Math.max(2, Math.ceil(LIMIT / activeCats.length));
     const rnFrom = page * perCat + 1;
     const rnTo = (page + 1) * perCat;
@@ -103,9 +103,7 @@ export async function GET(req: NextRequest) {
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
                ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
-        WHERE JSON_OVERLAPS(
-          IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
-          CAST(${catsJson} AS JSON))
+        WHERE p.category IN (${Prisma.join(activeCats)})
       )
       SELECT * FROM ranked WHERE rn BETWEEN ${rnFrom} AND ${rnTo}
     `;
@@ -118,11 +116,11 @@ export async function GET(req: NextRequest) {
       }))
       .sort(() => Math.random() - 0.5);
 
-    // Fill up to LIMIT from any post if personalized results are sparse
+    // Fill up to LIMIT from user's categories if sparse
     if (posts.length < LIMIT) {
       const seenIds = posts.map((p) => p.id);
       const extra = await prisma.post.findMany({
-        where: { id: { notIn: seenIds } },
+        where: { id: { notIn: seenIds }, category: { in: activeCats } },
         orderBy: { id: "desc" },
         take: LIMIT - posts.length,
         include: { _count: { select: { comments: true } } },
