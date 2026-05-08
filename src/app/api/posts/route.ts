@@ -13,7 +13,6 @@ function applyMeta<T extends { category: string }>(posts: T[]): T[] {
 }
 
 const LIMIT = 12;
-const PER_CATEGORY = 2; // 2 × 8 categories = 16 per page
 const LOW_THRESHOLD = 15;
 
 // Backfill categories for posts that predate multi-category support — runs once per process
@@ -45,6 +44,35 @@ function startOfToday() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+type RawRow = {
+  id: number; title: string; snippet: string; body: string; funFact: string;
+  tags: unknown; categories: unknown; category: string; emoji: string; gradient: string;
+  badge: string; authorEmoji: string; authorBg: string; sourceUrl: string | null;
+  likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint;
+};
+
+function mapRaw(rows: RawRow[], activeCats?: string[]) {
+  return rows.map(({ commentCount, categories: rawCats, ...p }) => {
+    const cats: string[] = Array.isArray(rawCats)
+      ? rawCats
+      : typeof rawCats === "string"
+        ? JSON.parse(rawCats)
+        : [p.category];
+
+    // For For You feed: override display category with first matching subscribed category
+    const displayCategory = activeCats
+      ? (cats.find((c) => activeCats.includes(c)) ?? p.category)
+      : p.category;
+
+    return {
+      ...p,
+      category: displayCategory,
+      tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
+      _count: { comments: Number(commentCount) },
+    };
+  });
 }
 
 export async function GET(req: NextRequest) {
@@ -83,72 +111,84 @@ export async function GET(req: NextRequest) {
   let posts;
 
   if (category === "all") {
-    type RawRow = {
-      id: number; title: string; snippet: string; body: string; funFact: string;
-      tags: unknown; category: string; emoji: string; gradient: string; badge: string;
-      authorEmoji: string; authorBg: string; sourceUrl: string | null;
-      likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint; rn: bigint;
-    };
-
     const perCat = Math.max(2, Math.ceil(LIMIT / activeCats.length));
     const rnFrom = page * perCat + 1;
     const rnTo = (page + 1) * perCat;
 
-    // Window function: take perCat most-recent posts per category, deduplicated naturally
+    // Window function: perCat most-recent posts per category matching user's subscribed categories
+    // JSON_OVERLAPS ensures cross-tagged posts appear (e.g. news+entertainment shows for news subscribers)
     const raw = await prisma.$queryRaw<RawRow[]>`
       WITH ranked AS (
-        SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.category,
+        SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
                p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
                ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
-        WHERE p.category IN (${Prisma.join(activeCats)})
+        WHERE JSON_OVERLAPS(
+          IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+          CAST(${JSON.stringify(activeCats)} AS JSON))
       )
       SELECT * FROM ranked WHERE rn BETWEEN ${rnFrom} AND ${rnTo}
     `;
 
-    posts = raw
-      .map(({ commentCount, rn: _rn, ...p }) => ({
-        ...p,
-        tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
-        _count: { comments: Number(commentCount) },
-      }))
-      .sort(() => Math.random() - 0.5);
+    // Pass activeCats so mapRaw can pick the correct display category
+    posts = mapRaw(raw as RawRow[], activeCats).sort(() => Math.random() - 0.5);
 
-    // Fill up to LIMIT from user's categories if sparse
+    // Fill up from user's subscribed categories if sparse
     if (posts.length < LIMIT) {
       const seenIds = posts.map((p) => p.id);
-      const extra = await prisma.post.findMany({
-        where: { id: { notIn: seenIds }, category: { in: activeCats } },
-        orderBy: { id: "desc" },
-        take: LIMIT - posts.length,
-        include: { _count: { select: { comments: true } } },
-      });
-      posts = [...posts, ...extra].sort(() => Math.random() - 0.5);
+      const extraRaw = await prisma.$queryRaw<RawRow[]>`
+        SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
+               p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
+               p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+               (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+        FROM \`Post\` p
+        WHERE p.id NOT IN (${Prisma.join(seenIds.length ? seenIds : [0])})
+          AND JSON_OVERLAPS(
+            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+            CAST(${JSON.stringify(activeCats)} AS JSON))
+        ORDER BY p.id DESC
+        LIMIT ${LIMIT - posts.length}
+      `;
+      posts = [...posts, ...mapRaw(extraRaw as RawRow[], activeCats)].sort(() => Math.random() - 0.5);
     }
   } else {
-    // Single category — today first, then older
-    const todayCount = await prisma.post.count({ where: { category, publishedAt: { gte: today } } });
-    const todayPages = Math.ceil(todayCount / LIMIT) || 0;
+    // Single category tab — filter by categories array so cross-tagged posts appear
+    const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
+      SELECT COUNT(*) AS n FROM \`Post\` p
+      WHERE p.publishedAt >= ${today}
+        AND JSON_CONTAINS(
+          IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+          JSON_QUOTE(${category}))
+    `;
+    const todayPages = Math.ceil(Number(todayCount) / LIMIT) || 0;
 
-    if (todayCount > 0 && page < todayPages) {
-      posts = await prisma.post.findMany({
-        where: { category, publishedAt: { gte: today } },
-        orderBy: { id: "desc" },
-        take: LIMIT,
-        skip: page * LIMIT,
-        include: { _count: { select: { comments: true } } },
-      });
+    const selectCols = Prisma.sql`
+      p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
+      p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
+      p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+      (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+    `;
+    const catFilter = Prisma.sql`JSON_CONTAINS(
+      IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+      JSON_QUOTE(${category}))`;
+
+    if (Number(todayCount) > 0 && page < todayPages) {
+      const raw = await prisma.$queryRaw<RawRow[]>`
+        SELECT ${selectCols} FROM \`Post\` p
+        WHERE p.publishedAt >= ${today} AND ${catFilter}
+        ORDER BY p.id DESC LIMIT ${LIMIT} OFFSET ${page * LIMIT}
+      `;
+      posts = mapRaw(raw);
     } else {
-      const olderPage = todayCount > 0 ? page - todayPages : page;
-      posts = await prisma.post.findMany({
-        where: { category, publishedAt: { lt: today } },
-        orderBy: { id: "desc" },
-        take: LIMIT,
-        skip: olderPage * LIMIT,
-        include: { _count: { select: { comments: true } } },
-      });
+      const olderPage = Number(todayCount) > 0 ? page - todayPages : page;
+      const raw = await prisma.$queryRaw<RawRow[]>`
+        SELECT ${selectCols} FROM \`Post\` p
+        WHERE p.publishedAt < ${today} AND ${catFilter}
+        ORDER BY p.id DESC LIMIT ${LIMIT} OFFSET ${olderPage * LIMIT}
+      `;
+      posts = mapRaw(raw);
     }
 
     posts = posts.sort(() => Math.random() - 0.5);
