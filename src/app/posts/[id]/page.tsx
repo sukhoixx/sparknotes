@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title: post.title,
       description: post.snippet,
-      url: `https://sparknotes.up.railway.app/posts/${id}`,
+      url: `https://sparknotes-production.up.railway.app/posts/${id}`,
       images: post.imageUrl ? [{ url: post.imageUrl }] : [],
     },
   };
@@ -26,7 +26,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const post = await prisma.post.findUnique({ where: { id } });
   if (!post) notFound();
 
-  const appLink = `https://sparknotes.up.railway.app/posts/${id}`;
+  const appLink = `https://sparknotes-production.up.railway.app/posts/${id}`;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "-apple-system, sans-serif" }}>
