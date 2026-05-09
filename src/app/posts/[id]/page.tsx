@@ -38,7 +38,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           <div style={{ fontSize: 15, fontWeight: 800, color: "#ff2442", marginBottom: 16 }}>📰 NewsBlock</div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 10 }}>{post.title}</h1>
           <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5, marginBottom: 24 }}>{post.snippet}</p>
-          <a href={`newsblock://post/${id}`} style={{ display: "block", textAlign: "center", background: "#ff2442", color: "#fff", fontSize: 15, fontWeight: 700, padding: 14, borderRadius: 14, textDecoration: "none", marginBottom: 10 }}>
+          <a href={`newsblock:///posts/${id}`} style={{ display: "block", textAlign: "center", background: "#ff2442", color: "#fff", fontSize: 15, fontWeight: 700, padding: 14, borderRadius: 14, textDecoration: "none", marginBottom: 10 }}>
             Open in NewsBlock
           </a>
           <a href="https://apps.apple.com/app/newsblock/id6766168195" style={{ display: "block", textAlign: "center", background: "#f3f4f6", color: "#374151", fontSize: 14, fontWeight: 600, padding: 13, borderRadius: 14, textDecoration: "none" }}>
@@ -46,7 +46,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           </a>
         </div>
       </div>
-      <script dangerouslySetInnerHTML={{ __html: `window.location.href = "newsblock://post/${id}";` }} />
+      <script dangerouslySetInnerHTML={{ __html: `window.location.href = "newsblock:///posts/${id}";` }} />
     </div>
   );
 }
