@@ -43,7 +43,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
             <h1>{post.title}</h1>
             <p className="snippet">{post.snippet}</p>
             <a className="open-btn" href={appUrl}>Open in NewsBlock</a>
-            <a className="download-btn" href="https://apps.apple.com/app/newsblock/id0000000000">Download NewsBlock on App Store</a>
+            <a className="download-btn" href="https://apps.apple.com/app/newsblock/id6766168195">Download NewsBlock on App Store</a>
           </div>
         </div>
         <script dangerouslySetInnerHTML={{ __html: `
