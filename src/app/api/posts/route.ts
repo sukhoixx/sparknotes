@@ -50,6 +50,7 @@ type RawRow = {
   id: number; title: string; snippet: string; body: string; funFact: string;
   tags: unknown; categories: unknown; category: string; emoji: string; gradient: string;
   badge: string; authorEmoji: string; authorBg: string; sourceUrl: string | null;
+  imageUrl: string | null;
   likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint;
   rn?: bigint; // present only in window-function queries
 };
@@ -128,7 +129,7 @@ export async function GET(req: NextRequest) {
       WITH ranked AS (
         SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-               p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+               p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
                ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
@@ -148,7 +149,7 @@ export async function GET(req: NextRequest) {
       const extraRaw = await prisma.$queryRaw<RawRow[]>`
         SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-               p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+               p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
         FROM \`Post\` p
         WHERE p.id NOT IN (${Prisma.join(seenIds.length ? seenIds : [0])})
@@ -174,7 +175,7 @@ export async function GET(req: NextRequest) {
     const selectCols = Prisma.sql`
       p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
       p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-      p.sourceUrl, p.likes, p.publishedAt, p.createdAt,
+      p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
       (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
     `;
     const catFilter = Prisma.sql`JSON_CONTAINS(

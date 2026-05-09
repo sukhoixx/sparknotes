@@ -85,6 +85,7 @@ model Post {
   authorBg    String
   categories  Json     @default("[]")
   sourceUrl   String?  @db.Text
+  imageUrl    String?  @db.Text
   likes       Int      @default(0)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())

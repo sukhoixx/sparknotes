@@ -7,9 +7,18 @@ export interface RawArticle {
   link: string;
   pubDate: Date;
   source: string;
+  imageUrl?: string;
 }
 
-const parser = new Parser({ timeout: 6000 });
+const parser = new Parser({
+  timeout: 6000,
+  customFields: {
+    item: [
+      ["media:content", "mediaContent", { keepArray: false }],
+      ["media:thumbnail", "mediaThumbnail", { keepArray: false }],
+    ],
+  },
+});
 
 const FEEDS: Record<Category, { url: string; source: string }[]> = {
   news: [
@@ -386,13 +395,22 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
     ]);
     return feed.items
       .filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff)
-      .map((item) => ({
-        title: item.title ?? "",
-        content: item.contentSnippet ?? item.summary ?? item.title ?? "",
-        link: item.link ?? "",
-        pubDate: new Date(item.pubDate!),
-        source,
-      }))
+      .map((item) => {
+        const enclosureUrl = item.enclosure?.url;
+        const imageUrl =
+          (enclosureUrl && /\.(jpg|jpeg|png|webp|gif)/i.test(enclosureUrl) ? enclosureUrl : undefined) ??
+          (item as any).mediaContent?.$?.url ??
+          (item as any).mediaThumbnail?.$?.url ??
+          undefined;
+        return {
+          title: item.title ?? "",
+          content: item.contentSnippet ?? item.summary ?? item.title ?? "",
+          link: item.link ?? "",
+          pubDate: new Date(item.pubDate!),
+          source,
+          ...(imageUrl ? { imageUrl } : {}),
+        };
+      })
       .filter((a) => a.title.length > 10 && a.link);
   } catch {
     return [];

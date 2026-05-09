@@ -54,6 +54,7 @@ async function runGeneration() {
             authorEmoji: post.authorEmoji,
             authorBg: post.authorBg,
             sourceUrl: post.sourceUrl,
+            imageUrl: post.imageUrl ?? null,
           },
         });
 

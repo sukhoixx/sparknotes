@@ -39,6 +39,7 @@ export interface GeneratedPost {
   authorEmoji: string;
   authorBg: string;
   sourceUrl: string;
+  imageUrl?: string;
 }
 
 function getClient() {
@@ -130,6 +131,7 @@ URL: ${article.link}`;
       authorEmoji: meta.authorEmoji,
       authorBg: meta.authorBg,
       sourceUrl: article.link,
+      imageUrl: article.imageUrl,
     };
   } catch (err) {
     console.error("[summarize] error:", err);
