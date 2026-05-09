@@ -58,6 +58,7 @@ function buildSystemPrompt(categoryFreqOrder?: string[]) {
 
 Rules:
 - Use plain language. If you must use a technical term or abbreviation, explain it immediately.
+- Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
 - Keep sentences short to moderate. Write like you're telling a friend.
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
@@ -82,6 +83,7 @@ export async function summarizeArticle(article: RawArticle, category: Category, 
 
   const userPrompt = `Category: ${category}
 Source: ${article.source}
+Published: ${article.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
 Title: ${article.title}
 Content: ${article.content.slice(0, 1500)}
 URL: ${article.link}`;
