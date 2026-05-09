@@ -62,7 +62,7 @@ Rules:
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
 - Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
-- Tags should start with # and be relevant (3-5 tags)
+- Tags should be plain words without # prefix, relevant to the article (3-5 tags)
 - Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
@@ -71,7 +71,7 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
   "snippet": "One-sentence hook that makes the reader want more (max 150 chars)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
-  "tags": ["#Tag1", "#Tag2"],
+  "tags": ["Tag1", "Tag2"],
   "categories": ["primary_category", "optional_second_category"]
 }`;
 }
@@ -122,7 +122,7 @@ URL: ${article.link}`;
       snippet: parsed.snippet,
       body: parsed.body,
       funFact: parsed.funFact,
-      tags: parsed.tags,
+      tags: parsed.tags.map((t) => (t.startsWith("#") ? t : `#${t}`)),
       category: resolvedCategory,
       categories: rawCats,
       emoji: meta.emoji,
