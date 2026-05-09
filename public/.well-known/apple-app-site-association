@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "ZWK274DMR9.com.newsblock.app",
+        "paths": ["/posts/*"]
+      }
+    ]
+  }
+}
