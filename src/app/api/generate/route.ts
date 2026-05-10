@@ -20,13 +20,18 @@ async function runGeneration() {
     const existing = await prisma.post.findMany({ select: { sourceUrl: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
 
-    // Fetch titles of posts published in the last 6 hours for cross-run duplicate suppression
+    // Fetch titles of posts from the last 2 weeks for exact-title dedup
+    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
     const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
     const recentPosts = await prisma.post.findMany({
-      where: { createdAt: { gte: sixHoursAgo } },
-      select: { title: true },
+      where: { createdAt: { gte: twoWeeksAgo } },
+      select: { title: true, createdAt: true },
     });
-    const recentTitles = recentPosts.map((p) => p.title);
+    const existingTitles = new Set(recentPosts.map((p) => p.title));
+    // Subset of last 6 hours for Jaccard-based cross-source dedup
+    const recentTitles = recentPosts
+      .filter((p) => p.createdAt >= sixHoursAgo)
+      .map((p) => p.title);
 
     // Sort categories least-to-most populated so the AI prefers thin categories as secondary tags
     const categoryCounts = await prisma.post.groupBy({ by: ["category"], _count: { _all: true } });
@@ -38,10 +43,10 @@ async function runGeneration() {
       console.log(`[generate] ${category}: generating ${NEW_PER_RUN} new posts`);
 
       const articles = await fetchArticlesByCategory(category as Category, 14);
-      const fresh = articles.filter((a) => !existingUrls.has(a.link));
+      const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
       const topArticles = selectTopArticles(deduped, NEW_PER_RUN);
-      console.log(`[generate] ${category}: ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} top stories selected`);
+      console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} top stories selected`);
 
       let generated = 0;
       for (const article of topArticles) {
@@ -69,6 +74,7 @@ async function runGeneration() {
         });
 
         existingUrls.add(article.link);
+        existingTitles.add(article.title);
         generated++;
         console.log(`[generate] ${category}: +1 (${generated}/${NEW_PER_RUN})`);
       }
