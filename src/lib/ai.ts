@@ -59,6 +59,7 @@ function buildSystemPrompt(categoryFreqOrder?: string[]) {
 Rules:
 - Use plain language. If you must use a technical term or abbreviation, explain it immediately.
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
+- If the article names specific people, companies, stocks, products, or numbers — include them. Never replace a concrete detail with a vague category (e.g. "a chip company" when the article says "Nvidia"). If the title promises a list or reveal, the body must deliver it.
 - Keep sentences short to moderate. Write like you're telling a friend.
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
 - Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). For news, us, world, and politics categories include key details: who, what, where, when, why, and what happens next.
