@@ -441,3 +441,62 @@ export async function fetchArticlesByCategory(category: Category, days = 14): Pr
 
   return articles.sort(() => Math.random() - 0.5);
 }
+
+const STOPWORDS = new Set([
+  "the","a","an","and","or","but","in","on","at","to","for","of","with","by",
+  "is","are","was","were","be","been","has","have","had","will","would","could",
+  "should","may","might","it","its","this","that","as","from","not","no","up",
+  "about","after","before","over","into","out","what","who","how","when","where",
+  "why","which","new","says","say","after","amid","over","as","us",
+]);
+
+function titleWords(title: string): Set<string> {
+  return new Set(
+    title.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !STOPWORDS.has(w))
+  );
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+  let intersection = 0;
+  for (const w of a) if (b.has(w)) intersection++;
+  return intersection / (a.size + b.size - intersection || 1);
+}
+
+// Cluster articles by headline similarity and return the top n most-covered stories.
+// Each cluster = one story covered by multiple sources; bigger clusters = bigger news.
+export function selectTopArticles(articles: RawArticle[], n: number): RawArticle[] {
+  const wordSets = articles.map((a) => titleWords(a.title));
+  const clusters: { indices: number[]; words: Set<string> }[] = [];
+
+  for (let i = 0; i < articles.length; i++) {
+    let bestCluster = -1;
+    let bestSim = 0.18;
+    for (let c = 0; c < clusters.length; c++) {
+      const sim = jaccard(wordSets[i], clusters[c].words);
+      if (sim > bestSim) { bestSim = sim; bestCluster = c; }
+    }
+    if (bestCluster >= 0) {
+      clusters[bestCluster].indices.push(i);
+      for (const w of wordSets[i]) clusters[bestCluster].words.add(w);
+    } else {
+      clusters.push({ indices: [i], words: new Set(wordSets[i]) });
+    }
+  }
+
+  clusters.sort((a, b) => b.indices.length - a.indices.length);
+
+  const selected: RawArticle[] = [];
+  for (const cluster of clusters) {
+    if (selected.length >= n) break;
+    // Pick the article with the most content as the representative
+    const best = cluster.indices
+      .map((i) => articles[i])
+      .sort((a, b) => b.content.length - a.content.length)[0];
+    selected.push(best);
+  }
+
+  return selected;
+}

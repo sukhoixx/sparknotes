@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory } from "@/lib/rss";
+import { fetchArticlesByCategory, selectTopArticles } from "@/lib/rss";
 import { summarizeArticle, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
@@ -31,10 +31,11 @@ async function runGeneration() {
 
       const articles = await fetchArticlesByCategory(category as Category, 14);
       const fresh = articles.filter((a) => !existingUrls.has(a.link));
+      const topArticles = selectTopArticles(fresh, NEW_PER_RUN);
+      console.log(`[generate] ${category}: ${fresh.length} fresh → ${topArticles.length} top stories selected`);
 
       let generated = 0;
-      for (const article of fresh) {
-        if (generated >= NEW_PER_RUN) break;
+      for (const article of topArticles) {
 
         const post = await summarizeArticle(article, category as Category, categoryFreqOrder);
         if (!post) continue;
