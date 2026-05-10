@@ -61,7 +61,7 @@ Rules:
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
 - Keep sentences short to moderate. Write like you're telling a friend.
 - Add excitement and wonder — make the reader feel "whoa, that's cool!"
-- Write the body as HTML using only <p> and <strong> tags (2-4 paragraphs)
+- Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). For news, us, world, and politics categories include key details: who, what, where, when, why, and what happens next.
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should be plain words without # prefix, relevant to the article (3-5 tags)
 - Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}

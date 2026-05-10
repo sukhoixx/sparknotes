@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, selectTopArticles } from "@/lib/rss";
+import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates } from "@/lib/rss";
 import { summarizeArticle, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
@@ -20,6 +20,14 @@ async function runGeneration() {
     const existing = await prisma.post.findMany({ select: { sourceUrl: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
 
+    // Fetch titles of posts published in the last 6 hours for cross-run duplicate suppression
+    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+    const recentPosts = await prisma.post.findMany({
+      where: { createdAt: { gte: sixHoursAgo } },
+      select: { title: true },
+    });
+    const recentTitles = recentPosts.map((p) => p.title);
+
     // Sort categories least-to-most populated so the AI prefers thin categories as secondary tags
     const categoryCounts = await prisma.post.groupBy({ by: ["category"], _count: { _all: true } });
     const countMap = Object.fromEntries(categoryCounts.map((c) => [c.category, c._count._all]));
@@ -31,8 +39,9 @@ async function runGeneration() {
 
       const articles = await fetchArticlesByCategory(category as Category, 14);
       const fresh = articles.filter((a) => !existingUrls.has(a.link));
-      const topArticles = selectTopArticles(fresh, NEW_PER_RUN);
-      console.log(`[generate] ${category}: ${fresh.length} fresh → ${topArticles.length} top stories selected`);
+      const deduped = filterRecentDuplicates(fresh, recentTitles);
+      const topArticles = selectTopArticles(deduped, NEW_PER_RUN);
+      console.log(`[generate] ${category}: ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} top stories selected`);
 
       let generated = 0;
       for (const article of topArticles) {

@@ -464,6 +464,21 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   return intersection / (a.size + b.size - intersection || 1);
 }
 
+// Filter out articles whose title is very similar (>= threshold) to a recently published post title,
+// within the last windowHours. Prevents re-publishing the same story from a different source
+// across generation runs, while allowing genuine follow-up stories (which have different titles).
+export function filterRecentDuplicates(
+  articles: RawArticle[],
+  recentTitles: string[],
+  threshold = 0.6,
+): RawArticle[] {
+  const recentWordSets = recentTitles.map(titleWords);
+  return articles.filter((article) => {
+    const words = titleWords(article.title);
+    return !recentWordSets.some((recent) => jaccard(words, recent) >= threshold);
+  });
+}
+
 // Cluster articles by headline similarity and return the top n most-covered stories.
 // Each cluster = one story covered by multiple sources; bigger clusters = bigger news.
 export function selectTopArticles(articles: RawArticle[], n: number): RawArticle[] {
