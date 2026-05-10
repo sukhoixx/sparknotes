@@ -60,17 +60,15 @@ Rules:
 - Use plain language. If you must use a technical term or abbreviation, explain it immediately.
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
 - If the article names specific people, companies, stocks, products, or numbers — include them. Never replace a concrete detail with a vague category (e.g. "a chip company" when the article says "Nvidia"). If the title promises a list or reveal, the body must deliver it.
-- Keep sentences short to moderate. Write like you're telling a friend.
-- Add excitement and wonder — make the reader feel "whoa, that's cool!"
-- Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). For news, us, world, and politics categories include key details: who, what, where, when, why, and what happens next.
+- Be concise and direct. No fluff, no filler phrases, no hype. Get to the point.
+- Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). Cover who, what, where, when, why, and what happens next. For news, us, world, and politics categories be especially thorough with details.
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should be plain words without # prefix, relevant to the article (3-5 tags)
 - Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
-  "title": "Exciting headline (max 80 chars)",
-  "snippet": "One-sentence hook that makes the reader want more (max 150 chars)",
+  "snippet": "One sentence summarizing the key point of the article (max 150 chars, no hype)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
   "tags": ["Tag1", "Tag2"],
@@ -105,7 +103,6 @@ URL: ${article.link}`;
     const jsonMatch = stripped.match(/\{[\s\S]*\}/);
     if (!jsonMatch) { console.error("[summarize] no JSON object in response:", raw); return null; }
     const parsed = JSON.parse(jsonMatch[0]) as {
-      title: string;
       snippet: string;
       body: string;
       funFact: string;
@@ -121,7 +118,7 @@ URL: ${article.link}`;
     const meta = CATEGORY_META[resolvedCategory] ?? CATEGORY_META["news"];
 
     return {
-      title: parsed.title,
+      title: article.title,
       snippet: parsed.snippet,
       body: parsed.body,
       funFact: parsed.funFact,
