@@ -12,7 +12,7 @@ function applyMeta<T extends { category: string }>(posts: T[]): T[] {
   });
 }
 
-const LIMIT = 12;
+const LIMIT = 10;
 const LOW_THRESHOLD = 15;
 
 // Backfill categories for posts that predate multi-category support — runs once per process
