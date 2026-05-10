@@ -451,17 +451,16 @@ const STOPWORDS = new Set([
 ]);
 
 function titleWords(title: string): Set<string> {
-  return new Set(
-    title.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .split(/\s+/)
-      .filter((w) => w.length > 2 && !STOPWORDS.has(w))
-  );
+  const words = title.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+  return new Set(words);
 }
 
 function jaccard(a: Set<string>, b: Set<string>): number {
   let intersection = 0;
-  for (const w of a) if (b.has(w)) intersection++;
+  a.forEach((w) => { if (b.has(w)) intersection++; });
   return intersection / (a.size + b.size - intersection || 1);
 }
 
@@ -480,7 +479,7 @@ export function selectTopArticles(articles: RawArticle[], n: number): RawArticle
     }
     if (bestCluster >= 0) {
       clusters[bestCluster].indices.push(i);
-      for (const w of wordSets[i]) clusters[bestCluster].words.add(w);
+      wordSets[i].forEach((w) => clusters[bestCluster].words.add(w));
     } else {
       clusters.push({ indices: [i], words: new Set(wordSets[i]) });
     }
