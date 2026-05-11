@@ -384,6 +384,25 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
 };
 
 const FEED_TIMEOUT_MS = 6000;
+const IMAGE_CHECK_TIMEOUT_MS = 2000;
+const IMAGE_MIN_BYTES = 5000;
+
+async function isValidImageUrl(url: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), IMAGE_CHECK_TIMEOUT_MS);
+    const res = await fetch(url, { method: "HEAD", signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return false;
+    const ct = res.headers.get("content-type") ?? "";
+    if (!ct.startsWith("image/")) return false;
+    const cl = res.headers.get("content-length");
+    if (cl && parseInt(cl, 10) < IMAGE_MIN_BYTES) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function fetchFeed(url: string, source: string, cutoff: Date): Promise<RawArticle[]> {
   try {
@@ -393,15 +412,16 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
         setTimeout(() => reject(new Error("feed timeout")), FEED_TIMEOUT_MS)
       ),
     ]);
-    return feed.items
-      .filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff)
-      .map((item) => {
+    const items = feed.items.filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff);
+    const articles = await Promise.all(
+      items.map(async (item) => {
         const enclosureUrl = item.enclosure?.url;
-        const imageUrl =
+        const rawImageUrl =
           (enclosureUrl && /\.(jpg|jpeg|png|webp|gif)/i.test(enclosureUrl) ? enclosureUrl : undefined) ??
           (item as any).mediaContent?.$?.url ??
           (item as any).mediaThumbnail?.$?.url ??
           undefined;
+        const imageUrl = rawImageUrl && await isValidImageUrl(rawImageUrl) ? rawImageUrl : undefined;
         return {
           title: item.title ?? "",
           content: item.contentSnippet ?? item.summary ?? item.title ?? "",
@@ -411,7 +431,8 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
           ...(imageUrl ? { imageUrl } : {}),
         };
       })
-      .filter((a) => a.title.length > 10 && a.link);
+    );
+    return articles.filter((a) => a.title.length > 10 && a.link);
   } catch {
     return [];
   }
