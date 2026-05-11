@@ -8,7 +8,7 @@ export async function GET() {
 
   const row = await prisma.userProfile.findUnique({
     where: { id: userId },
-    select: { screenName: true, categories: true },
+    select: { screenName: true, categories: true, lang: true },
   });
 
   return NextResponse.json({ profile: row ?? null });
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { screenName, categories } = await req.json();
+  const { screenName, categories, lang } = await req.json();
 
   const trimmed = (screenName ?? "").trim().slice(0, 50);
   if (trimmed.length < 2) {
@@ -33,11 +33,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Screen name already taken" }, { status: 409 });
   }
 
+  const validLang = ["en", "zh-TW", "zh-CN"].includes(lang) ? lang : "en";
   const profile = await prisma.userProfile.upsert({
     where: { id: userId },
-    create: { id: userId, screenName: trimmed, categories },
-    update: { screenName: trimmed, categories },
-    select: { screenName: true, categories: true },
+    create: { id: userId, screenName: trimmed, categories, lang: validLang },
+    update: { screenName: trimmed, categories, lang: validLang },
+    select: { screenName: true, categories: true, lang: true },
   });
 
   return NextResponse.json({ profile });

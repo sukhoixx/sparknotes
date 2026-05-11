@@ -50,9 +50,9 @@ type RawRow = {
   id: number; title: string; snippet: string; body: string; funFact: string;
   tags: unknown; categories: unknown; category: string; emoji: string; gradient: string;
   badge: string; authorEmoji: string; authorBg: string; sourceUrl: string | null;
-  imageUrl: string | null;
-  likes: number; publishedAt: Date; createdAt: Date; commentCount: bigint;
-  rn?: bigint; // present only in window-function queries
+  imageUrl: string | null; likes: number; publishedAt: Date; createdAt: Date;
+  commentCount: bigint; rn?: bigint;
+  zhTitle: string | null; zhSnippet: string | null; zhBody: string | null; zhFunFact: string | null;
 };
 
 function mapRaw(rows: RawRow[], activeCats?: string[]) {
@@ -130,6 +130,7 @@ export async function GET(req: NextRequest) {
         SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
                p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
+               p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
                ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
@@ -150,6 +151,7 @@ export async function GET(req: NextRequest) {
         SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
                p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
+               p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
         FROM \`Post\` p
         WHERE p.id NOT IN (${Prisma.join(seenIds.length ? seenIds : [0])})
@@ -176,6 +178,7 @@ export async function GET(req: NextRequest) {
       p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
       p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
       p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
+      p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
       (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
     `;
     const catFilter = Prisma.sql`JSON_CONTAINS(

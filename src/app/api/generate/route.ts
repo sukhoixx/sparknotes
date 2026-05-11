@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates } from "@/lib/rss";
-import { summarizeArticle, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
 const NEW_PER_RUN = 5;
@@ -57,6 +57,8 @@ async function runGeneration() {
         const post = await summarizeArticle(article, category as Category, categoryFreqOrder);
         if (!post) continue;
 
+        const zh = await translateToTraditionalChinese(post);
+
         await prisma.post.create({
           data: {
             title: post.title,
@@ -73,6 +75,10 @@ async function runGeneration() {
             authorBg: post.authorBg,
             sourceUrl: post.sourceUrl,
             imageUrl: post.imageUrl ?? null,
+            zhTitle: zh?.zhTitle ?? null,
+            zhSnippet: zh?.zhSnippet ?? null,
+            zhBody: zh?.zhBody ?? null,
+            zhFunFact: zh?.zhFunFact ?? null,
           },
         });
 

@@ -41,6 +41,50 @@ export interface GeneratedPost {
   authorBg: string;
   sourceUrl: string;
   imageUrl?: string;
+  zhTitle?: string;
+  zhSnippet?: string;
+  zhBody?: string;
+  zhFunFact?: string;
+}
+
+export async function translateToTraditionalChinese(
+  post: Pick<GeneratedPost, "title" | "snippet" | "body" | "funFact">
+): Promise<{ zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string } | null> {
+  const client = getClient();
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+
+  const userPrompt = `Rewrite the following news article fields in Traditional Chinese (繁體中文) as a Chinese journalist would write them — natural, fluent prose, not a word-for-word translation. Use your judgement on names: keep well-known English acronyms (e.g. NATO, FBI, AI) in English; transliterate or translate proper nouns as a Taiwanese news outlet would. Preserve all HTML tags exactly as-is in body and funFact. Return ONLY valid JSON with no extra text or markdown.
+
+Title: ${post.title}
+Snippet: ${post.snippet}
+Body (HTML): ${post.body}
+FunFact (HTML): ${post.funFact}
+
+Respond with this exact JSON schema:
+{"zhTitle":"...","zhSnippet":"...","zhBody":"...","zhFunFact":"..."}`;
+
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 1500,
+      temperature: 0.5,
+      messages: [
+        { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。保留所有 HTML 標籤不變。只回傳 JSON 物件。" },
+        { role: "user", content: userPrompt },
+      ],
+    });
+
+    const raw = res.choices[0]?.message?.content ?? "";
+    const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) { console.error("[translate] no JSON in response:", raw); return null; }
+    const parsed = JSON.parse(jsonrepair(jsonMatch[0]));
+    if (!parsed.zhTitle || !parsed.zhBody) return null;
+    return parsed as { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string };
+  } catch (err) {
+    console.error("[translate] error:", err);
+    return null;
+  }
 }
 
 function getClient() {
