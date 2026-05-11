@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { jsonrepair } from "jsonrepair";
 import type { RawArticle } from "./rss";
 
 export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty"] as const;
@@ -102,7 +103,7 @@ URL: ${article.link}`;
     const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
     const jsonMatch = stripped.match(/\{[\s\S]*\}/);
     if (!jsonMatch) { console.error("[summarize] no JSON object in response:", raw); return null; }
-    const parsed = JSON.parse(jsonMatch[0]) as {
+    const parsed = JSON.parse(jsonrepair(jsonMatch[0])) as {
       snippet: string;
       body: string;
       funFact: string;
