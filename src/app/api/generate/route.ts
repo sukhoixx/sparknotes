@@ -5,6 +5,8 @@ import { summarizeArticle, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
 const NEW_PER_RUN = 5;
+const HIGH_VOLUME_CATEGORIES = new Set(["news", "world", "us"]);
+const HIGH_VOLUME_PER_RUN = 10;
 
 let isRunning = false;
 
@@ -40,12 +42,13 @@ async function runGeneration() {
     console.log(`[generate] category freq order: ${categoryFreqOrder.join(", ")}`);
 
     for (const category of CATEGORIES) {
-      console.log(`[generate] ${category}: generating ${NEW_PER_RUN} new posts`);
+      const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : NEW_PER_RUN;
+      console.log(`[generate] ${category}: generating ${perRun} new posts`);
 
       const articles = await fetchArticlesByCategory(category as Category, 14);
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
-      const topArticles = selectTopArticles(deduped, NEW_PER_RUN);
+      const topArticles = selectTopArticles(deduped, perRun);
       console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} top stories selected`);
 
       let generated = 0;
@@ -76,7 +79,7 @@ async function runGeneration() {
         existingUrls.add(article.link);
         existingTitles.add(article.title);
         generated++;
-        console.log(`[generate] ${category}: +1 (${generated}/${NEW_PER_RUN})`);
+        console.log(`[generate] ${category}: +1 (${generated}/${perRun})`);
       }
 
       console.log(`[generate] ${category}: done (${generated} generated)`);
