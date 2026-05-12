@@ -53,6 +53,7 @@ type RawRow = {
   imageUrl: string | null; likes: number; publishedAt: Date; createdAt: Date;
   commentCount: bigint; rn?: bigint;
   zhTitle: string | null; zhSnippet: string | null; zhBody: string | null; zhFunFact: string | null;
+  zhTitleCn: string | null; zhSnippetCn: string | null; zhBodyCn: string | null; zhFunFactCn: string | null;
 };
 
 function mapRaw(rows: RawRow[], activeCats?: string[]) {
@@ -131,6 +132,7 @@ export async function GET(req: NextRequest) {
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
                p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
                p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
+               p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
                ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
@@ -152,6 +154,7 @@ export async function GET(req: NextRequest) {
                p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
                p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
                p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
+               p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
         FROM \`Post\` p
         WHERE p.id NOT IN (${Prisma.join(seenIds.length ? seenIds : [0])})
@@ -179,6 +182,7 @@ export async function GET(req: NextRequest) {
       p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
       p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
       p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
+      p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
       (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
     `;
     const catFilter = Prisma.sql`JSON_CONTAINS(

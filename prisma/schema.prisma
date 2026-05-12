@@ -91,6 +91,10 @@ model Post {
   zhSnippet   String?  @db.VarChar(1000)
   zhBody      String?  @db.Text
   zhFunFact   String?  @db.Text
+  zhTitleCn   String?  @db.VarChar(500)
+  zhSnippetCn String?  @db.VarChar(1000)
+  zhBodyCn    String?  @db.Text
+  zhFunFactCn String?  @db.Text
   likes       Int      @default(0)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())

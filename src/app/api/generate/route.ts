@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
+
+const toSimplified = Converter({ from: "tw", to: "cn" });
+function cnField(s: string | null | undefined): string | null {
+  return s ? toSimplified(s) : null;
+}
 
 const NEW_PER_RUN = 5;
 const HIGH_VOLUME_CATEGORIES = new Set(["news", "world", "us"]);
@@ -79,6 +85,10 @@ async function runGeneration() {
             zhSnippet: zh?.zhSnippet ?? null,
             zhBody: zh?.zhBody ?? null,
             zhFunFact: zh?.zhFunFact ?? null,
+            zhTitleCn: cnField(zh?.zhTitle),
+            zhSnippetCn: cnField(zh?.zhSnippet),
+            zhBodyCn: cnField(zh?.zhBody),
+            zhFunFactCn: cnField(zh?.zhFunFact),
           },
         });
 
