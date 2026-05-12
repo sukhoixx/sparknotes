@@ -109,7 +109,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). Write as a journalist reporting the story directly — cover who, what, where, when, why, and what happens next. Never reference "the article", "the report", "the story", or use phrases like "the article highlights", "according to the article", "the piece notes", etc. Just state the facts as your own reporting. For news, us, world, and politics categories be especially thorough with details.
 - The funFact should start with a relevant emoji and bold "Fun Fact:"
 - Tags should be plain words without # prefix, relevant to the article (3-5 tags)
-- Pick 1-5 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
+- Pick 1-3 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
