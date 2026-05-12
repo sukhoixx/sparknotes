@@ -9,6 +9,9 @@ const toSimplified = Converter({ from: "tw", to: "cn" });
 function cnField(s: string | null | undefined): string | null {
   return s ? toSimplified(s) : null;
 }
+function stripHtml(s: string | null | undefined): string | null {
+  return s ? s.replace(/<[^>]*>/g, "") : null;
+}
 
 const NEW_PER_RUN = 5;
 const HIGH_VOLUME_CATEGORIES = new Set(["news", "world", "us"]);
@@ -67,8 +70,8 @@ async function runGeneration() {
 
         await prisma.post.create({
           data: {
-            title: post.title,
-            snippet: post.snippet,
+            title: stripHtml(post.title) ?? post.title,
+            snippet: stripHtml(post.snippet) ?? post.snippet,
             body: post.body,
             funFact: post.funFact,
             tags: post.tags,
