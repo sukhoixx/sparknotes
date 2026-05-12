@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
   // Search path — simple full-text filter across all posts
   if (q) {
     const posts = applyMeta(await prisma.post.findMany({
-      where: { OR: [{ title: { contains: q } }, { snippet: { contains: q } }] },
+      where: { OR: [{ title: { contains: q } }, { snippet: { contains: q } }, { zhTitle: { contains: q } }, { zhSnippet: { contains: q } }] },
       orderBy: { id: "desc" },
       take: LIMIT,
       skip: page * LIMIT,
