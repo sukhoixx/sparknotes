@@ -5,7 +5,15 @@ import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates } fr
 import { summarizeArticle, translateToTraditionalChinese, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
-const toSimplified = Converter({ from: "tw", to: "cn" });
+const _toSimplified = Converter({ from: "tw", to: "cn" });
+function toSimplified(text: string): string {
+  const result = _toSimplified(text);
+  if ([...result].length === [...text].length) return result;
+  return [...text].map((ch) => {
+    const c = _toSimplified(ch);
+    return [...c].length === 1 ? c : ch;
+  }).join("");
+}
 function cnField(s: string | null | undefined): string | null {
   return s ? toSimplified(s) : null;
 }
