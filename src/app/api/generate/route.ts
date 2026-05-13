@@ -8,10 +8,10 @@ import type { Category } from "@/lib/ai";
 const _toSimplified = Converter({ from: "tw", to: "cn" });
 function toSimplified(text: string): string {
   const result = _toSimplified(text);
-  if ([...result].length === [...text].length) return result;
-  return [...text].map((ch) => {
+  if (Array.from(result).length === Array.from(text).length) return result;
+  return Array.from(text).map((ch) => {
     const c = _toSimplified(ch);
-    return [...c].length === 1 ? c : ch;
+    return Array.from(c).length === 1 ? c : ch;
   }).join("");
 }
 function cnField(s: string | null | undefined): string | null {
