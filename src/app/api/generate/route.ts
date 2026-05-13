@@ -17,8 +17,19 @@ function toSimplified(text: string): string {
 function cnField(s: string | null | undefined): string | null {
   return s ? toSimplified(s) : null;
 }
+function decodeHtml(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;|&#0*39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
 function stripHtml(s: string | null | undefined): string | null {
-  return s ? s.replace(/<[^>]*>/g, "") : null;
+  return s ? decodeHtml(s.replace(/<[^>]*>/g, "")) : null;
 }
 
 const NEW_PER_RUN = 5;
@@ -78,10 +89,10 @@ async function runGeneration() {
 
         await prisma.post.create({
           data: {
-            title: stripHtml(post.title) ?? post.title,
-            snippet: stripHtml(post.snippet) ?? post.snippet,
+            title: stripHtml(post.title) ?? decodeHtml(post.title),
+            snippet: stripHtml(post.snippet) ?? decodeHtml(post.snippet),
             body: post.body,
-            funFact: post.funFact,
+            funFact: decodeHtml(post.funFact),
             tags: post.tags,
             category: post.category,
             categories: post.categories,
@@ -95,11 +106,11 @@ async function runGeneration() {
             zhTitle: stripHtml(zh?.zhTitle),
             zhSnippet: stripHtml(zh?.zhSnippet),
             zhBody: zh?.zhBody ?? null,
-            zhFunFact: zh?.zhFunFact ?? null,
+            zhFunFact: zh?.zhFunFact ? decodeHtml(zh.zhFunFact) : null,
             zhTitleCn: cnField(stripHtml(zh?.zhTitle) ?? zh?.zhTitle),
             zhSnippetCn: cnField(stripHtml(zh?.zhSnippet) ?? zh?.zhSnippet),
             zhBodyCn: cnField(zh?.zhBody),
-            zhFunFactCn: cnField(zh?.zhFunFact),
+            zhFunFactCn: zh?.zhFunFact ? cnField(decodeHtml(zh.zhFunFact)) : null,
           },
         });
 
