@@ -87,6 +87,57 @@ Respond with this exact JSON schema:
   }
 }
 
+export interface DetectedEvent {
+  slug: string;
+  label: string;
+  description: string;
+  query: string;
+  score: number;
+}
+
+export async function detectHotEvent(headlines: string[]): Promise<DetectedEvent | null> {
+  const client = getClient();
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+
+  const prompt = `You are a senior news editor with decades of experience. Given the following news headlines from today, determine if any single story qualifies as a truly exceptional, rare, must-cover event.
+
+Criteria for a qualifying event (score 8-10):
+- Extremely rare historically (e.g. terrorist attack on US soil, assassination of a world leader, major nuclear incident, catastrophic natural disaster with mass casualties)
+- Geopolitically significant and rapidly developing
+- Would make a reasonable person say "I can't believe this is happening"
+
+Do NOT qualify routine events even if large (e.g. Japan earthquakes are common — only qualify if there are mass casualties or a nuclear facility is damaged, score would then be 8+). Political news, economic news, and celebrity news should rarely exceed score 6.
+
+Headlines:
+${headlines.slice(0, 100).join("\n")}
+
+Return ONLY valid JSON. If no story qualifies (score < 8), return {"score":0}. Otherwise return:
+{"slug":"kebab-case-event-id","label":"emoji + short display label","description":"one sentence explaining the event","query":"search keywords to find more articles about this event","score":8}`;
+
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 300,
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: "You are a senior news editor. Return only valid JSON, no markdown." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const raw = res.choices[0]?.message?.content ?? "";
+    const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonrepair(jsonMatch[0]));
+    if (!parsed.score || parsed.score < 8) return null;
+    return parsed as DetectedEvent;
+  } catch (err) {
+    console.error("[detectHotEvent] error:", err);
+    return null;
+  }
+}
+
 function getClient() {
   return new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,

@@ -463,6 +463,31 @@ export async function fetchArticlesByCategory(category: Category, days = 14): Pr
   return articles.sort(() => Math.random() - 0.5);
 }
 
+export async function fetchAllFeeds(days = 2): Promise<RawArticle[]> {
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const allFeeds = (Object.values(FEEDS) as { url: string; source: string }[][]).flat();
+  const uniqueUrls = new Map<string, string>();
+  for (const { url, source } of allFeeds) uniqueUrls.set(url, source);
+
+  const results = await Promise.allSettled(
+    Array.from(uniqueUrls.entries()).map(([url, source]) => fetchFeed(url, source, cutoff))
+  );
+
+  const articles: RawArticle[] = [];
+  const seenUrls = new Set<string>();
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      for (const article of result.value) {
+        if (!seenUrls.has(article.link)) {
+          seenUrls.add(article.link);
+          articles.push(article);
+        }
+      }
+    }
+  }
+  return articles;
+}
+
 const STOPWORDS = new Set([
   "the","a","an","and","or","but","in","on","at","to","for","of","with","by",
   "is","are","was","were","be","been","has","have","had","will","would","could",

@@ -91,7 +91,20 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category") ?? "all";
   const catsParam = searchParams.get("cats");
   const q = searchParams.get("q")?.trim() ?? "";
+  const eventSlug = searchParams.get("event") ?? "";
   const today = startOfToday();
+
+  // Event feed path — all posts for a specific event slug
+  if (eventSlug) {
+    const posts = applyMeta(await prisma.post.findMany({
+      where: { eventSlug },
+      orderBy: { id: "desc" },
+      take: LIMIT,
+      skip: page * LIMIT,
+      include: { _count: { select: { comments: true } } },
+    }));
+    return NextResponse.json({ posts, nextCursor: posts.length === LIMIT ? String(page + 1) : null });
+  }
 
   // Search path — simple full-text filter across all posts
   if (q) {

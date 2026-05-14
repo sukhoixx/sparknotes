@@ -96,11 +96,24 @@ model Post {
   zhBodyCn    String?  @db.Text
   zhFunFactCn String?  @db.Text
   likes       Int      @default(0)
+  eventSlug   String?  @db.VarChar(100)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
 
   comments Comment[]
   likedBy  Like[]
+}
+
+// Singleton row (id=1) — upserted by the event detector
+model ActiveEvent {
+  id          Int      @id @default(1)
+  slug        String   @db.VarChar(100)
+  label       String   @db.VarChar(200)
+  description String?  @db.VarChar(500)
+  query       String   @db.VarChar(300)
+  score       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Like {
