@@ -147,7 +147,7 @@ export async function translateLabel(label: string): Promise<string | null> {
       max_tokens: 80,
       temperature: 0.3,
       messages: [
-        { role: "system", content: "Translate the news event label to Traditional Chinese (繁體中文). Return ONLY the translated text, nothing else." },
+        { role: "system", content: "你是台灣資深新聞記者。將以下突發新聞事件標題翻譯成繁體中文，語氣自然流暢，符合台灣媒體用語習慣。專有名詞如 NATO、FBI、AI 等英文縮寫保留英文，人名地名依台灣慣例音譯或翻譯。只回傳翻譯後的文字，不加任何說明或標點以外的內容。" },
         { role: "user", content: label },
       ],
     });
