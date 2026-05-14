@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { slug, label, description, query, score, maxPosts = 30 } = body;
+  const { slug, label, description, query, score, maxPosts = 3 } = body;
 
   if (!slug || !label || !query) {
     return NextResponse.json({ error: "slug, label, and query are required" }, { status: 400 });
@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
 
   if (!isRunning) {
     isRunning = true;
-    runEventGenerate(event.slug, event.label, event.query, 30);
+    runEventGenerate(event.slug, event.label, event.query, 5);
   }
 
   return NextResponse.json({ message: `Hot event detected: "${event.label}"`, event });
