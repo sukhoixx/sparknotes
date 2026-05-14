@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchAllFeeds, filterRecentDuplicates, selectTopArticles } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, detectHotEvent, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, detectHotEvent, translateLabel, CATEGORIES } from "@/lib/ai";
 
 const _toSimplified = Converter({ from: "tw", to: "cn" });
 function toSimplified(text: string): string {
@@ -117,11 +117,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "slug, label, and query are required" }, { status: 400 });
   }
 
+  const labelZh = await translateLabel(label).catch(() => null);
+
   // Upsert the active event in DB
   await prisma.activeEvent.upsert({
     where: { id: 1 },
-    create: { id: 1, slug, label, description: description ?? null, query, score: score ?? 10 },
-    update: { slug, label, description: description ?? null, query, score: score ?? 10 },
+    create: { id: 1, slug, label, labelZh, description: description ?? null, query, score: score ?? 10 },
+    update: { slug, label, labelZh, description: description ?? null, query, score: score ?? 10 },
   });
 
   if (isRunning) {
@@ -149,11 +151,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "No exceptional event detected", score: 0 });
   }
 
+  const labelZh = await translateLabel(event.label).catch(() => null);
+
   // Upsert active event
   await prisma.activeEvent.upsert({
     where: { id: 1 },
-    create: { id: 1, ...event },
-    update: { ...event },
+    create: { id: 1, ...event, labelZh },
+    update: { ...event, labelZh },
   });
 
   if (!isRunning) {

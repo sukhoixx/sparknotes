@@ -9,7 +9,7 @@ export async function GET() {
   return NextResponse.json({
     minVersion: process.env.MIN_APP_VERSION ?? "1.0.0",
     activeEvent: activeEvent
-      ? { slug: activeEvent.slug, label: activeEvent.label, description: activeEvent.description }
+      ? { slug: activeEvent.slug, label: activeEvent.label, labelZh: activeEvent.labelZh ?? null, description: activeEvent.description }
       : null,
   });
 }

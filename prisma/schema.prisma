@@ -109,6 +109,7 @@ model ActiveEvent {
   id          Int      @id @default(1)
   slug        String   @db.VarChar(100)
   label       String   @db.VarChar(200)
+  labelZh     String?  @db.VarChar(200)
   description String?  @db.VarChar(500)
   query       String   @db.VarChar(300)
   score       Int

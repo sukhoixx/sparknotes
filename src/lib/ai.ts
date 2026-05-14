@@ -138,6 +138,25 @@ Return ONLY valid JSON. If no story qualifies (score < 8), return {"score":0}. O
   }
 }
 
+export async function translateLabel(label: string): Promise<string | null> {
+  const client = getClient();
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 80,
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: "Translate the news event label to Traditional Chinese (繁體中文). Return ONLY the translated text, nothing else." },
+        { role: "user", content: label },
+      ],
+    });
+    return res.choices[0]?.message?.content?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function getClient() {
   return new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
