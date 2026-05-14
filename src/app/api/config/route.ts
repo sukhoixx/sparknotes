@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const activeEvent = await prisma.activeEvent.findUnique({ where: { id: 1 } }).catch(() => null);
 
