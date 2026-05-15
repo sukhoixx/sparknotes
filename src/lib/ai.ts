@@ -99,14 +99,19 @@ export async function detectHotEvent(headlines: string[]): Promise<DetectedEvent
   const client = getClient();
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
-  const prompt = `You are a senior news editor with decades of experience. Given the following news headlines from today, determine if any single story qualifies as a truly exceptional, rare, must-cover event.
+  const prompt = `You are the chief editor of a major international news agency. Your job is to decide whether any story breaking right now is exceptional enough to warrant a dedicated "Breaking" tab that interrupts the normal news feed.
 
-Criteria for a qualifying event (score 8-10):
-- Extremely rare historically (e.g. terrorist attack on US soil, assassination of a world leader, major nuclear incident, catastrophic natural disaster with mass casualties)
-- Geopolitically significant and rapidly developing
-- Would make a reasonable person say "I can't believe this is happening"
+A story qualifies (score 8-10) if it is:
+- A historic diplomatic moment: a head of state visiting a longtime adversary, a surprise peace deal, a sudden alliance shift, or a major summit between rivals — especially involving major powers (US, China, Russia, EU, Taiwan, North Korea, Middle East powers, etc.)
+- A catastrophic or violent event: assassination or attempted assassination of a world leader, major terrorist attack, nuclear incident, large-scale military strike, or natural disaster with mass casualties — anywhere in the world
+- A geopolitical rupture: a country leaving a major alliance, a declaration of war or ceasefire, a coup in a strategically significant nation, a landmark election result that shocks the world
 
-Do NOT qualify routine events even if large (e.g. Japan earthquakes are common — only qualify if there are mass casualties or a nuclear facility is damaged, score would then be 8+). Political news, economic news, and celebrity news should rarely exceed score 6.
+Do NOT qualify (score ≤ 6):
+- Routine political news, legislation, executive orders, or policy disputes
+- Economic data, market moves, trade negotiations (unless a treaty is signed)
+- Celebrity, sports, or entertainment news
+- Common natural disasters in disaster-prone regions without extraordinary casualties
+- Ongoing conflicts with no major new development
 
 Headlines:
 ${headlines.slice(0, 100).join("\n")}
@@ -120,7 +125,7 @@ Return ONLY valid JSON. If no story qualifies (score < 8), return {"score":0}. O
       max_tokens: 300,
       temperature: 0.2,
       messages: [
-        { role: "system", content: "You are a senior news editor. Return only valid JSON, no markdown." },
+        { role: "system", content: "You are the chief editor of a major international news agency. Return only valid JSON, no markdown." },
         { role: "user", content: prompt },
       ],
     });
