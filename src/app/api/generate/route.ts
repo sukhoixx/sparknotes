@@ -73,7 +73,7 @@ async function runGeneration() {
       const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : NEW_PER_RUN;
       console.log(`[generate] ${category}: generating ${perRun} new posts`);
 
-      const articles = await fetchArticlesByCategory(category as Category, 14);
+      const articles = await fetchArticlesByCategory(category as Category, 1);
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
       const topArticles = selectTopArticles(deduped, perRun);
