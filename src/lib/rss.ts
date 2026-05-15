@@ -448,7 +448,19 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
         };
       })
     );
-    return articles.filter((a) => a.title.length > 10 && a.link);
+    const LOW_QUALITY_PATTERNS = [
+      /news bulletin/i,
+      /morning bulletin/i,
+      /evening bulletin/i,
+      /daily bulletin/i,
+      /watch.{0,20}bulletin/i,
+      /bulletin.{0,30}euronews/i,
+      /access.{0,30}full.{0,20}bulletin/i,
+    ];
+    return articles.filter((a) =>
+      a.title.length > 10 && a.link &&
+      !LOW_QUALITY_PATTERNS.some((p) => p.test(a.title) || p.test(a.content))
+    );
   } catch {
     return [];
   }
