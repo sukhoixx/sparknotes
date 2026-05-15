@@ -101,10 +101,13 @@ export async function detectHotEvent(headlines: string[]): Promise<DetectedEvent
 
   const prompt = `You are the chief editor of a major international news agency. Your job is to decide whether any story breaking right now is exceptional enough to warrant a dedicated "Breaking" tab that interrupts the normal news feed.
 
-A story qualifies (score 8-10) if it is:
-- A historic diplomatic moment: a head of state visiting a longtime adversary, a surprise peace deal, a sudden alliance shift, or a major summit between rivals — especially involving major powers (US, China, Russia, EU, Taiwan, North Korea, Middle East powers, etc.)
-- A catastrophic or violent event: assassination or attempted assassination of a world leader, major terrorist attack, nuclear incident, large-scale military strike, or natural disaster with mass casualties — anywhere in the world
-- A geopolitical rupture: a country leaving a major alliance, a declaration of war or ceasefire, a coup in a strategically significant nation, a landmark election result that shocks the world
+A story qualifies (score 8-10) if it meets ALL of the following:
+1. It will dominate front pages of major global media (NYT, BBC, Reuters, etc.) for several days — not just today
+2. Ordinary people who don't follow politics closely will still hear about it and care
+3. It falls into one of these categories:
+   - A historic diplomatic moment: a head of state visiting a longtime adversary, a surprise peace deal, a sudden alliance shift, or a major summit between rivals — especially involving major powers (US, China, Russia, EU, Taiwan, North Korea, Middle East powers, etc.)
+   - A catastrophic or violent event: assassination or attempted assassination of a world leader, major terrorist attack, nuclear incident, large-scale military strike, or natural disaster with mass casualties — anywhere in the world
+   - A geopolitical rupture: a country leaving a major alliance, a declaration of war or ceasefire, a coup in a strategically significant nation, a landmark election result that shocks the world
 
 Do NOT qualify (score ≤ 6):
 - Routine political news, legislation, executive orders, or policy disputes
