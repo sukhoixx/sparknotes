@@ -387,6 +387,22 @@ const FEED_TIMEOUT_MS = 6000;
 const IMAGE_CHECK_TIMEOUT_MS = 2000;
 const IMAGE_MIN_BYTES = 5000;
 
+export async function fetchOgImage(articleUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(articleUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0)", "Range": "bytes=0-16383" },
+      signal: AbortSignal.timeout(5000),
+    });
+    const html = await res.text();
+    const match =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function isValidImageUrl(url: string): Promise<boolean> {
   try {
     const controller = new AbortController();

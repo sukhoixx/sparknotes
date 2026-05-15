@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates } from "@/lib/rss";
+import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates, fetchOgImage } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
@@ -102,7 +102,7 @@ async function runGeneration() {
             authorEmoji: post.authorEmoji,
             authorBg: post.authorBg,
             sourceUrl: post.sourceUrl,
-            imageUrl: post.imageUrl ?? null,
+            imageUrl: post.imageUrl ?? await fetchOgImage(article.link).catch(() => null) ?? null,
             zhTitle: stripHtml(zh?.zhTitle),
             zhSnippet: stripHtml(zh?.zhSnippet),
             zhBody: zh?.zhBody ?? null,
