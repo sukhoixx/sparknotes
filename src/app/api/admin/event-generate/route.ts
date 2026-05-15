@@ -35,7 +35,7 @@ async function runEventGenerate(eventSlug: string, eventLabel: string, maxPosts:
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
     const existingTitles = new Set(existing.map((p) => p.title));
 
-    const allArticles = await fetchAllFeeds(3);
+    const allArticles = await fetchAllFeeds(1);
     console.log(`[event-generate] ${allArticles.length} total articles from all feeds`);
 
     const candidates = allArticles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
