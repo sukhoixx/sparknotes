@@ -8,6 +8,6 @@ export async function GET() {
 
   return NextResponse.json({
     minVersion: process.env.MIN_APP_VERSION ?? "1.0.0",
-    activeEvents: rows.map((e) => ({ slug: e.slug, label: e.label, labelZh: e.labelZh ?? null, description: e.description })),
+    activeEvents: rows.map((e) => ({ slot: e.id, slug: e.slug, label: e.label, labelZh: e.labelZh ?? null, description: e.description })),
   });
 }
