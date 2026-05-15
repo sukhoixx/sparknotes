@@ -149,7 +149,8 @@ export async function GET(req: NextRequest) {
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
                ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
         FROM \`Post\` p
-        WHERE JSON_OVERLAPS(
+        WHERE p.eventSlug IS NULL
+          AND JSON_OVERLAPS(
           IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
           CAST(${JSON.stringify(activeCats)} AS JSON))
       )
@@ -171,6 +172,7 @@ export async function GET(req: NextRequest) {
                (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
         FROM \`Post\` p
         WHERE p.id NOT IN (${Prisma.join(seenIds.length ? seenIds : [0])})
+          AND p.eventSlug IS NULL
           AND JSON_OVERLAPS(
             IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
             CAST(${JSON.stringify(activeCats)} AS JSON))
@@ -184,6 +186,7 @@ export async function GET(req: NextRequest) {
     const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
       SELECT COUNT(*) AS n FROM \`Post\` p
       WHERE p.publishedAt >= ${today}
+        AND p.eventSlug IS NULL
         AND JSON_CONTAINS(
           IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
           JSON_QUOTE(${category}))
@@ -205,7 +208,7 @@ export async function GET(req: NextRequest) {
     if (Number(todayCount) > 0 && page < todayPages) {
       const raw = await prisma.$queryRaw<RawRow[]>`
         SELECT ${selectCols} FROM \`Post\` p
-        WHERE p.publishedAt >= ${today} AND ${catFilter}
+        WHERE p.publishedAt >= ${today} AND p.eventSlug IS NULL AND ${catFilter}
         ORDER BY p.id DESC LIMIT ${LIMIT} OFFSET ${page * LIMIT}
       `;
       posts = mapRaw(raw);
@@ -213,7 +216,7 @@ export async function GET(req: NextRequest) {
       const olderPage = Number(todayCount) > 0 ? page - todayPages : page;
       const raw = await prisma.$queryRaw<RawRow[]>`
         SELECT ${selectCols} FROM \`Post\` p
-        WHERE p.publishedAt < ${today} AND ${catFilter}
+        WHERE p.publishedAt < ${today} AND p.eventSlug IS NULL AND ${catFilter}
         ORDER BY p.id DESC LIMIT ${LIMIT} OFFSET ${olderPage * LIMIT}
       `;
       posts = mapRaw(raw);
