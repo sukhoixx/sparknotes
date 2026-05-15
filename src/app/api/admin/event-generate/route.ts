@@ -104,18 +104,25 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { slug, label, description, query, score, maxPosts = 3 } = body;
+  const { slug, label, description, query, score, maxPosts = 3, slot } = body;
 
   if (!slug || !label || !query) {
     return NextResponse.json({ error: "slug, label, and query are required" }, { status: 400 });
   }
 
+  // Determine which slot (1–3) to use
+  let targetSlot: number = slot ? Math.min(3, Math.max(1, parseInt(slot))) : 0;
+  if (!targetSlot) {
+    const existing = await prisma.activeEvent.findMany({ select: { id: true } });
+    const usedIds = new Set(existing.map((e) => e.id));
+    targetSlot = [1, 2, 3].find((id) => !usedIds.has(id)) ?? 1;
+  }
+
   const labelZh = await translateLabel(label).catch(() => null);
 
-  // Upsert the active event in DB
   await prisma.activeEvent.upsert({
-    where: { id: 1 },
-    create: { id: 1, slug, label, labelZh, description: description ?? null, query, score: score ?? 10 },
+    where: { id: targetSlot },
+    create: { id: targetSlot, slug, label, labelZh, description: description ?? null, query, score: score ?? 10 },
     update: { slug, label, labelZh, description: description ?? null, query, score: score ?? 10 },
   });
 
@@ -146,10 +153,14 @@ export async function GET(req: NextRequest) {
 
   const labelZh = await translateLabel(event.label).catch(() => null);
 
-  // Upsert active event
+  // Find next empty slot (1–3), default to slot 1 if all full
+  const existing = await prisma.activeEvent.findMany({ select: { id: true } });
+  const usedIds = new Set(existing.map((e) => e.id));
+  const autoSlot = [1, 2, 3].find((id) => !usedIds.has(id)) ?? 1;
+
   await prisma.activeEvent.upsert({
-    where: { id: 1 },
-    create: { id: 1, ...event, labelZh },
+    where: { id: autoSlot },
+    create: { id: autoSlot, ...event, labelZh },
     update: { ...event, labelZh },
   });
 
@@ -167,6 +178,12 @@ export async function DELETE(req: NextRequest) {
   if (secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  await prisma.activeEvent.deleteMany({ where: { id: 1 } });
-  return NextResponse.json({ message: "Active event cleared" });
+  const slot = req.nextUrl.searchParams.get("slot");
+  if (slot) {
+    const id = Math.min(3, Math.max(1, parseInt(slot)));
+    await prisma.activeEvent.deleteMany({ where: { id } });
+    return NextResponse.json({ message: `Slot ${id} cleared` });
+  }
+  await prisma.activeEvent.deleteMany();
+  return NextResponse.json({ message: "All active events cleared" });
 }
