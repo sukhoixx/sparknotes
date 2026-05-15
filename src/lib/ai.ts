@@ -138,6 +138,38 @@ Return ONLY valid JSON. If no story qualifies (score < 8), return {"score":0}. O
   }
 }
 
+export async function filterRelevantArticles(
+  articles: { title: string }[],
+  eventLabel: string,
+): Promise<number[]> {
+  if (articles.length === 0) return [];
+  const client = getClient();
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  const numbered = articles.map((a, i) => `${i}: ${a.title}`).join("\n");
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 300,
+      temperature: 0,
+      messages: [
+        {
+          role: "system",
+          content: "You are a strict news editor. Given a breaking news event and a numbered list of article headlines, return a JSON array of the indices of articles whose headline is directly and primarily about that event. Exclude articles that only mention the topic in passing. Return ONLY a valid JSON array like [0,3,7] — no explanation, no markdown.",
+        },
+        {
+          role: "user",
+          content: `Event: ${eventLabel}\n\nHeadlines:\n${numbered}`,
+        },
+      ],
+    });
+    const raw = res.choices[0]?.message?.content?.trim() ?? "[]";
+    const match = raw.match(/\[[\d,\s]*\]/);
+    return match ? (JSON.parse(match[0]) as number[]).filter((i) => i >= 0 && i < articles.length) : [];
+  } catch {
+    return articles.map((_, i) => i);
+  }
+}
+
 export async function translateLabel(label: string): Promise<string | null> {
   const client = getClient();
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";

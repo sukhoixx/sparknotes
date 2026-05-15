@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchAllFeeds, filterRecentDuplicates, selectTopArticles } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, detectHotEvent, translateLabel, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, detectHotEvent, translateLabel, filterRelevantArticles, CATEGORIES } from "@/lib/ai";
 
 const _toSimplified = Converter({ from: "tw", to: "cn" });
 function toSimplified(text: string): string {
@@ -27,16 +27,9 @@ function decodeHtml(s: string): string {
     .replace(/&#x([0-9a-fA-F]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
 }
 
-function articleMatchesQuery(article: { title: string; content: string }, query: string): boolean {
-  const text = `${article.title} ${article.content}`.toLowerCase();
-  const keywords = query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
-  const matchCount = keywords.filter((kw) => text.includes(kw)).length;
-  return matchCount >= Math.ceil(keywords.length * 0.5);
-}
-
 let isRunning = false;
 
-async function runEventGenerate(eventSlug: string, eventLabel: string, query: string, maxPosts: number) {
+async function runEventGenerate(eventSlug: string, eventLabel: string, maxPosts: number) {
   try {
     const existing = await prisma.post.findMany({ select: { sourceUrl: true, title: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
@@ -45,10 +38,10 @@ async function runEventGenerate(eventSlug: string, eventLabel: string, query: st
     const allArticles = await fetchAllFeeds(3);
     console.log(`[event-generate] ${allArticles.length} total articles from all feeds`);
 
-    const matching = allArticles.filter(
-      (a) => !existingUrls.has(a.link) && !existingTitles.has(a.title) && articleMatchesQuery(a, query)
-    );
-    console.log(`[event-generate] ${matching.length} articles match query "${query}"`);
+    const candidates = allArticles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
+    const relevantIndices = await filterRelevantArticles(candidates, eventLabel);
+    const matching = relevantIndices.map((i) => candidates[i]);
+    console.log(`[event-generate] ${matching.length}/${candidates.length} articles judged relevant by AI`);
 
     const recentTitles = existing.map((p) => p.title);
     const deduped = filterRecentDuplicates(matching, recentTitles);
@@ -131,7 +124,7 @@ export async function POST(req: NextRequest) {
   }
 
   isRunning = true;
-  runEventGenerate(slug, label, query, maxPosts);
+  runEventGenerate(slug, label, maxPosts);
   return NextResponse.json({ message: `Event "${slug}" saved and generation started` });
 }
 
@@ -162,7 +155,7 @@ export async function GET(req: NextRequest) {
 
   if (!isRunning) {
     isRunning = true;
-    runEventGenerate(event.slug, event.label, event.query, 5);
+    runEventGenerate(event.slug, event.label, 5);
   }
 
   return NextResponse.json({ message: `Hot event detected: "${event.label}"`, event });
