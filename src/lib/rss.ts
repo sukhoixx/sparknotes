@@ -466,8 +466,8 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
   }
 }
 
-export async function fetchArticlesByCategory(category: Category, days = 14): Promise<RawArticle[]> {
-  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function fetchArticlesByCategory(category: Category, hours = 3): Promise<RawArticle[]> {
+  const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
   const feeds = FEEDS[category];
 
   const results = await Promise.allSettled(

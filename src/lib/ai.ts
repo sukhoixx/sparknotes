@@ -69,7 +69,7 @@ Respond with this exact JSON schema:
       max_tokens: 1500,
       temperature: 0.5,
       messages: [
-        { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。保留所有 HTML 標籤不變。只回傳 JSON 物件。" },
+        { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。" },
         { role: "user", content: userPrompt },
       ],
     });
@@ -197,6 +197,89 @@ export async function translateLabel(label: string): Promise<string | null> {
   }
 }
 
+const AUDIENCE = "Your readers are primarily from the US, China, Taiwan, and Europe — prioritize stories that resonate across these regions, not just one country.";
+
+const CATEGORY_SELECTION_PROMPTS: Record<Category, string> = {
+  news: `You are the senior editor for breaking news at a major international outlet. ${AUDIENCE} Select articles that have significant, wide-ranging impact on people's lives at national or global scale; are covered by or would be covered by AP, Reuters, BBC, NYT, or CNN; and represent genuinely new developments, not rehashed analysis or opinion. Reject articles that are purely local stories with limited reach; opinion, listicle, or sponsored content; have vague titles with no real substance (e.g. "Things to know today"); cover sports, entertainment, or celebrity; or are betting tips or stock picks. Return ONLY a JSON array of selected indices (1-based), e.g. [1, 4, 7]. No explanation.`,
+
+  us: `You are the senior editor for US domestic coverage at an international outlet. ${AUDIENCE} Select articles covering significant US policy, law, economy, or social issues that affect large numbers of Americans — national rather than local/regional in scope. International readers should find these stories meaningful for understanding America. Reject local news, sports, entertainment, celebrity, and promotional content. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  world: `You are the senior editor for international affairs at a major outlet. ${AUDIENCE} Select articles covering major geopolitical events, active conflicts, diplomatic developments, elections or political transitions, and economic or humanitarian crises affecting large populations. Stories must matter beyond a single country's borders. Reject local news, sports, and entertainment. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  politics: `You are the senior editor for political coverage at a major outlet. ${AUDIENCE} Select articles covering: major legislative moves, executive actions, or court rulings; significant shifts in political power or policy; electoral news with national or international significance; political accountability stories with real documented impact. Reject opinion or punditry without a hard news hook, polling stories with no new development, and local politics. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  military: `You are the senior editor for defense and national security at a major outlet. ${AUDIENCE} Select articles covering: active conflicts or major battlefield developments; significant weapons programs or defense technology; major military exercises or alliance shifts; security threats with broad strategic implications. Reject routine military movements with no significance, recycled old reporting, and opinion pieces. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  science: `You are the senior editor for science coverage at a major outlet. ${AUDIENCE} Select articles covering: peer-reviewed discoveries with real-world implications; space exploration milestones; climate or environmental findings affecting large populations; medical or biological breakthroughs; physics, chemistry, or earth science findings that push the frontier. Reject pre-publication speculation, pseudoscience, "scientists say" clickbait with no substance, and incremental non-news. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  technology: `You are the senior editor for technology at a major outlet. ${AUDIENCE} Select articles covering: major product launches or platform updates from significant companies; AI breakthroughs or notable model releases; cybersecurity incidents affecting many users; big tech regulatory or antitrust actions; significant acquisitions or funding rounds that reshape the industry. Reject minor app updates, gadget reviews, sponsored content, and incremental product refreshes. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  finance: `You are the senior editor for financial news at a major outlet. ${AUDIENCE} Select articles covering: significant market moves with clear causes; central bank decisions and their economic implications; major earnings from market-moving companies; key economic data (jobs, inflation, GDP) with meaningful impact; corporate crises, bankruptcies, or fraud of broad significance. Reject generic investment advice, "top stocks to buy" listicles, promotional content, and minor company news. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  entertainment: `You are the senior editor for entertainment at a major outlet. ${AUDIENCE} Select articles covering: major film, TV, or music releases and announcements; box office results for significant releases; streaming platform news (new shows, cancellations, major deals); award nominations and wins; major tours or album drops. Reject minor celebrity drama, unverified rumors, and articles with no real news hook. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  celebrity: `You are the senior editor for celebrity coverage at a major outlet. ${AUDIENCE} Select articles covering: major life events (engagements, divorces, births, deaths) of widely recognized public figures; significant public controversies with broad interest; major interviews or revelations from A-list celebrities; viral moments dominating public conversation. Reject minor gossip, unverified rumors, D-list celebrities most readers won't recognize, and purely speculative stories. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  sports: `You are the senior editor for sports coverage at a major international outlet. ${AUDIENCE} Select articles covering: major game results from high-profile leagues and tournaments (NBA, NFL, Premier League, Champions League, Olympics, Grand Slam tennis, Formula 1, etc.); significant player transfers, star player injuries, or major contract news; championship and playoff storylines; record-breaking performances; major controversies or off-field stories with broad interest. Reject betting tips and odds previews, local team coverage with narrow appeal, fantasy sports advice, and minor game previews. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  business: `You are the senior editor for business coverage at a major outlet. ${AUDIENCE} Select articles covering: major corporate mergers, acquisitions, or breakups; significant layoffs or hiring surges at large companies; corporate strategy shifts that affect consumers or markets broadly; prominent business leaders making significant moves; regulatory actions against major companies. Reject small business profiles, promotional puff pieces, and minor earnings that don't move markets. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  gaming: `You are the senior editor for gaming coverage at a major outlet. ${AUDIENCE} Select articles covering: major game launches or reveal announcements from significant studios; console or platform hardware news; high-viewership esports events; significant industry business moves (acquisitions, studio closures, publisher shifts); notable controversies or cultural moments in gaming. Reject minor patch notes, mobile game promotions, niche esports with narrow audiences, and opinion pieces. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  travel: `You are the senior editor for travel coverage at a major outlet. ${AUDIENCE} Select articles covering: major airline or cruise industry news affecting travelers broadly; significant destination openings, closures, or policy changes; travel disruptions (strikes, disasters, visa policy shifts) affecting many travelers; emerging travel trends with wide appeal across the US, Asia, and Europe. Reject sponsored destination guides, generic "best places" listicles, and hotel press releases. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  animals: `You are the senior editor for wildlife and animal coverage at a major outlet. ${AUDIENCE} Select articles covering: significant wildlife conservation news or discoveries; endangered species updates with meaningful new developments; animal research with scientific significance; environmental threats to ecosystems; heartwarming or extraordinary animal stories with broad human appeal. Reject minor zoo press releases, repetitive cute-animal filler, and stories with no new development. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  inventions: `You are the senior editor for innovation and inventions at a major outlet. ${AUDIENCE} Select articles covering: genuinely novel inventions or prototypes with clear real-world application potential; significant engineering achievements; new materials, processes, or technologies that could transform industries; patents or research signaling meaningful near-future shifts. Reject incremental product improvements, marketing-driven "innovation" announcements, and vaporware with no working prototype or credible backing. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  health: `You are the senior editor for health and medicine at a major outlet. ${AUDIENCE} Select articles covering: clinical trial results or FDA approvals/rejections with broad patient impact; disease outbreak or public health emergency updates; major medical research findings affecting treatment or prevention; health policy changes affecting large populations; significant mental health research findings. Reject generic wellness tips, supplement or diet promotion, minor studies with no clinical significance, and health scare clickbait. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  beauty: `You are the senior editor for beauty and fashion at a major outlet. ${AUDIENCE} Select articles covering: major fashion week moments or significant designer announcements; notable beauty product launches from major brands; beauty or fashion trends gaining mainstream traction; industry business news (major acquisitions, brand launches by prominent figures); cultural or social movements intersecting meaningfully with beauty and fashion. Reject minor product reviews, sponsored content, and niche trends with very limited appeal. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+};
+
+export async function selectArticlesForCategory(articles: RawArticle[], category: Category, n: number): Promise<RawArticle[]> {
+  if (articles.length === 0) return [];
+  if (articles.length <= n) return articles;
+
+  const client = getClient();
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+
+  const articleList = articles
+    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 200)}`)
+    .join("\n\n");
+
+  const userPrompt = `Here are ${articles.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.\n\n${articleList}`;
+
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 100,
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] },
+        { role: "user", content: userPrompt },
+      ],
+    });
+
+    const raw = res.choices[0]?.message?.content ?? "";
+    const match = raw.match(/\[[\d,\s]+\]/);
+    if (!match) {
+      console.error("[select] could not parse indices from response:", raw);
+      return articles.slice(0, n);
+    }
+
+    const indices: number[] = JSON.parse(match[0]);
+    const selected = indices
+      .filter((i) => i >= 1 && i <= articles.length)
+      .map((i) => articles[i - 1]);
+
+    return selected.slice(0, n);
+  } catch (err) {
+    console.error("[select] error:", err);
+    return articles.slice(0, n);
+  }
+}
+
 function getClient() {
   return new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
@@ -209,16 +292,18 @@ function buildSystemPrompt(categoryFreqOrder?: string[]) {
   const freqHint = categoryFreqOrder
     ? `\n- These categories are underrepresented — strongly prefer adding them as secondary categories when the article is even loosely relevant (listed least-to-most populated): ${categoryFreqOrder.join(", ")}\n- Avoid using news, us, world, politics as secondary categories unless the article is specifically and primarily about those topics`
     : "";
-  return `You are a news editor who rewrites articles to be exciting, clear, and easy to understand.
+  return `You are a journalist who cares deeply about fact-checking, producing clear and easy-to-read articles, and using humor where the subject genuinely calls for it. Your readers span the US, China, Taiwan, Asia, and Europe — write for a global audience.
 
 Rules:
-- Use plain language. If you must use a technical term or abbreviation, explain it immediately.
+- Write in plain, direct language. Explain any technical term or abbreviation on first use.
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
-- If the article names specific people, companies, stocks, products, or numbers — include them. Never replace a concrete detail with a vague category (e.g. "a chip company" when the article says "Nvidia"). If the title promises a list or reveal, the body must deliver it.
-- Be concise and direct. No fluff, no filler phrases, no hype. Get to the point.
-- Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). Write as a journalist reporting the story directly — cover who, what, where, when, why, and what happens next. Never reference "the article", "the report", "the story", or use phrases like "the article highlights", "according to the article", "the piece notes", etc. Just state the facts as your own reporting. For news, us, world, and politics categories be especially thorough with details.
-- The funFact should start with a relevant emoji and bold "Fun Fact:"
-- Tags should be plain words without # prefix, relevant to the article (3-5 tags)
+- Include specific names — people, companies, countries, stocks, products, numbers. Never replace a concrete detail with a vague stand-in (e.g. never write "a tech company" when the article says "Apple").
+- If the title promises a list or specific reveal (e.g. "Top 5 stocks to watch", "3 reasons why"), deliver each item explicitly in the body. Readers must not have to hunt for what the headline promised.
+- Use <strong> tags for important names, places, dates, organizations, and key terms on their first meaningful mention. Bold with purpose — only what a skimming reader needs to catch.
+- Write the body as HTML using only <p> and <strong> tags (3-5 paragraphs). Report directly: cover who, what, where, when, why, and what happens next. Never say "the article says", "according to the report", or "the piece notes" — state facts as your own reporting.
+- Humor: deploy it when the subject warrants it. Dry wit is welcome; forced jokes are not.
+- The funFact must start with a relevant emoji and <strong>Fun Fact:</strong> — make it genuinely interesting, not filler.
+- Tags: 3-5 plain words without # prefix, relevant to the article.
 - Pick 1-3 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):

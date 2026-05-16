@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, selectTopArticles, filterRecentDuplicates, fetchOgImage } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, CATEGORIES } from "@/lib/ai";
+import { fetchArticlesByCategory, filterRecentDuplicates, fetchOgImage } from "@/lib/rss";
+import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
 const _toSimplified = Converter({ from: "tw", to: "cn" });
@@ -73,11 +73,11 @@ async function runGeneration() {
       const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : NEW_PER_RUN;
       console.log(`[generate] ${category}: generating ${perRun} new posts`);
 
-      const articles = await fetchArticlesByCategory(category as Category, 1);
+      const articles = await fetchArticlesByCategory(category as Category, 3);
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
-      const topArticles = selectTopArticles(deduped, perRun);
-      console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} top stories selected`);
+      const topArticles = await selectArticlesForCategory(deduped, category as Category, perRun);
+      console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} AI-selected`);
 
       let generated = 0;
       for (const article of topArticles) {
