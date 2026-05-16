@@ -41,6 +41,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.independent.co.uk/rss",                        source: "The Independent" },
     { url: "https://theweek.com/rss",                                  source: "The Week" },
     { url: "https://feeds.nbcnews.com/nbcnews/public/news",            source: "NBC News" },
+    { url: "https://feeds.feedburner.com/rsscna/engnews/",             source: "Focus Taiwan" },
+    { url: "https://www.taipeitimes.com/xml/index.rss",                source: "Taipei Times" },
   ],
   world: [
     { url: "https://feeds.reuters.com/Reuters/worldNews",              source: "Reuters World" },
@@ -56,6 +58,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://rss.nytimes.com/services/xml/rss/nf/World.xml",   source: "NYT World" },
     { url: "https://thediplomat.com/feed/",                            source: "The Diplomat" },
     { url: "https://theconversation.com/us/articles.atom",             source: "The Conversation" },
+    { url: "https://feeds.feedburner.com/rsscna/engnews/",             source: "Focus Taiwan" },
+    { url: "https://www.taipeitimes.com/xml/index.rss",                source: "Taipei Times" },
   ],
   us: [
     { url: "https://rss.nytimes.com/services/xml/rss/nf/US.xml",      source: "NYT US" },
@@ -93,6 +97,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.motherjones.com/feed/",                      source: "Mother Jones" },
     { url: "https://www.thenation.com/feed/?post_type=article",      source: "The Nation" },
     { url: "https://slate.com/feeds/all.rss",                        source: "Slate" },
+    { url: "https://feeds.feedburner.com/rsscna/engnews/",           source: "Focus Taiwan" },
+    { url: "https://www.taipeitimes.com/xml/index.rss",              source: "Taipei Times" },
     { url: "https://theintercept.com/feed/?rss",                     source: "The Intercept" },
     { url: "https://talkingpointsmemo.com/feed/",                    source: "Talking Points Memo" },
     { url: "https://www.huffpost.com/section/politics/feed",         source: "HuffPost Politics" },
