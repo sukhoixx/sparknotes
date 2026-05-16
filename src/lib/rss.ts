@@ -43,6 +43,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://feeds.nbcnews.com/nbcnews/public/news",            source: "NBC News" },
     { url: "https://feeds.feedburner.com/rsscna/engnews/",             source: "Focus Taiwan" },
     { url: "https://www.taipeitimes.com/xml/index.rss",                source: "Taipei Times" },
+    { url: "https://www.scmp.com/rss/91/feed/",                        source: "SCMP" },
+    { url: "https://hongkongfp.com/feed/",                             source: "HK Free Press" },
   ],
   world: [
     { url: "https://feeds.reuters.com/Reuters/worldNews",              source: "Reuters World" },
@@ -60,6 +62,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://theconversation.com/us/articles.atom",             source: "The Conversation" },
     { url: "https://feeds.feedburner.com/rsscna/engnews/",             source: "Focus Taiwan" },
     { url: "https://www.taipeitimes.com/xml/index.rss",                source: "Taipei Times" },
+    { url: "https://www.scmp.com/rss/91/feed/",                        source: "SCMP" },
+    { url: "https://hongkongfp.com/feed/",                             source: "HK Free Press" },
   ],
   us: [
     { url: "https://rss.nytimes.com/services/xml/rss/nf/US.xml",      source: "NYT US" },
@@ -99,6 +103,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://slate.com/feeds/all.rss",                        source: "Slate" },
     { url: "https://feeds.feedburner.com/rsscna/engnews/",           source: "Focus Taiwan" },
     { url: "https://www.taipeitimes.com/xml/index.rss",              source: "Taipei Times" },
+    { url: "https://www.scmp.com/rss/91/feed/",                      source: "SCMP" },
+    { url: "https://hongkongfp.com/feed/",                           source: "HK Free Press" },
     { url: "https://theintercept.com/feed/?rss",                     source: "The Intercept" },
     { url: "https://talkingpointsmemo.com/feed/",                    source: "Talking Points Memo" },
     { url: "https://www.huffpost.com/section/politics/feed",         source: "HuffPost Politics" },
@@ -243,6 +249,7 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://feeds.feedburner.com/businessinsider",         source: "Business Insider" },
     { url: "https://qz.com/feed",                                  source: "Quartz" },
     { url: "https://www.vox.com/rss/money/index.xml",              source: "Vox Money" },
+    { url: "https://www.scmp.com/rss/5/feed/",                    source: "SCMP Business" },
   ],
   gaming: [
     { url: "https://www.ign.com/rss/articles",                     source: "IGN" },
@@ -321,6 +328,7 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.bankrate.com/rss/",                        source: "Bankrate" },
     { url: "https://www.zacks.com/rss.php",                        source: "Zacks" },
     { url: "https://money.com/feed/",                              source: "Money" },
+    { url: "https://www.scmp.com/rss/4/feed/",                    source: "SCMP Finance" },
   ],
   health: [
     { url: "https://rss.webmd.com/rss/rss.aspx?RSSSource=RS_WEBMD_0", source: "WebMD" },
