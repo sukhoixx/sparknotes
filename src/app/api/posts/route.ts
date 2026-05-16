@@ -7,14 +7,20 @@ import type { Category } from "@/lib/ai";
 
 type MappedPost = ReturnType<typeof mapRaw>[number];
 
-// Sort by recency overall, but shuffle within buckets of bucketSize so the
-// feed varies on each refresh while newest posts still appear near the top.
-function bucketShuffle(posts: MappedPost[], bucketSize: number): MappedPost[] {
+// Sort by recency, then shuffle posts within 3-hour windows so the feed
+// varies on each refresh while older posts never leapfrog newer ones.
+const BUCKET_MS = 3 * 60 * 60 * 1000;
+function bucketShuffle(posts: MappedPost[]): MappedPost[] {
   const sorted = [...posts].sort((a, b) => b.id - a.id);
   const result: MappedPost[] = [];
-  for (let i = 0; i < sorted.length; i += bucketSize) {
-    const bucket = sorted.slice(i, i + bucketSize).sort(() => Math.random() - 0.5);
+  let i = 0;
+  while (i < sorted.length) {
+    const bucketStart = sorted[i].createdAt.getTime();
+    let j = i + 1;
+    while (j < sorted.length && bucketStart - sorted[j].createdAt.getTime() < BUCKET_MS) j++;
+    const bucket = sorted.slice(i, j).sort(() => Math.random() - 0.5);
     result.push(...bucket);
+    i = j;
   }
   return result;
 }
@@ -173,7 +179,7 @@ export async function GET(req: NextRequest) {
     `;
 
     // Pass activeCats so mapRaw can pick the correct display category
-    posts = bucketShuffle(mapRaw(raw as RawRow[], activeCats), activeCats.length);
+    posts = bucketShuffle(mapRaw(raw as RawRow[], activeCats));
 
     // Fill up from user's subscribed categories if sparse
     if (posts.length < LIMIT) {
@@ -194,7 +200,7 @@ export async function GET(req: NextRequest) {
         ORDER BY p.id DESC
         LIMIT ${LIMIT - posts.length}
       `;
-      posts = bucketShuffle([...posts, ...mapRaw(extraRaw as RawRow[], activeCats)], activeCats.length);
+      posts = bucketShuffle([...posts, ...mapRaw(extraRaw as RawRow[], activeCats)]);
     }
   } else {
     // Single category tab — filter by categories array so cross-tagged posts appear
