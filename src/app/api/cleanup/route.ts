@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
   }
 
   const days = parseInt(req.nextUrl.searchParams.get("days") ?? "7");
-  if (isNaN(days) || days < 1) {
-    return NextResponse.json({ error: "Invalid days parameter" }, { status: 400 });
+  if (isNaN(days) || days < 7) {
+    return NextResponse.json({ error: "days must be >= 7" }, { status: 400 });
   }
 
   if (isRunning) {
