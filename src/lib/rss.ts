@@ -439,7 +439,7 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
           undefined;
         const imageUrl = rawImageUrl && await isValidImageUrl(rawImageUrl) ? rawImageUrl : undefined;
         return {
-          title: item.title ?? "",
+          title: (item.title ?? "").trim(),
           content: item.contentSnippet ?? item.summary ?? item.title ?? "",
           link: (item.link ?? "").trim(),
           pubDate: new Date(item.pubDate!),
