@@ -12,7 +12,7 @@ function interleaveByCategory(posts: MappedPost[]): MappedPost[] {
     if (!groups.has(post.category)) groups.set(post.category, []);
     groups.get(post.category)!.push(post);
   }
-  const queues = [...groups.values()].sort(() => Math.random() - 0.5);
+  const queues = Array.from(groups.values()).sort(() => Math.random() - 0.5);
   const result: MappedPost[] = [];
   let i = 0;
   while (queues.some((q) => q.length > 0)) {
