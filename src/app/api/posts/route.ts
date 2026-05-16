@@ -4,6 +4,25 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORIES, CATEGORY_META } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
+type MappedPost = ReturnType<typeof mapRaw>[number];
+
+function interleaveByCategory(posts: MappedPost[]): MappedPost[] {
+  const groups = new Map<string, MappedPost[]>();
+  for (const post of posts) {
+    if (!groups.has(post.category)) groups.set(post.category, []);
+    groups.get(post.category)!.push(post);
+  }
+  const queues = [...groups.values()].sort(() => Math.random() - 0.5);
+  const result: MappedPost[] = [];
+  let i = 0;
+  while (queues.some((q) => q.length > 0)) {
+    const q = queues[i % queues.length];
+    if (q.length > 0) result.push(q.shift()!);
+    i++;
+  }
+  return result;
+}
+
 function applyMeta<T extends { category: string }>(posts: T[]): T[] {
   return posts.map((p) => {
     const meta = CATEGORY_META[p.category as Category];
@@ -158,7 +177,7 @@ export async function GET(req: NextRequest) {
     `;
 
     // Pass activeCats so mapRaw can pick the correct display category
-    posts = mapRaw(raw as RawRow[], activeCats).sort(() => Math.random() - 0.5);
+    posts = interleaveByCategory(mapRaw(raw as RawRow[], activeCats));
 
     // Fill up from user's subscribed categories if sparse
     if (posts.length < LIMIT) {
@@ -179,7 +198,7 @@ export async function GET(req: NextRequest) {
         ORDER BY p.id DESC
         LIMIT ${LIMIT - posts.length}
       `;
-      posts = [...posts, ...mapRaw(extraRaw as RawRow[], activeCats)].sort(() => Math.random() - 0.5);
+      posts = interleaveByCategory([...posts, ...mapRaw(extraRaw as RawRow[], activeCats)]);
     }
   } else {
     // Single category tab — filter by categories array so cross-tagged posts appear
@@ -222,7 +241,6 @@ export async function GET(req: NextRequest) {
       posts = mapRaw(raw);
     }
 
-    posts = posts.sort(() => Math.random() - 0.5);
   }
 
   const nextCursor = posts.length > 0 ? String(page + 1) : null;
