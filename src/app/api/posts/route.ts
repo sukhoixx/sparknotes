@@ -85,10 +85,7 @@ function mapRaw(rows: RawRow[], activeCats?: string[]) {
         ? JSON.parse(rawCats)
         : [p.category];
 
-    // For For You feed: override display category with first matching subscribed category
-    const displayCategory = activeCats
-      ? (cats.find((c) => activeCats.includes(c)) ?? p.category)
-      : p.category;
+    const displayCategory = cats[0] ?? p.category;
 
     const categoryEmojis = cats
       .map((c) => CATEGORY_META[c as Category]?.emoji)
