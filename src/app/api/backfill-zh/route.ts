@@ -33,8 +33,9 @@ let isRunning = false;
 
 async function runBackfill() {
   try {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const posts = await prisma.post.findMany({
-      where: { zhTitle: null },
+      where: { zhTitle: null, createdAt: { gte: oneDayAgo } },
       select: { id: true, title: true, snippet: true, body: true, funFact: true },
       orderBy: { createdAt: "desc" },
     });
