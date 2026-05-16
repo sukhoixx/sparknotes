@@ -45,6 +45,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.taipeitimes.com/xml/index.rss",                source: "Taipei Times" },
     { url: "https://www.scmp.com/rss/91/feed/",                        source: "SCMP" },
     { url: "https://hongkongfp.com/feed/",                             source: "HK Free Press" },
+    { url: "https://www.straitstimes.com/rss.xml",                     source: "Straits Times" },
+    { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311", source: "CNA Singapore" },
   ],
   world: [
     { url: "https://feeds.reuters.com/Reuters/worldNews",              source: "Reuters World" },
@@ -64,6 +66,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.taipeitimes.com/xml/index.rss",                source: "Taipei Times" },
     { url: "https://www.scmp.com/rss/91/feed/",                        source: "SCMP" },
     { url: "https://hongkongfp.com/feed/",                             source: "HK Free Press" },
+    { url: "https://www.straitstimes.com/rss.xml",                     source: "Straits Times" },
+    { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311", source: "CNA Singapore" },
   ],
   us: [
     { url: "https://rss.nytimes.com/services/xml/rss/nf/US.xml",      source: "NYT US" },
@@ -105,6 +109,8 @@ const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.taipeitimes.com/xml/index.rss",              source: "Taipei Times" },
     { url: "https://www.scmp.com/rss/91/feed/",                      source: "SCMP" },
     { url: "https://hongkongfp.com/feed/",                           source: "HK Free Press" },
+    { url: "https://www.straitstimes.com/rss.xml",                   source: "Straits Times" },
+    { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311", source: "CNA Singapore" },
     { url: "https://theintercept.com/feed/?rss",                     source: "The Intercept" },
     { url: "https://talkingpointsmemo.com/feed/",                    source: "Talking Points Memo" },
     { url: "https://www.huffpost.com/section/politics/feed",         source: "HuffPost Politics" },
