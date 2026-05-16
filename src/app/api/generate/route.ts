@@ -86,7 +86,11 @@ async function runGeneration() {
         const post = await summarizeArticle(article, category as Category, categoryFreqOrder);
         if (!post) continue;
 
-        const zh = await translateToTraditionalChinese(post);
+        let zh = await translateToTraditionalChinese(post);
+        if (!zh) {
+          console.log(`[generate] ${category}: translation failed, retrying...`);
+          zh = await translateToTraditionalChinese(post);
+        }
 
         await prisma.post.create({
           data: {
