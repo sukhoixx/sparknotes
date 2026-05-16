@@ -33,7 +33,7 @@ function stripHtml(s: string | null | undefined): string | null {
 }
 
 const NEW_PER_RUN = 5;
-const HIGH_VOLUME_CATEGORIES = new Set(["news", "world", "us"]);
+const HIGH_VOLUME_CATEGORIES = new Set(["news", "world"]);
 const HIGH_VOLUME_PER_RUN = 10;
 
 let isRunning = false;
