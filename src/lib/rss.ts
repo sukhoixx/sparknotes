@@ -441,7 +441,7 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
         return {
           title: item.title ?? "",
           content: item.contentSnippet ?? item.summary ?? item.title ?? "",
-          link: item.link ?? "",
+          link: (item.link ?? "").trim(),
           pubDate: new Date(item.pubDate!),
           source,
           ...(imageUrl ? { imageUrl } : {}),
