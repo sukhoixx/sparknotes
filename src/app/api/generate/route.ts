@@ -17,7 +17,8 @@ function toSimplified(text: string): string {
 function cnField(s: string | null | undefined): string | null {
   return s ? toSimplified(s) : null;
 }
-function decodeHtml(s: string): string {
+function decodeHtml(s: string | null | undefined): string {
+  if (!s) return "";
   return s
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
