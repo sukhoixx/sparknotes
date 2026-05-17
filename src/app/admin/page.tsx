@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 
 const CATEGORIES = ["news","us","world","politics","military","science","technology","finance","entertainment","celebrity","sports","business","gaming","travel","animals","inventions","health","beauty"];
 
@@ -20,6 +20,28 @@ type Stats = {
 };
 
 type ActionStatus = "idle" | "running" | "done" | "error";
+
+type OverlayField = {
+  key: string;
+  label: string;
+  placeholder?: string;
+  type?: "text" | "number";
+  min?: number;
+  max?: number;
+  required?: boolean;
+  options?: string[];
+};
+
+type PendingAction = {
+  key: string;
+  url: string;
+  method: string;
+  params?: Record<string, string>;
+  body?: object;
+  curlCmd?: string;
+  fields?: OverlayField[];
+  buildFromValues?: (values: Record<string, string>) => { params?: Record<string, string>; body?: object; curlCmd: string };
+};
 
 function useAction(secret: string) {
   const [status, setStatus] = useState<Record<string, ActionStatus>>({});
@@ -50,8 +72,6 @@ function useAction(secret: string) {
   return { status, messages, run };
 }
 
-type PendingAction = { key: string; url: string; params?: Record<string, string>; body?: object; method?: string; curlCmd: string };
-
 function buildCurl(url: string, secret: string, params?: Record<string, string>, body?: object, method = "POST"): string {
   const fullUrl = params ? `${url}?${new URLSearchParams(params)}` : url;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -74,22 +94,23 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [cleanupDays, setCleanupDays] = useState("7");
   const [pending, setPending] = useState<PendingAction | null>(null);
-  const [evSlug, setEvSlug] = useState("");
-  const [evLabel, setEvLabel] = useState("");
-  const [evQuery, setEvQuery] = useState("");
-  const [evDesc, setEvDesc] = useState("");
-  const [evScore, setEvScore] = useState("10");
-  const [evMaxPosts, setEvMaxPosts] = useState("3");
-  const [evSlot, setEvSlot] = useState("");
   const { status, messages, run } = useAction(secret);
 
-  function requestRun(key: string, url: string, params?: Record<string, string>, body?: object, method = "POST") {
-    setPending({ key, url, params, body, method, curlCmd: buildCurl(url, secret, params, body, method) });
+  function requestRun(key: string, url: string, options: {
+    params?: Record<string, string>;
+    body?: object;
+    method?: string;
+    fields?: OverlayField[];
+    buildFromValues?: (values: Record<string, string>) => { params?: Record<string, string>; body?: object; curlCmd: string };
+  } = {}) {
+    const { params, body, method = "POST", fields, buildFromValues } = options;
+    const curlCmd = buildFromValues ? undefined : buildCurl(url, secret, params, body, method);
+    setPending({ key, url, method, params, body, curlCmd, fields, buildFromValues });
   }
 
-  function confirmRun() {
+  function confirmRun(params?: Record<string, string>, body?: object) {
     if (!pending) return;
-    run(pending.key, pending.url, pending.params, pending.body, pending.method);
+    run(pending.key, pending.url, params ?? pending.params, body ?? pending.body, pending.method);
     setPending(null);
   }
 
@@ -153,7 +174,6 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* Actions */}
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Actions</h2>
         <div style={styles.actionGrid}>
@@ -176,7 +196,7 @@ export default function AdminPage() {
             description="Delete posts older than N days (min 7)"
             status={status["cleanup"] ?? "idle"}
             message={messages["cleanup"]}
-            onRun={() => requestRun("cleanup", "/api/cleanup", { days: cleanupDays })}
+            onRun={() => requestRun("cleanup", "/api/cleanup", { params: { days: cleanupDays } })}
             extra={
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
                 <label style={styles.label}>Days:</label>
@@ -192,105 +212,56 @@ export default function AdminPage() {
           />
           <ActionCard
             label="Detect Hot Event"
-            description="Scan current headlines and activate a Breaking tab if warranted"
-            status={status["event"] ?? "idle"}
-            message={messages["event"]}
-            onRun={() => requestRun("event", "/api/admin/event-generate", undefined, undefined, "GET")}
+            description="Scan current headlines and auto-activate a Breaking tab if warranted"
+            status={status["event-detect"] ?? "idle"}
+            message={messages["event-detect"]}
+            onRun={() => requestRun("event-detect", "/api/admin/event-generate", { method: "GET" })}
+          />
+          <ActionCard
+            label="Create Event"
+            description="Manually create a Breaking event tab with a custom slug, label, and search query"
+            status={status["event-create"] ?? "idle"}
+            message={messages["event-create"]}
+            onRun={() => requestRun("event-create", "/api/admin/event-generate", {
+              method: "POST",
+              fields: [
+                { key: "slug",        label: "Slug *",                      placeholder: "e.g. trump-tariffs",                required: true },
+                { key: "label",       label: "Label *",                     placeholder: "e.g. Trump Tariffs",                required: true },
+                { key: "query",       label: "Query *",                     placeholder: "e.g. Trump trade war tariffs China", required: true },
+                { key: "description", label: "Description",                 placeholder: "Short description shown to users" },
+                { key: "score",       label: "Score (1–10)",   type: "number", min: 1, max: 10, placeholder: "10" },
+                { key: "maxPosts",    label: "Max Posts",      type: "number", min: 1,           placeholder: "3" },
+                { key: "slot",        label: "Slot (1–3, auto if blank)", type: "number", min: 1, max: 3, placeholder: "auto" },
+              ],
+              buildFromValues: (values) => {
+                const body: Record<string, unknown> = { slug: values.slug, label: values.label, query: values.query };
+                if (values.description) body.description = values.description;
+                if (values.score)    body.score    = parseInt(values.score);
+                if (values.maxPosts) body.maxPosts = parseInt(values.maxPosts);
+                if (values.slot)     body.slot     = parseInt(values.slot);
+                return { body: body as object, curlCmd: buildCurl("/api/admin/event-generate", secret, undefined, body as object) };
+              },
+            })}
+          />
+          <ActionCard
+            label="Clear Event Slot"
+            description="Remove an active event from a Breaking tab slot"
+            status={status["event-clear"] ?? "idle"}
+            message={messages["event-clear"]}
+            onRun={() => requestRun("event-clear", "/api/admin/event-generate", {
+              method: "DELETE",
+              fields: [
+                { key: "slot", label: "Slot to clear", options: ["1", "2", "3", "All"], required: true },
+              ],
+              buildFromValues: (values) => {
+                const params = values.slot && values.slot !== "All" ? { slot: values.slot } : undefined;
+                return { params, curlCmd: buildCurl("/api/admin/event-generate", secret, params, undefined, "DELETE") };
+              },
+            })}
           />
         </div>
       </section>
 
-      {/* Manual event creation */}
-      <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Create Event Manually</h2>
-        <div style={styles.eventForm}>
-          <div style={styles.eventRow}>
-            <div style={styles.eventField}>
-              <label style={styles.label}>Slug *</label>
-              <input style={styles.input} placeholder="e.g. trump-tariffs" value={evSlug} onChange={(e) => setEvSlug(e.target.value)} />
-            </div>
-            <div style={styles.eventField}>
-              <label style={styles.label}>Label *</label>
-              <input style={styles.input} placeholder="e.g. Trump Tariffs" value={evLabel} onChange={(e) => setEvLabel(e.target.value)} />
-            </div>
-          </div>
-          <div style={styles.eventField}>
-            <label style={styles.label}>Query * (used to find relevant articles)</label>
-            <input style={styles.input} placeholder="e.g. Trump trade war tariffs China" value={evQuery} onChange={(e) => setEvQuery(e.target.value)} />
-          </div>
-          <div style={styles.eventField}>
-            <label style={styles.label}>Description</label>
-            <input style={styles.input} placeholder="Short description shown to users" value={evDesc} onChange={(e) => setEvDesc(e.target.value)} />
-          </div>
-          <div style={styles.eventRow}>
-            <div style={styles.eventField}>
-              <label style={styles.label}>Score (urgency 1–10)</label>
-              <input style={styles.input} type="number" min={1} max={10} value={evScore} onChange={(e) => setEvScore(e.target.value)} />
-            </div>
-            <div style={styles.eventField}>
-              <label style={styles.label}>Max Posts</label>
-              <input style={styles.input} type="number" min={1} value={evMaxPosts} onChange={(e) => setEvMaxPosts(e.target.value)} />
-            </div>
-            <div style={styles.eventField}>
-              <label style={styles.label}>Slot (1–3, auto if blank)</label>
-              <input style={styles.input} type="number" min={1} max={3} placeholder="auto" value={evSlot} onChange={(e) => setEvSlot(e.target.value)} />
-            </div>
-          </div>
-          <button
-            disabled={!evSlug || !evLabel || !evQuery || status["event-manual"] === "running"}
-            style={{ ...styles.btnPrimary, ...(status["event-manual"] === "done" ? { backgroundColor: "#22c55e" } : status["event-manual"] === "error" ? { backgroundColor: "#ef4444" } : {}) }}
-            onClick={() => {
-              const body: Record<string, unknown> = { slug: evSlug, label: evLabel, query: evQuery };
-              if (evDesc) body.description = evDesc;
-              if (evScore) body.score = parseInt(evScore);
-              if (evMaxPosts) body.maxPosts = parseInt(evMaxPosts);
-              if (evSlot) body.slot = parseInt(evSlot);
-              requestRun("event-manual", "/api/admin/event-generate", undefined, body);
-            }}
-          >
-            {status["event-manual"] === "running" ? "Creating…" : status["event-manual"] === "done" ? "Created!" : "Create Event"}
-          </button>
-          {messages["event-manual"] && (
-            <div style={{ ...styles.actionMsg, color: status["event-manual"] === "done" ? "#22c55e" : "#ef4444" }}>
-              {messages["event-manual"]}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Clear event slots */}
-      <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Clear Event Slots</h2>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {[1, 2, 3].map((slot) => (
-            <button
-              key={slot}
-              style={{ ...styles.btnSmall, padding: "8px 20px", fontSize: 13 }}
-              onClick={() => requestRun(`del-slot-${slot}`, "/api/admin/event-generate", { slot: String(slot) }, undefined, "DELETE")}
-              disabled={status[`del-slot-${slot}`] === "running"}
-            >
-              {status[`del-slot-${slot}`] === "running" ? "Clearing…" : `Clear Slot ${slot}`}
-            </button>
-          ))}
-          <button
-            style={{ ...styles.btnSmall, padding: "8px 20px", fontSize: 13, color: "#ef4444" }}
-            onClick={() => requestRun("del-slot-all", "/api/admin/event-generate", undefined, undefined, "DELETE")}
-            disabled={status["del-slot-all"] === "running"}
-          >
-            {status["del-slot-all"] === "running" ? "Clearing…" : "Clear All"}
-          </button>
-        </div>
-        {[1, 2, 3, "all"].map((slot) => {
-          const key = `del-slot-${slot}`;
-          return messages[key] ? (
-            <div key={key} style={{ ...styles.actionMsg, marginTop: 8, color: status[key] === "done" ? "#22c55e" : "#ef4444" }}>
-              Slot {slot}: {messages[key]}
-            </div>
-          ) : null;
-        })}
-      </section>
-
-      {/* Post stats */}
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Posts</h2>
         <div style={styles.statRow}>
@@ -300,16 +271,12 @@ export default function AdminPage() {
         </div>
         <h3 style={styles.subTitle}>Posts by Category</h3>
         <div style={styles.barList}>
-          {CATEGORIES.map((cat) => {
-            const val = stats?.posts.byCategory[cat] ?? 0;
-            return (
-              <BarRow key={cat} label={cat} value={val} max={maxPostCat} color="#6c47ff" />
-            );
-          })}
+          {CATEGORIES.map((cat) => (
+            <BarRow key={cat} label={cat} value={stats?.posts.byCategory[cat] ?? 0} max={maxPostCat} color="#6c47ff" />
+          ))}
         </div>
       </section>
 
-      {/* User stats */}
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Users</h2>
         <div style={styles.statRow}>
@@ -321,27 +288,81 @@ export default function AdminPage() {
         </div>
         <h3 style={styles.subTitle}>Subscribers by Category</h3>
         <div style={styles.barList}>
-          {CATEGORIES.map((cat) => {
-            const val = stats?.users.byCategory[cat] ?? 0;
-            return (
-              <BarRow key={cat} label={cat} value={val} max={maxUserCat} color="#00b4d8" />
-            );
-          })}
+          {CATEGORIES.map((cat) => (
+            <BarRow key={cat} label={cat} value={stats?.users.byCategory[cat] ?? 0} max={maxUserCat} color="#00b4d8" />
+          ))}
         </div>
       </section>
 
       {pending && (
-        <div style={styles.overlayBackdrop} onClick={() => setPending(null)}>
-          <div style={styles.overlayBox} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.overlayTitle}>Confirm Action</div>
-            <pre style={styles.curlBox}>{pending.curlCmd}</pre>
-            <div style={styles.overlayBtns}>
-              <button style={styles.btnCancel} onClick={() => setPending(null)}>Cancel</button>
-              <button style={styles.btnPrimary} onClick={confirmRun}>Run</button>
-            </div>
-          </div>
-        </div>
+        <ConfirmOverlay
+          pending={pending}
+          onCancel={() => setPending(null)}
+          onConfirm={confirmRun}
+        />
       )}
+    </div>
+  );
+}
+
+function ConfirmOverlay({ pending, onCancel, onConfirm }: {
+  pending: PendingAction;
+  onCancel: () => void;
+  onConfirm: (params?: Record<string, string>, body?: object) => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+
+  const computed = useMemo(() => {
+    if (pending.buildFromValues) return pending.buildFromValues(values);
+    return { params: pending.params, body: pending.body, curlCmd: pending.curlCmd ?? "" };
+  }, [pending, values]);
+
+  const canConfirm = !pending.fields ||
+    pending.fields.filter((f) => f.required).every((f) => values[f.key]?.trim());
+
+  return (
+    <div style={styles.overlayBackdrop} onClick={onCancel}>
+      <div style={styles.overlayBox} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.overlayTitle}>Confirm Action</div>
+        {pending.fields?.map((field, idx) => (
+          <div key={field.key} style={{ marginBottom: 12 }}>
+            <label style={{ ...styles.label, display: "block", marginBottom: 4 }}>{field.label}</label>
+            {field.options ? (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {field.options.map((opt) => (
+                  <button
+                    key={opt}
+                    style={{ ...styles.btnSmall, padding: "6px 18px", ...(values[field.key] === opt ? { backgroundColor: "#6c47ff", color: "#fff" } : {}) }}
+                    onClick={() => setValues((v) => ({ ...v, [field.key]: opt }))}>
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <input
+                autoFocus={idx === 0}
+                style={{ ...styles.input, marginBottom: 0 }}
+                type={field.type ?? "text"}
+                placeholder={field.placeholder}
+                min={field.min}
+                max={field.max}
+                value={values[field.key] ?? ""}
+                onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
+              />
+            )}
+          </div>
+        ))}
+        <pre style={styles.curlBox}>{computed.curlCmd}</pre>
+        <div style={styles.overlayBtns}>
+          <button style={styles.btnCancel} onClick={onCancel}>Cancel</button>
+          <button
+            style={{ ...styles.btnPrimary, width: "auto", opacity: canConfirm ? 1 : 0.5 }}
+            disabled={!canConfirm}
+            onClick={() => onConfirm(computed.params, computed.body)}>
+            Run
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -418,18 +439,15 @@ const styles: Record<string, React.CSSProperties> = {
   barValue: { width: 36, fontSize: 12, color: "#64748b", textAlign: "right" },
   btnPrimary: { backgroundColor: "#6c47ff", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "100%" },
   btnSmall: { backgroundColor: "#1e293b", color: "#94a3b8", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, cursor: "pointer" },
-  input: { backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8, padding: "8px 12px", color: "#f1f5f9", fontSize: 14, width: "100%", marginBottom: 12, boxSizing: "border-box" },
+  input: { backgroundColor: "#0f172a", border: "1px solid #334155", borderRadius: 8, padding: "8px 12px", color: "#f1f5f9", fontSize: 14, width: "100%", marginBottom: 12, boxSizing: "border-box" },
   label: { fontSize: 12, color: "#94a3b8" },
   loginWrap: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#0f172a" },
   loginForm: { backgroundColor: "#1e293b", borderRadius: 16, padding: 32, width: 300 },
   loginTitle: { fontSize: 20, fontWeight: 800, color: "#f1f5f9", marginBottom: 20, textAlign: "center" },
   overlayBackdrop: { position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
-  overlayBox: { backgroundColor: "#1e293b", borderRadius: 16, padding: 28, width: 560, maxWidth: "90vw" },
+  overlayBox: { backgroundColor: "#1e293b", borderRadius: 16, padding: 28, width: 560, maxWidth: "90vw", maxHeight: "90vh", overflowY: "auto" },
   overlayTitle: { fontSize: 16, fontWeight: 700, marginBottom: 16, color: "#f1f5f9" },
-  curlBox: { backgroundColor: "#0f172a", borderRadius: 8, padding: 16, fontSize: 12, color: "#7dd3fc", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: "0 0 20px" },
+  curlBox: { backgroundColor: "#0f172a", borderRadius: 8, padding: 16, fontSize: 12, color: "#7dd3fc", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: "16px 0 20px" },
   overlayBtns: { display: "flex", gap: 12, justifyContent: "flex-end" },
   btnCancel: { backgroundColor: "#334155", color: "#94a3b8", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  eventForm: { backgroundColor: "#1e293b", borderRadius: 12, padding: 20, display: "flex", flexDirection: "column", gap: 0 },
-  eventRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
-  eventField: { display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 },
 };
