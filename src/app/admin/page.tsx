@@ -25,15 +25,18 @@ function useAction(secret: string) {
   const [status, setStatus] = useState<Record<string, ActionStatus>>({});
   const [messages, setMessages] = useState<Record<string, string>>({});
 
-  const run = useCallback(async (key: string, url: string, params?: Record<string, string>) => {
+  const run = useCallback(async (key: string, url: string, params?: Record<string, string>, body?: object, method = "POST") => {
     setStatus((s) => ({ ...s, [key]: "running" }));
     try {
-      const fullUrl = params
-        ? `${url}?${new URLSearchParams(params)}`
-        : url;
+      const fullUrl = params ? `${url}?${new URLSearchParams(params)}` : url;
       const res = await fetch(fullUrl, {
-        method: "POST",
-        headers: { "x-generate-secret": secret, "x-admin-secret": secret },
+        method,
+        headers: {
+          "x-generate-secret": secret,
+          "x-admin-secret": secret,
+          ...(body ? { "Content-Type": "application/json" } : {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
       });
       const data = await res.json();
       setMessages((m) => ({ ...m, [key]: data.message ?? data.error ?? "Done" }));
@@ -47,16 +50,21 @@ function useAction(secret: string) {
   return { status, messages, run };
 }
 
-type PendingAction = { key: string; url: string; params?: Record<string, string>; curlCmd: string };
+type PendingAction = { key: string; url: string; params?: Record<string, string>; body?: object; method?: string; curlCmd: string };
 
-function buildCurl(url: string, secret: string, params?: Record<string, string>): string {
+function buildCurl(url: string, secret: string, params?: Record<string, string>, body?: object, method = "POST"): string {
   const fullUrl = params ? `${url}?${new URLSearchParams(params)}` : url;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return [
-    `curl -X POST '${origin}${fullUrl}'`,
+  const lines = [
+    `curl -X ${method} '${origin}${fullUrl}'`,
     `  -H 'x-generate-secret: ${secret}'`,
     `  -H 'x-admin-secret: ${secret}'`,
-  ].join(" \\\n");
+  ];
+  if (body) {
+    lines.push(`  -H 'Content-Type: application/json'`);
+    lines.push(`  -d '${JSON.stringify(body, null, 2)}'`);
+  }
+  return lines.join(" \\\n");
 }
 
 export default function AdminPage() {
@@ -66,15 +74,22 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [cleanupDays, setCleanupDays] = useState("7");
   const [pending, setPending] = useState<PendingAction | null>(null);
+  const [evSlug, setEvSlug] = useState("");
+  const [evLabel, setEvLabel] = useState("");
+  const [evQuery, setEvQuery] = useState("");
+  const [evDesc, setEvDesc] = useState("");
+  const [evScore, setEvScore] = useState("10");
+  const [evMaxPosts, setEvMaxPosts] = useState("3");
+  const [evSlot, setEvSlot] = useState("");
   const { status, messages, run } = useAction(secret);
 
-  function requestRun(key: string, url: string, params?: Record<string, string>) {
-    setPending({ key, url, params, curlCmd: buildCurl(url, secret, params) });
+  function requestRun(key: string, url: string, params?: Record<string, string>, body?: object, method = "POST") {
+    setPending({ key, url, params, body, method, curlCmd: buildCurl(url, secret, params, body, method) });
   }
 
   function confirmRun() {
     if (!pending) return;
-    run(pending.key, pending.url, pending.params);
+    run(pending.key, pending.url, pending.params, pending.body, pending.method);
     setPending(null);
   }
 
@@ -180,8 +195,66 @@ export default function AdminPage() {
             description="Scan current headlines and activate a Breaking tab if warranted"
             status={status["event"] ?? "idle"}
             message={messages["event"]}
-            onRun={() => requestRun("event", "/api/admin/event-generate")}
+            onRun={() => requestRun("event", "/api/admin/event-generate", undefined, undefined, "GET")}
           />
+        </div>
+      </section>
+
+      {/* Manual event creation */}
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>Create Event Manually</h2>
+        <div style={styles.eventForm}>
+          <div style={styles.eventRow}>
+            <div style={styles.eventField}>
+              <label style={styles.label}>Slug *</label>
+              <input style={styles.input} placeholder="e.g. trump-tariffs" value={evSlug} onChange={(e) => setEvSlug(e.target.value)} />
+            </div>
+            <div style={styles.eventField}>
+              <label style={styles.label}>Label *</label>
+              <input style={styles.input} placeholder="e.g. Trump Tariffs" value={evLabel} onChange={(e) => setEvLabel(e.target.value)} />
+            </div>
+          </div>
+          <div style={styles.eventField}>
+            <label style={styles.label}>Query * (used to find relevant articles)</label>
+            <input style={styles.input} placeholder="e.g. Trump trade war tariffs China" value={evQuery} onChange={(e) => setEvQuery(e.target.value)} />
+          </div>
+          <div style={styles.eventField}>
+            <label style={styles.label}>Description</label>
+            <input style={styles.input} placeholder="Short description shown to users" value={evDesc} onChange={(e) => setEvDesc(e.target.value)} />
+          </div>
+          <div style={styles.eventRow}>
+            <div style={styles.eventField}>
+              <label style={styles.label}>Score (urgency 1–10)</label>
+              <input style={styles.input} type="number" min={1} max={10} value={evScore} onChange={(e) => setEvScore(e.target.value)} />
+            </div>
+            <div style={styles.eventField}>
+              <label style={styles.label}>Max Posts</label>
+              <input style={styles.input} type="number" min={1} value={evMaxPosts} onChange={(e) => setEvMaxPosts(e.target.value)} />
+            </div>
+            <div style={styles.eventField}>
+              <label style={styles.label}>Slot (1–3, auto if blank)</label>
+              <input style={styles.input} type="number" min={1} max={3} placeholder="auto" value={evSlot} onChange={(e) => setEvSlot(e.target.value)} />
+            </div>
+          </div>
+          <button
+            disabled={!evSlug || !evLabel || !evQuery || status["event-manual"] === "running"}
+            style={{ ...styles.btnPrimary, ...(status["event-manual"] === "done" ? { backgroundColor: "#22c55e" } : status["event-manual"] === "error" ? { backgroundColor: "#ef4444" } : {}) }}
+            onClick={() => {
+              const body: Record<string, unknown> = { slug: evSlug, label: evLabel, query: evQuery };
+              if (evDesc) body.description = evDesc;
+              if (evScore) body.score = parseInt(evScore);
+              if (evMaxPosts) body.maxPosts = parseInt(evMaxPosts);
+              if (evSlot) body.slot = parseInt(evSlot);
+              requestRun("event-manual", "/api/admin/event-generate", undefined, body);
+            }}
+          >
+            {status["event-manual"] === "running" ? "Creating…" : status["event-manual"] === "done" ? "Created!" : "Create Event"}
+          </button>
+          {messages["event-manual"] && (
+            <div style={{ ...styles.actionMsg, color: status["event-manual"] === "done" ? "#22c55e" : "#ef4444" }}>
+              {messages["event-manual"]}
+            </div>
+          )}
         </div>
       </section>
 
@@ -324,4 +397,7 @@ const styles: Record<string, React.CSSProperties> = {
   curlBox: { backgroundColor: "#0f172a", borderRadius: 8, padding: 16, fontSize: 12, color: "#7dd3fc", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: "0 0 20px" },
   overlayBtns: { display: "flex", gap: 12, justifyContent: "flex-end" },
   btnCancel: { backgroundColor: "#334155", color: "#94a3b8", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  eventForm: { backgroundColor: "#1e293b", borderRadius: 12, padding: 20, display: "flex", flexDirection: "column", gap: 0 },
+  eventRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
+  eventField: { display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 },
 };
