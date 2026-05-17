@@ -287,7 +287,7 @@ export default function AdminPage() {
             <StatBox key={lang} label={lang || "en"} value={count} />
           ))}
         </div>
-        <h3 style={styles.subTitle}>Daily Active Users (commenters, 14d)</h3>
+        <h3 style={styles.subTitle}>Daily Active Users (14d)</h3>
         <DauChart data={stats?.users.dau ?? []} />
         <h3 style={styles.subTitle}>Subscribers by Category</h3>
         <div style={styles.barList}>
