@@ -6,10 +6,20 @@ export async function GET() {
   const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ profile: null });
 
-  const row = await prisma.userProfile.findUnique({
-    where: { id: userId },
-    select: { screenName: true, categories: true, lang: true },
-  });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [row] = await Promise.all([
+    prisma.userProfile.findUnique({
+      where: { id: userId },
+      select: { screenName: true, categories: true, lang: true },
+    }),
+    prisma.activity.upsert({
+      where: { userId_date: { userId, date: today } },
+      create: { userId, date: today },
+      update: {},
+    }),
+  ]);
 
   return NextResponse.json({ profile: row ?? null });
 }

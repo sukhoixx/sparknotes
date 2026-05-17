@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 
 const CATEGORIES = ["news","us","world","politics","military","science","technology","finance","entertainment","celebrity","sports","business","gaming","travel","animals","inventions","health","beauty"];
 
+type DauPoint = { date: string; count: number };
+
 type Stats = {
   posts: {
     total: number;
@@ -13,9 +15,9 @@ type Stats = {
   };
   users: {
     total: number;
-    activeLast7d: number;
     byLang: Record<string, number>;
     byCategory: Record<string, number>;
+    dau: DauPoint[];
   };
 };
 
@@ -281,11 +283,12 @@ export default function AdminPage() {
         <h2 style={styles.sectionTitle}>Users</h2>
         <div style={styles.statRow}>
           <StatBox label="Total Profiles" value={stats?.users.total ?? "—"} />
-          <StatBox label="Active (7d)" value={stats?.users.activeLast7d ?? "—"} />
           {Object.entries(stats?.users.byLang ?? {}).map(([lang, count]) => (
             <StatBox key={lang} label={lang || "en"} value={count} />
           ))}
         </div>
+        <h3 style={styles.subTitle}>Daily Active Users (commenters, 14d)</h3>
+        <DauChart data={stats?.users.dau ?? []} />
         <h3 style={styles.subTitle}>Subscribers by Category</h3>
         <div style={styles.barList}>
           {CATEGORIES.map((cat) => (
@@ -389,6 +392,37 @@ function ActionCard({ label, description, status, message, onRun, extra }: {
         {status === "running" ? "Running…" : status === "done" ? "Run Again" : "Run"}
       </button>
       {message && <div style={{ ...styles.actionMsg, color }}>{message}</div>}
+    </div>
+  );
+}
+
+function DauChart({ data }: { data: DauPoint[] }) {
+  const max = Math.max(...data.map((d) => d.count), 1);
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 60, marginBottom: 8 }}>
+      {data.map(({ date, count }) => {
+        const pct = (count / max) * 100;
+        const label = date.slice(5); // MM-DD
+        return (
+          <div key={date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, height: "100%" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+              <div
+                title={`${date}: ${count}`}
+                style={{
+                  width: "100%",
+                  height: count === 0 ? 2 : `${pct}%`,
+                  backgroundColor: count === 0 ? "#1e293b" : "#6c47ff",
+                  borderRadius: 3,
+                  transition: "height 0.3s",
+                  minHeight: 2,
+                }}
+              />
+            </div>
+            <div style={{ fontSize: 9, color: "#475569", whiteSpace: "nowrap" }}>{label}</div>
+            {count > 0 && <div style={{ fontSize: 9, color: "#94a3b8" }}>{count}</div>}
+          </div>
+        );
+      })}
     </div>
   );
 }

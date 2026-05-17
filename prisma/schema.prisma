@@ -124,3 +124,10 @@ model Like {
 
   @@id([userId, postId])
 }
+
+model Activity {
+  userId String
+  date   DateTime @db.Date
+
+  @@id([userId, date])
+}
