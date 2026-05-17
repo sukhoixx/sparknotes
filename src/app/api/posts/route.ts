@@ -85,7 +85,10 @@ function mapRaw(rows: RawRow[], activeCats?: string[]) {
         ? JSON.parse(rawCats)
         : [p.category];
 
-    const displayCategory = cats[0] ?? p.category;
+    const displayCategory =
+      (activeCats?.length ? cats.find((c) => activeCats.includes(c)) : undefined) ??
+      cats[0] ??
+      p.category;
 
     const categoryEmojis = cats
       .map((c) => CATEGORY_META[c as Category]?.emoji)
@@ -95,6 +98,7 @@ function mapRaw(rows: RawRow[], activeCats?: string[]) {
     return {
       ...p,
       category: displayCategory,
+      categories: cats,
       categoryEmojis,
       tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
       _count: { comments: Number(commentCount) },
