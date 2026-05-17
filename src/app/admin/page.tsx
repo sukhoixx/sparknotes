@@ -47,13 +47,36 @@ function useAction(secret: string) {
   return { status, messages, run };
 }
 
+type PendingAction = { key: string; url: string; params?: Record<string, string>; curlCmd: string };
+
+function buildCurl(url: string, secret: string, params?: Record<string, string>): string {
+  const fullUrl = params ? `${url}?${new URLSearchParams(params)}` : url;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return [
+    `curl -X POST '${origin}${fullUrl}'`,
+    `  -H 'x-generate-secret: ${secret}'`,
+    `  -H 'x-admin-secret: ${secret}'`,
+  ].join(" \\\n");
+}
+
 export default function AdminPage() {
   const [secret, setSecret] = useState("");
   const [authed, setAuthed] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [cleanupDays, setCleanupDays] = useState("7");
+  const [pending, setPending] = useState<PendingAction | null>(null);
   const { status, messages, run } = useAction(secret);
+
+  function requestRun(key: string, url: string, params?: Record<string, string>) {
+    setPending({ key, url, params, curlCmd: buildCurl(url, secret, params) });
+  }
+
+  function confirmRun() {
+    if (!pending) return;
+    run(pending.key, pending.url, pending.params);
+    setPending(null);
+  }
 
   const loadStats = useCallback(async (s: string) => {
     setStatsLoading(true);
@@ -124,21 +147,21 @@ export default function AdminPage() {
             description="Fetch RSS feeds and generate new posts for all categories"
             status={status["generate"] ?? "idle"}
             message={messages["generate"]}
-            onRun={() => run("generate", "/api/generate")}
+            onRun={() => requestRun("generate", "/api/generate")}
           />
           <ActionCard
             label="Backfill Chinese"
             description="Translate posts from the last 24h that are missing Chinese"
             status={status["backfill"] ?? "idle"}
             message={messages["backfill"]}
-            onRun={() => run("backfill", "/api/backfill-zh")}
+            onRun={() => requestRun("backfill", "/api/backfill-zh")}
           />
           <ActionCard
             label="Cleanup Old Posts"
             description="Delete posts older than N days (min 7)"
             status={status["cleanup"] ?? "idle"}
             message={messages["cleanup"]}
-            onRun={() => run("cleanup", "/api/cleanup", { days: cleanupDays })}
+            onRun={() => requestRun("cleanup", "/api/cleanup", { days: cleanupDays })}
             extra={
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
                 <label style={styles.label}>Days:</label>
@@ -157,7 +180,7 @@ export default function AdminPage() {
             description="Scan current headlines and activate a Breaking tab if warranted"
             status={status["event"] ?? "idle"}
             message={messages["event"]}
-            onRun={() => run("event", "/api/admin/event-generate")}
+            onRun={() => requestRun("event", "/api/admin/event-generate")}
           />
         </div>
       </section>
@@ -201,6 +224,19 @@ export default function AdminPage() {
           })}
         </div>
       </section>
+
+      {pending && (
+        <div style={styles.overlayBackdrop} onClick={() => setPending(null)}>
+          <div style={styles.overlayBox} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.overlayTitle}>Confirm Action</div>
+            <pre style={styles.curlBox}>{pending.curlCmd}</pre>
+            <div style={styles.overlayBtns}>
+              <button style={styles.btnCancel} onClick={() => setPending(null)}>Cancel</button>
+              <button style={styles.btnPrimary} onClick={confirmRun}>Run</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -282,4 +318,10 @@ const styles: Record<string, React.CSSProperties> = {
   loginWrap: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#0f172a" },
   loginForm: { backgroundColor: "#1e293b", borderRadius: 16, padding: 32, width: 300 },
   loginTitle: { fontSize: 20, fontWeight: 800, color: "#f1f5f9", marginBottom: 20, textAlign: "center" },
+  overlayBackdrop: { position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
+  overlayBox: { backgroundColor: "#1e293b", borderRadius: 16, padding: 28, width: 560, maxWidth: "90vw" },
+  overlayTitle: { fontSize: 16, fontWeight: 700, marginBottom: 16, color: "#f1f5f9" },
+  curlBox: { backgroundColor: "#0f172a", borderRadius: 8, padding: 16, fontSize: 12, color: "#7dd3fc", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: "0 0 20px" },
+  overlayBtns: { display: "flex", gap: 12, justifyContent: "flex-end" },
+  btnCancel: { backgroundColor: "#334155", color: "#94a3b8", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
 };
