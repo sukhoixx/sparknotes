@@ -151,54 +151,22 @@ export async function GET(req: NextRequest) {
   let posts;
 
   if (category === "all") {
-    const perCat = Math.max(2, Math.ceil(LIMIT / activeCats.length));
-    const rnFrom = page * perCat + 1;
-    const rnTo = (page + 1) * perCat;
-
-    // Window function: perCat most-recent posts per category matching user's subscribed categories
-    // JSON_OVERLAPS ensures cross-tagged posts appear (e.g. news+entertainment shows for news subscribers)
     const raw = await prisma.$queryRaw<RawRow[]>`
-      WITH ranked AS (
-        SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
-               p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-               p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
-               p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
-               p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
-               (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount,
-               ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.id DESC) AS rn
-        FROM \`Post\` p
-        WHERE p.eventSlug IS NULL
-          AND JSON_OVERLAPS(
+      SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
+             p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
+             p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
+             p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
+             p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
+             (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+      FROM \`Post\` p
+      WHERE p.eventSlug IS NULL
+        AND JSON_OVERLAPS(
           IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
           CAST(${JSON.stringify(activeCats)} AS JSON))
-      )
-      SELECT * FROM ranked WHERE rn BETWEEN ${rnFrom} AND ${rnTo}
+      ORDER BY p.id DESC
+      LIMIT ${LIMIT} OFFSET ${page * LIMIT}
     `;
-
-    // Pass activeCats so mapRaw can pick the correct display category
-    posts = bucketShuffle(mapRaw(raw as RawRow[], activeCats));
-
-    // Fill up from user's subscribed categories if sparse
-    if (posts.length < LIMIT) {
-      const seenIds = posts.map((p) => p.id);
-      const extraRaw = await prisma.$queryRaw<RawRow[]>`
-        SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
-               p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-               p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
-               p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
-               p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
-               (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
-        FROM \`Post\` p
-        WHERE p.id NOT IN (${Prisma.join(seenIds.length ? seenIds : [0])})
-          AND p.eventSlug IS NULL
-          AND JSON_OVERLAPS(
-            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
-            CAST(${JSON.stringify(activeCats)} AS JSON))
-        ORDER BY p.id DESC
-        LIMIT ${LIMIT - posts.length}
-      `;
-      posts = bucketShuffle([...posts, ...mapRaw(extraRaw as RawRow[], activeCats)]);
-    }
+    posts = mapRaw(raw as RawRow[], activeCats);
   } else {
     // Single category tab — filter by categories array so cross-tagged posts appear
     const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
