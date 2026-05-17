@@ -10,6 +10,7 @@ import Card, { CardSkeleton } from "./Card";
 import ArticleModal from "./ArticleModal";
 import type { UserProfile } from "@/hooks/useProfile";
 import type { AbVariant } from "@/hooks/useAbVariant";
+import { CATEGORY_LIST } from "@/lib/categories";
 
 interface PageData {
   posts: PostWithCount[];
@@ -132,6 +133,19 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
     fetch(`/api/posts/${openPost.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
   }, [openPost, liked]);
 
+  const userCats = profile?.categories ?? [];
+
+  function getMatchedBadge(post: PostWithCount): string | undefined {
+    if (category !== "all" || !userCats.length) return undefined;
+    const postCats = Array.isArray(post.categories) ? (post.categories as string[]) : [];
+    const matchedId =
+      userCats.find((uc) => postCats.includes(uc)) ??
+      (userCats.includes(post.category) ? post.category : undefined);
+    if (!matchedId) return undefined;
+    const cat = CATEGORY_LIST.find((c) => c.id === matchedId);
+    return cat ? `${cat.emoji} ${cat.label}` : undefined;
+  }
+
   const renderCard = (post: PostWithCount) => (
     <Card
       key={post.id}
@@ -139,6 +153,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
       liked={liked.has(post.id)}
       likeCount={getLikeCount(post)}
       variant={variant}
+      badgeOverride={getMatchedBadge(post)}
       onLike={(e) => handleLike(e, post)}
       onClick={() => setOpenPost(post)}
     />

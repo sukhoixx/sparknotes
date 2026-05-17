@@ -9,6 +9,7 @@ interface CardProps {
   liked: boolean;
   likeCount: number;
   variant: AbVariant;
+  badgeOverride?: string;
   onLike: (e: React.MouseEvent) => void;
   onClick: () => void;
 }
@@ -17,7 +18,7 @@ function formatNum(n: number): string {
   return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);
 }
 
-export default function Card({ post, liked, likeCount, variant, onLike, onClick }: CardProps) {
+export default function Card({ post, liked, likeCount, variant, badgeOverride, onLike, onClick }: CardProps) {
   const isLight = variant === "B";
   const isDark = variant === "A";
   const catMeta = CATEGORY_LIST.find((c) => c.id === post.category);
@@ -41,7 +42,7 @@ export default function Card({ post, liked, likeCount, variant, onLike, onClick 
             isLight ? "bg-black/10 text-black/70" : "bg-black/40 text-white"
           }`}
         >
-          {post.badge}
+          {badgeOverride ?? post.badge}
         </span>
         <p
           className={`font-bold text-[15px] leading-[1.4] drop-shadow-sm mb-3 ${
