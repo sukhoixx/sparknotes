@@ -258,6 +258,38 @@ export default function AdminPage() {
         </div>
       </section>
 
+      {/* Clear event slots */}
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>Clear Event Slots</h2>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {[1, 2, 3].map((slot) => (
+            <button
+              key={slot}
+              style={{ ...styles.btnSmall, padding: "8px 20px", fontSize: 13 }}
+              onClick={() => requestRun(`del-slot-${slot}`, "/api/admin/event-generate", { slot: String(slot) }, undefined, "DELETE")}
+              disabled={status[`del-slot-${slot}`] === "running"}
+            >
+              {status[`del-slot-${slot}`] === "running" ? "Clearing…" : `Clear Slot ${slot}`}
+            </button>
+          ))}
+          <button
+            style={{ ...styles.btnSmall, padding: "8px 20px", fontSize: 13, color: "#ef4444" }}
+            onClick={() => requestRun("del-slot-all", "/api/admin/event-generate", undefined, undefined, "DELETE")}
+            disabled={status["del-slot-all"] === "running"}
+          >
+            {status["del-slot-all"] === "running" ? "Clearing…" : "Clear All"}
+          </button>
+        </div>
+        {[1, 2, 3, "all"].map((slot) => {
+          const key = `del-slot-${slot}`;
+          return messages[key] ? (
+            <div key={key} style={{ ...styles.actionMsg, marginTop: 8, color: status[key] === "done" ? "#22c55e" : "#ef4444" }}>
+              Slot {slot}: {messages[key]}
+            </div>
+          ) : null;
+        })}
+      </section>
+
       {/* Post stats */}
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Posts</h2>
