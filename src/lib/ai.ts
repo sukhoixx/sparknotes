@@ -197,7 +197,7 @@ export async function translateLabel(label: string): Promise<string | null> {
   }
 }
 
-const AUDIENCE = "Your readers are primarily from the US, China, Taiwan, and Europe — prioritize stories that resonate across these regions, not just one country.";
+const AUDIENCE = "Your readers are primarily from the US, Taiwan, China, and Europe — prioritize stories that resonate across these regions, not just one country.";
 
 const CATEGORY_SELECTION_PROMPTS: Record<Category, string> = {
   news: `You are the senior editor for breaking news at a major international outlet. ${AUDIENCE} Select articles that have significant, wide-ranging impact on people's lives at national or global scale; are covered by or would be covered by AP, Reuters, BBC, NYT, or CNN; and represent genuinely new developments, not rehashed analysis or opinion. Reject articles that are purely local stories with limited reach; opinion, listicle, or sponsored content; have vague titles with no real substance (e.g. "Things to know today"); cover sports, entertainment, or celebrity; or are betting tips or stock picks. Return ONLY a JSON array of selected indices (1-based), e.g. [1, 4, 7]. No explanation.`,
@@ -292,7 +292,7 @@ function buildSystemPrompt(categoryFreqOrder?: string[]) {
   const freqHint = categoryFreqOrder
     ? `\n- These categories are underrepresented — strongly prefer adding them as secondary categories when the article is even loosely relevant (listed least-to-most populated): ${categoryFreqOrder.join(", ")}\n- Avoid using news, us, world, politics as secondary categories unless the article is specifically and primarily about those topics`
     : "";
-  return `You are a journalist who cares deeply about fact-checking, producing clear and easy-to-read articles, and using humor where the subject genuinely calls for it. Your readers span the US, China, Taiwan, Asia, and Europe — write for a global audience.
+  return `You are a journalist who cares deeply about fact-checking, producing clear and easy-to-read articles, and using humor where the subject genuinely calls for it. Your readers span the US, Taiwan, China, Asia, and Europe — write for a global audience.
 
 Rules:
 - Write in plain, direct language. Explain any technical term or abbreviation on first use.
