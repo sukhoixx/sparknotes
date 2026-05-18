@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/ai";
+import { FEEDS } from "@/lib/rss";
 
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-admin-secret");
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
     postsLast24h,
     postsLast7d,
     postsByCategory,
+    postsLast24hByCategory,
     totalUsers,
     langDist,
     allProfiles,
@@ -27,6 +29,7 @@ export async function GET(req: NextRequest) {
     prisma.post.count({ where: { createdAt: { gte: oneDayAgo } } }),
     prisma.post.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
     prisma.post.groupBy({ by: ["category"], _count: { _all: true }, orderBy: { _count: { id: "desc" } } }),
+    prisma.post.groupBy({ by: ["category"], where: { createdAt: { gte: oneDayAgo } }, _count: { _all: true } }),
     prisma.userProfile.count(),
     prisma.userProfile.groupBy({ by: ["lang"], _count: { _all: true } }),
     prisma.userProfile.findMany({ select: { categories: true } }),
@@ -61,13 +64,19 @@ export async function GET(req: NextRequest) {
     return { date: key, count: dauMap[key] ?? 0 };
   });
 
+  const feedSources = Object.fromEntries(
+    Object.entries(FEEDS).map(([cat, sources]) => [cat, sources.map((s) => s.source)])
+  );
+
   return NextResponse.json({
     posts: {
       total: totalPosts,
       last24h: postsLast24h,
       last7d: postsLast7d,
       byCategory: Object.fromEntries(postsByCategory.map((r) => [r.category, r._count._all])),
+      last24hByCategory: Object.fromEntries(postsLast24hByCategory.map((r) => [r.category, r._count._all])),
     },
+    feeds: feedSources,
     users: {
       total: totalUsers,
       byLang: Object.fromEntries(langDist.map((r) => [r.lang ?? "en", r._count._all])),

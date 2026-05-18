@@ -20,7 +20,7 @@ const parser = new Parser({
   },
 });
 
-const FEEDS: Record<Category, { url: string; source: string }[]> = {
+export const FEEDS: Record<Category, { url: string; source: string }[]> = {
   news: [
     { url: "https://feeds.bbci.co.uk/news/rss.xml",                    source: "BBC News" },
     { url: "https://feeds.npr.org/1001/rss.xml",                       source: "NPR" },

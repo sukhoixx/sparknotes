@@ -12,6 +12,7 @@ type Stats = {
     last24h: number;
     last7d: number;
     byCategory: Record<string, number>;
+    last24hByCategory: Record<string, number>;
   };
   users: {
     total: number;
@@ -19,6 +20,7 @@ type Stats = {
     byCategory: Record<string, number>;
     dau: DauPoint[];
   };
+  feeds: Record<string, string[]>;
 };
 
 type ActionStatus = "idle" | "running" | "done" | "error";
@@ -96,6 +98,7 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [cleanupDays, setCleanupDays] = useState("7");
   const [pending, setPending] = useState<PendingAction | null>(null);
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
   const { status, messages, run } = useAction(secret);
 
   function requestRun(key: string, url: string, options: {
@@ -276,6 +279,45 @@ export default function AdminPage() {
           {CATEGORIES.map((cat) => (
             <BarRow key={cat} label={cat} value={stats?.posts.byCategory[cat] ?? 0} max={maxPostCat} color="#6c47ff" />
           ))}
+        </div>
+      </section>
+
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>Content Pipeline</h2>
+        <div style={styles.pipelineTable}>
+          <div style={styles.pipelineHeader}>
+            <span style={{ width: 110 }}>Category</span>
+            <span style={{ width: 70, textAlign: "center" }}>Sources</span>
+            <span style={{ width: 80, textAlign: "center" }}>Last 24h</span>
+            <span style={{ width: 80, textAlign: "center" }}>Total</span>
+          </div>
+          {CATEGORIES.map((cat) => {
+            const sources = stats?.feeds?.[cat] ?? [];
+            const last24h = stats?.posts.last24hByCategory?.[cat] ?? 0;
+            const total = stats?.posts.byCategory?.[cat] ?? 0;
+            const expanded = expandedCat === cat;
+            return (
+              <div key={cat}>
+                <div
+                  style={{ ...styles.pipelineRow, cursor: "pointer" }}
+                  onClick={() => setExpandedCat(expanded ? null : cat)}
+                >
+                  <span style={{ width: 110, textTransform: "capitalize", color: "#f1f5f9" }}>{cat}</span>
+                  <span style={{ width: 70, textAlign: "center", color: "#94a3b8" }}>{sources.length}</span>
+                  <span style={{ width: 80, textAlign: "center", color: last24h > 0 ? "#22c55e" : "#64748b", fontWeight: last24h > 0 ? 700 : 400 }}>{last24h}</span>
+                  <span style={{ width: 80, textAlign: "center", color: "#64748b" }}>{total}</span>
+                  <span style={{ marginLeft: "auto", color: "#475569", fontSize: 11 }}>{expanded ? "▲" : "▼"}</span>
+                </div>
+                {expanded && sources.length > 0 && (
+                  <div style={styles.sourceList}>
+                    {sources.map((s) => (
+                      <span key={s} style={styles.sourceChip}>{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -484,4 +526,9 @@ const styles: Record<string, React.CSSProperties> = {
   curlBox: { backgroundColor: "#0f172a", borderRadius: 8, padding: 16, fontSize: 12, color: "#7dd3fc", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: "16px 0 20px" },
   overlayBtns: { display: "flex", gap: 12, justifyContent: "flex-end" },
   btnCancel: { backgroundColor: "#334155", color: "#94a3b8", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  pipelineTable: { display: "flex", flexDirection: "column", gap: 2 },
+  pipelineHeader: { display: "flex", alignItems: "center", gap: 12, padding: "6px 12px", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em" },
+  pipelineRow: { display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", backgroundColor: "#1e293b", borderRadius: 8, fontSize: 13 },
+  sourceList: { display: "flex", flexWrap: "wrap" as const, gap: 6, padding: "8px 12px 10px 12px", backgroundColor: "#162032", borderRadius: "0 0 8px 8px", marginTop: -4 },
+  sourceChip: { backgroundColor: "#0f172a", color: "#7dd3fc", fontSize: 11, padding: "3px 8px", borderRadius: 4, fontFamily: "monospace" },
 };
