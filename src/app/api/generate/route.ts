@@ -52,10 +52,10 @@ async function runGeneration() {
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
 
     // Fetch titles of posts from the last 2 weeks for exact-title dedup
-    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
     const recentPosts = await prisma.post.findMany({
-      where: { createdAt: { gte: twoWeeksAgo } },
+      where: { createdAt: { gte: twoDaysAgo } },
       select: { title: true, createdAt: true },
     });
     const existingTitles = new Set(recentPosts.map((p) => p.title));
