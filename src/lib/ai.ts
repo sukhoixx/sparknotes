@@ -308,6 +308,7 @@ Rules:
 - The funFact must start with a relevant emoji and <strong>Fun Fact:</strong> — make it genuinely interesting, not filler.
 - Tags: 3-5 plain words without # prefix, relevant to the article.
 - Pick 1-3 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
+- Only assign "asia" if the article is directly about events, people, governments, or companies based in an Asian country (e.g. China, Japan, South Korea, Taiwan, India, Southeast Asia). Asia does NOT include the Middle East. Do NOT assign "asia" just because a Western company has Asian operations, customers, or revenue exposure.
 - Gaming articles must be categorized as "gaming" only. Do NOT add "technology" as a secondary category unless the article is specifically about a breakthrough in gaming technology (e.g. a new graphics API, hardware architecture, or AI advancement applied to games) — not a game release, studio news, or industry business story.
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
