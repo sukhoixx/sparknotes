@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
     langDist,
     allProfiles,
     dauRows,
+    topViewedRows,
+    totalViewsRow,
   ] = await Promise.all([
     prisma.post.count(),
     prisma.post.count({ where: { createdAt: { gte: oneDayAgo } } }),
@@ -39,6 +41,12 @@ export async function GET(req: NextRequest) {
       _count: { userId: true },
       orderBy: { date: "asc" },
     }),
+    prisma.$queryRaw<{ id: number; title: string; views: number; category: string }[]>`
+      SELECT id, title, views, category FROM \`Post\` ORDER BY views DESC LIMIT 10
+    `.catch(() => [] as { id: number; title: string; views: number; category: string }[]),
+    prisma.$queryRaw<[{ total: bigint }]>`
+      SELECT COALESCE(SUM(views), 0) AS total FROM \`Post\`
+    `.catch(() => [{ total: BigInt(0) }]),
   ]);
 
   // Count subscribers per category by unnesting categories JSON arrays
@@ -82,6 +90,10 @@ export async function GET(req: NextRequest) {
       byLang: Object.fromEntries(langDist.map((r) => [r.lang ?? "en", r._count._all])),
       byCategory: catCounts,
       dau,
+    },
+    views: {
+      total: Number(totalViewsRow[0]?.total ?? 0),
+      topPosts: topViewedRows.map((r) => ({ id: r.id, title: r.title, views: r.views, category: r.category })),
     },
   });
 }

@@ -21,6 +21,10 @@ type Stats = {
     dau: DauPoint[];
   };
   feeds: Record<string, string[]>;
+  views: {
+    total: number;
+    topPosts: { id: number; title: string; views: number; category: string }[];
+  };
 };
 
 type ActionStatus = "idle" | "running" | "done" | "error";
@@ -278,6 +282,28 @@ export default function AdminPage() {
         <div style={styles.barList}>
           {CATEGORIES.map((cat) => (
             <BarRow key={cat} label={cat} value={stats?.posts.byCategory[cat] ?? 0} max={maxPostCat} color="#6c47ff" />
+          ))}
+        </div>
+      </section>
+
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>Views</h2>
+        <div style={styles.statRow}>
+          <StatBox label="Total Views" value={stats?.views?.total ?? "—"} />
+        </div>
+        <h3 style={styles.subTitle}>Top 10 Most Viewed</h3>
+        <div style={styles.pipelineTable}>
+          <div style={styles.pipelineHeader}>
+            <span style={{ flex: 1 }}>Title</span>
+            <span style={{ width: 100 }}>Category</span>
+            <span style={{ width: 70, textAlign: "right" }}>Views</span>
+          </div>
+          {(stats?.views?.topPosts ?? []).map((p) => (
+            <div key={p.id} style={styles.pipelineRow}>
+              <span style={{ flex: 1, color: "#f1f5f9", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</span>
+              <span style={{ width: 100, color: "#94a3b8", fontSize: 12, textTransform: "capitalize" }}>{p.category}</span>
+              <span style={{ width: 70, textAlign: "right", color: "#22c55e", fontWeight: 700 }}>{p.views}</span>
+            </div>
           ))}
         </div>
       </section>

@@ -96,6 +96,7 @@ model Post {
   zhBodyCn    String?  @db.Text
   zhFunFactCn String?  @db.Text
   likes       Int      @default(0)
+  views       Int      @default(0)
   eventSlug   String?  @db.VarChar(100)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
