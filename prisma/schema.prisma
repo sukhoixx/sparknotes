@@ -132,3 +132,8 @@ model Activity {
 
   @@id([userId, date])
 }
+
+model DailyViews {
+  date  DateTime @id @db.Date
+  count Int      @default(0)
+}

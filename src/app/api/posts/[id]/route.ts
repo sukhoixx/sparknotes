@@ -10,6 +10,9 @@ async function ensureViewsColumn() {
   await prisma.$executeRaw`
     ALTER TABLE \`Post\` ADD COLUMN IF NOT EXISTS \`views\` INT NOT NULL DEFAULT 0
   `.catch(() => {});
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS \`DailyViews\` (\`date\` DATE NOT NULL PRIMARY KEY, \`count\` INT NOT NULL DEFAULT 0)
+  `.catch(() => {});
 }
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -24,7 +27,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
   prisma.$executeRaw`UPDATE \`Post\` SET views = views + 1 WHERE id = ${id}`.catch(() => {});
+  prisma.$executeRaw`
+    INSERT INTO \`DailyViews\` (\`date\`, \`count\`) VALUES (${today}, 1)
+    ON DUPLICATE KEY UPDATE \`count\` = \`count\` + 1
+  `.catch(() => {});
 
   const meta = CATEGORY_META[post.category as Category] ?? CATEGORY_META["news"];
   const result = {

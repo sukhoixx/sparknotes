@@ -24,6 +24,7 @@ type Stats = {
   views: {
     total: number;
     topPosts: { id: number; title: string; views: number; category: string }[];
+    daily: DauPoint[];
   };
 };
 
@@ -291,6 +292,8 @@ export default function AdminPage() {
         <div style={styles.statRow}>
           <StatBox label="Total Views" value={stats?.views?.total ?? "—"} />
         </div>
+        <h3 style={styles.subTitle}>Daily Views (14d)</h3>
+        <DauChart data={stats?.views?.daily ?? []} color="#f59e0b" />
         <h3 style={styles.subTitle}>Top 10 Most Viewed</h3>
         <div style={styles.pipelineTable}>
           <div style={styles.pipelineHeader}>
@@ -464,7 +467,7 @@ function ActionCard({ label, description, status, message, onRun, extra }: {
   );
 }
 
-function DauChart({ data }: { data: DauPoint[] }) {
+function DauChart({ data, color = "#6c47ff" }: { data: DauPoint[]; color?: string }) {
   const max = Math.max(...data.map((d) => d.count), 1);
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 60, marginBottom: 8 }}>
@@ -479,7 +482,7 @@ function DauChart({ data }: { data: DauPoint[] }) {
                 style={{
                   width: "100%",
                   height: count === 0 ? 2 : `${pct}%`,
-                  backgroundColor: count === 0 ? "#1e293b" : "#6c47ff",
+                  backgroundColor: count === 0 ? "#1e293b" : color,
                   borderRadius: 3,
                   transition: "height 0.3s",
                   minHeight: 2,
