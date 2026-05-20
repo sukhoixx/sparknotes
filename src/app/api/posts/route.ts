@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
       ORDER BY p.id DESC
       LIMIT ${LIMIT} OFFSET ${page * LIMIT}
     `;
-    posts = mapRaw(raw as RawRow[], activeCats);
+    posts = bucketShuffle(mapRaw(raw as RawRow[], activeCats));
   } else {
     // Single category tab — filter by categories array so cross-tagged posts appear
     const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
