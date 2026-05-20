@@ -25,6 +25,7 @@ const CATEGORIES: CategoryItem[] = [
   { id: "finance",       labels: { en: "💰 Finance",       "zh-TW": "💰 財經",      "zh-CN": "💰 财经" } },
   { id: "health",        labels: { en: "💊 Health",        "zh-TW": "💊 健康",      "zh-CN": "💊 健康" } },
   { id: "beauty",        labels: { en: "💄 Beauty",        "zh-TW": "💄 美妝",      "zh-CN": "💄 美妆" } },
+  { id: "asia",          labels: { en: "🌏 Asia",          "zh-TW": "🌏 亞洲",      "zh-CN": "🌏 亚洲" } },
 ];
 
 export async function GET() {

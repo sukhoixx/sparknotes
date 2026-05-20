@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { jsonrepair } from "jsonrepair";
 import type { RawArticle } from "./rss";
 
-export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty"] as const;
+export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty", "asia"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
@@ -24,6 +24,7 @@ export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: strin
   health:        { badge: "💊 Health",        authorEmoji: "💊", authorBg: "linear-gradient(135deg,#56ab2f,#a8e063)",      emoji: "💊", gradient: "linear-gradient(135deg,#56ab2f,#a8e063)" },
   beauty:        { badge: "💄 Beauty",        authorEmoji: "💄", authorBg: "linear-gradient(135deg,#ee9ca7,#ffdde1)",      emoji: "💄", gradient: "linear-gradient(135deg,#ee9ca7,#ffdde1)" },
   celebrity:     { badge: "⭐ Celebrity",     authorEmoji: "⭐", authorBg: "linear-gradient(135deg,#c471ed,#f64f59)",      emoji: "⭐", gradient: "linear-gradient(135deg,#c471ed,#f64f59)" },
+  asia:          { badge: "🌏 Asia",          authorEmoji: "🌏", authorBg: "linear-gradient(135deg,#c0392b,#e67e22)",      emoji: "🌏", gradient: "linear-gradient(135deg,#c0392b,#e67e22)" },
 };
 
 export interface GeneratedPost {
@@ -235,6 +236,8 @@ const CATEGORY_SELECTION_PROMPTS: Record<Category, string> = {
   health: `You are the senior editor for health and medicine at a major outlet. ${AUDIENCE} Select articles covering: clinical trial results or FDA approvals/rejections with broad patient impact; disease outbreak or public health emergency updates; major medical research findings affecting treatment or prevention; health policy changes affecting large populations; significant mental health research findings. Reject generic wellness tips, supplement or diet promotion, minor studies with no clinical significance, and health scare clickbait. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
 
   beauty: `You are the senior editor for beauty and fashion at a major outlet. ${AUDIENCE} Select articles covering: major fashion week moments or significant designer announcements; notable beauty product launches from major brands; beauty or fashion trends gaining mainstream traction; industry business news (major acquisitions, brand launches by prominent figures); cultural or social movements intersecting meaningfully with beauty and fashion. Reject minor product reviews, sponsored content, and niche trends with very limited appeal. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  asia: `You are the senior editor for Asia-Pacific coverage at a major international outlet. ${AUDIENCE} Select articles covering: major political or diplomatic developments across East Asia, Southeast Asia, or South Asia; economic policy decisions by China, Japan, South Korea, or ASEAN nations with regional or global impact; Taiwan Strait tensions, cross-strait relations, or Taiwan domestic politics; military or security developments in the Indo-Pacific; significant elections or leadership changes across Asia. Reject purely local human-interest stories with no regional significance, generic travel or culture pieces, and entertainment news. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
 };
 
 export async function selectArticlesForCategory(articles: RawArticle[], category: Category, n: number): Promise<RawArticle[]> {
