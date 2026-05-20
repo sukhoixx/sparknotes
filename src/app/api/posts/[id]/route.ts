@@ -12,6 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     include: { _count: { select: { comments: true } } },
   });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  console.log(`[view] postId=${id} category=${post.category} t=${new Date().toISOString()}`);
 
   const meta = CATEGORY_META[post.category as Category] ?? CATEGORY_META["news"];
   const result = {
