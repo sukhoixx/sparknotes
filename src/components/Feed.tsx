@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import type { Post } from "@prisma/client";
 
-export type PostWithCount = Post & { _count: { comments: number } };
+export type PostWithCount = Post & {
+  _count: { comments: number };
+  likes: number;
+  reactions?: Record<string, number>;
+};
 
 import Card, { CardSkeleton } from "./Card";
 import ArticleModal from "./ArticleModal";
@@ -113,7 +117,11 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
         ...prev,
         [post.id]: (prev[post.id] ?? post.likes) + (wasLiked ? -1 : 1),
       }));
-      fetch(`/api/posts/${post.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
+      fetch(`/api/posts/${post.id}/like`, {
+        method: wasLiked ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: wasLiked ? undefined : JSON.stringify({ emoji: "❤️" }),
+      }).catch(() => {});
     },
     [liked]
   );
@@ -130,7 +138,11 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
       ...prev,
       [openPost.id]: (prev[openPost.id] ?? openPost.likes) + (wasLiked ? -1 : 1),
     }));
-    fetch(`/api/posts/${openPost.id}/like`, { method: wasLiked ? "DELETE" : "POST" }).catch(() => {});
+    fetch(`/api/posts/${openPost.id}/like`, {
+      method: wasLiked ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: wasLiked ? undefined : JSON.stringify({ emoji: "❤️" }),
+    }).catch(() => {});
   }, [openPost, liked]);
 
   const userCats = profile?.categories ?? [];
