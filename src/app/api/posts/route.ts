@@ -106,6 +106,24 @@ function mapRaw(rows: RawRow[], activeCats?: string[]) {
   });
 }
 
+async function enrichWithReactions<T extends { id: number }>(
+  posts: T[]
+): Promise<(T & { reactions: Record<string, number> })[]> {
+  if (posts.length === 0) return posts.map((p) => ({ ...p, reactions: {} }));
+  const ids = posts.map((p) => p.id);
+  const groups = await prisma.like.groupBy({
+    by: ["postId", "emoji"],
+    where: { postId: { in: ids } },
+    _count: { emoji: true },
+  });
+  const reactMap = new Map<number, Record<string, number>>();
+  for (const g of groups) {
+    if (!reactMap.has(g.postId)) reactMap.set(g.postId, {});
+    reactMap.get(g.postId)![g.emoji] = g._count.emoji;
+  }
+  return posts.map((p) => ({ ...p, reactions: reactMap.get(p.id) ?? {} }));
+}
+
 export async function GET(req: NextRequest) {
   ensureCategoriesBackfill().catch(() => {});
   const { searchParams } = new URL(req.url);
@@ -118,25 +136,27 @@ export async function GET(req: NextRequest) {
 
   // Event feed path — all posts for a specific event slug
   if (eventSlug) {
-    const posts = applyMeta(await prisma.post.findMany({
+    const raw = applyMeta(await prisma.post.findMany({
       where: { eventSlug },
       orderBy: { id: "desc" },
       take: LIMIT,
       skip: page * LIMIT,
       include: { _count: { select: { comments: true } } },
     }));
+    const posts = await enrichWithReactions(raw);
     return NextResponse.json({ posts, nextCursor: posts.length === LIMIT ? String(page + 1) : null });
   }
 
   // Search path — simple full-text filter across all posts
   if (q) {
-    const posts = applyMeta(await prisma.post.findMany({
+    const raw = applyMeta(await prisma.post.findMany({
       where: { OR: [{ title: { contains: q } }, { snippet: { contains: q } }, { zhTitle: { contains: q } }, { zhSnippet: { contains: q } }] },
       orderBy: { id: "desc" },
       take: LIMIT,
       skip: page * LIMIT,
       include: { _count: { select: { comments: true } } },
     }));
+    const posts = await enrichWithReactions(raw);
     return NextResponse.json({ posts, nextCursor: posts.length > 0 ? String(page + 1) : null });
   }
 
@@ -215,7 +235,7 @@ export async function GET(req: NextRequest) {
   }
 
   const nextCursor = posts.length > 0 ? String(page + 1) : null;
-  posts = applyMeta(posts);
+  const enriched = await enrichWithReactions(applyMeta(posts));
 
-  return NextResponse.json({ posts, nextCursor });
+  return NextResponse.json({ posts: enriched, nextCursor });
 }

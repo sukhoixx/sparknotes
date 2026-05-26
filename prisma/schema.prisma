@@ -121,6 +121,7 @@ model ActiveEvent {
 model Like {
   userId String
   postId Int
+  emoji  String @default("❤️") @db.VarChar(10)
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@id([userId, postId])
