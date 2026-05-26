@@ -71,7 +71,7 @@ type RawRow = {
   id: number; title: string; snippet: string; body: string; funFact: string;
   tags: unknown; categories: unknown; category: string; emoji: string; gradient: string;
   badge: string; authorEmoji: string; authorBg: string; sourceUrl: string | null;
-  imageUrl: string | null; likes: number; publishedAt: Date; createdAt: Date;
+  imageUrl: string | null; publishedAt: Date; createdAt: Date;
   commentCount: bigint; rn?: bigint;
   zhTitle: string | null; zhSnippet: string | null; zhBody: string | null; zhFunFact: string | null;
   zhTitleCn: string | null; zhSnippetCn: string | null; zhBodyCn: string | null; zhFunFactCn: string | null;
@@ -108,8 +108,8 @@ function mapRaw(rows: RawRow[], activeCats?: string[]) {
 
 async function enrichWithReactions<T extends { id: number }>(
   posts: T[]
-): Promise<(T & { reactions: Record<string, number> })[]> {
-  if (posts.length === 0) return posts.map((p) => ({ ...p, reactions: {} }));
+): Promise<(T & { reactions: Record<string, number>; likes: number })[]> {
+  if (posts.length === 0) return posts.map((p) => ({ ...p, reactions: {}, likes: 0 }));
   const ids = posts.map((p) => p.id);
   const groups = await prisma.like.groupBy({
     by: ["postId", "emoji"],
@@ -121,7 +121,11 @@ async function enrichWithReactions<T extends { id: number }>(
     if (!reactMap.has(g.postId)) reactMap.set(g.postId, {});
     reactMap.get(g.postId)![g.emoji] = g._count.emoji;
   }
-  return posts.map((p) => ({ ...p, reactions: reactMap.get(p.id) ?? {} }));
+  return posts.map((p) => {
+    const reactions = reactMap.get(p.id) ?? {};
+    const likes = Object.values(reactions).reduce((sum, n) => sum + n, 0);
+    return { ...p, reactions, likes };
+  });
 }
 
 export async function GET(req: NextRequest) {
@@ -178,7 +182,7 @@ export async function GET(req: NextRequest) {
     const raw = await prisma.$queryRaw<RawRow[]>`
       SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
              p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-             p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
+             p.sourceUrl, p.imageUrl, p.publishedAt, p.createdAt,
              p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
              p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
              (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
@@ -206,7 +210,7 @@ export async function GET(req: NextRequest) {
     const selectCols = Prisma.sql`
       p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
       p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-      p.sourceUrl, p.imageUrl, p.likes, p.publishedAt, p.createdAt,
+      p.sourceUrl, p.imageUrl, p.publishedAt, p.createdAt,
       p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
       p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
       (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount

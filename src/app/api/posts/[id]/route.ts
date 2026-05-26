@@ -13,9 +13,20 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const groups = await prisma.like.groupBy({
+    by: ["emoji"],
+    where: { postId: id },
+    _count: { emoji: true },
+  });
+  const reactions: Record<string, number> = {};
+  for (const g of groups) reactions[g.emoji] = g._count.emoji;
+  const likes = Object.values(reactions).reduce((sum, n) => sum + n, 0);
+
   const meta = CATEGORY_META[post.category as Category] ?? CATEGORY_META["news"];
   const result = {
     ...post,
+    reactions,
+    likes,
     gradient: meta.gradient,
     badge: meta.badge,
     authorEmoji: meta.authorEmoji,
