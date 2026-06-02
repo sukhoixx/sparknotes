@@ -168,7 +168,6 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.technologyreview.com/feed/",                 source: "MIT Tech Review" },
     { url: "https://feeds.arstechnica.com/arstechnica/index",        source: "Ars Technica" },
     { url: "https://www.engadget.com/rss.xml",                       source: "Engadget" },
-    { url: "https://www.zdnet.com/news/rss.xml",                     source: "ZDNet" },
     { url: "https://www.theguardian.com/us/technology/rss",          source: "Guardian Tech" },
     { url: "https://www.cnet.com/rss/news/",                         source: "CNET" },
     { url: "https://9to5mac.com/feed/",                              source: "9to5Mac" },
@@ -338,7 +337,6 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
   ],
   health: [
     { url: "https://rss.webmd.com/rss/rss.aspx?RSSSource=RS_WEBMD_0", source: "WebMD" },
-    { url: "https://www.medpagetoday.com/rss/headlines.xml",       source: "MedPage Today" },
     { url: "https://www.psychologytoday.com/us/rss",               source: "Psychology Today" },
     { url: "https://www.mindful.org/feed/",                        source: "Mindful" },
     { url: "https://www.wellandgood.com/feed/",                    source: "Well+Good" },
