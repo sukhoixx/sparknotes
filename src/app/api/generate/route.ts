@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, filterRecentDuplicates, fetchOgImage } from "@/lib/rss";
+import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
@@ -77,8 +77,9 @@ async function runGeneration() {
       const articles = await fetchArticlesByCategory(category as Category, 3);
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
-      const topArticles = await selectArticlesForCategory(deduped, category as Category, perRun);
-      console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${topArticles.length} AI-selected`);
+      const clustered = selectTopArticles(deduped, perRun * 3);
+      const topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
+      console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${clustered.length} clustered → ${topArticles.length} AI-selected`);
 
       let generated = 0;
       for (const article of topArticles) {

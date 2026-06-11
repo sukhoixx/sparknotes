@@ -2,6 +2,11 @@ import OpenAI from "openai";
 import { jsonrepair } from "jsonrepair";
 import type { RawArticle } from "./rss";
 
+const client = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com/v1",
+});
+
 export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty", "asia"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -51,7 +56,7 @@ export interface GeneratedPost {
 export async function translateToTraditionalChinese(
   post: Pick<GeneratedPost, "title" | "snippet" | "body" | "funFact">
 ): Promise<{ zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string } | null> {
-  const client = getClient();
+
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const userPrompt = `Rewrite the following news article fields in Traditional Chinese (繁體中文) as a Chinese journalist would write them — natural, fluent prose, not a word-for-word translation. Use your judgement on names: keep well-known English acronyms (e.g. NATO, FBI, AI) in English; transliterate or translate proper nouns as a Taiwanese news outlet would. Preserve all HTML tags exactly as-is in body and funFact. Return ONLY valid JSON with no extra text or markdown.
@@ -97,7 +102,7 @@ export interface DetectedEvent {
 }
 
 export async function detectHotEvent(headlines: string[]): Promise<DetectedEvent | null> {
-  const client = getClient();
+
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const prompt = `You are the chief editor of a major international news agency. Your job is to decide whether any story breaking right now is exceptional enough to warrant a dedicated "Breaking" tab that interrupts the normal news feed.
@@ -152,7 +157,7 @@ export async function filterRelevantArticles(
   eventLabel: string,
 ): Promise<number[]> {
   if (articles.length === 0) return [];
-  const client = getClient();
+
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
   const numbered = articles.map((a, i) => `${i}: ${a.title}`).join("\n");
   try {
@@ -180,7 +185,7 @@ export async function filterRelevantArticles(
 }
 
 export async function translateLabel(label: string): Promise<string | null> {
-  const client = getClient();
+
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
   try {
     const res = await client.chat.completions.create({
@@ -244,7 +249,7 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
   if (articles.length === 0) return [];
   if (articles.length <= n) return articles;
 
-  const client = getClient();
+
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const articleList = articles
@@ -283,13 +288,6 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
   }
 }
 
-function getClient() {
-  return new OpenAI({
-    apiKey: process.env.DEEPSEEK_API_KEY,
-    baseURL: "https://api.deepseek.com/v1",
-  });
-}
-
 function buildSystemPrompt(categoryFreqOrder?: string[]) {
   const catList = CATEGORIES.join(", ");
   const freqHint = categoryFreqOrder
@@ -321,7 +319,7 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
 }
 
 export async function summarizeArticle(article: RawArticle, category: Category, categoryFreqOrder?: string[]): Promise<GeneratedPost | null> {
-  const client = getClient();
+
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const userPrompt = `Category: ${category}
