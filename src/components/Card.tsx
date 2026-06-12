@@ -44,15 +44,16 @@ export default function Card({ post, liked, likeCount, variant, badgeOverride, o
 
       {/* Image or gradient fallback */}
       {post.imageUrl ? (
-        <img
-          src={post.imageUrl}
-          alt=""
-          className="w-full object-cover"
-          style={{ height: 120, display: "block" }}
-          loading="lazy"
-        />
+        <div className="w-full aspect-video overflow-hidden">
+          <img
+            src={post.imageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
       ) : (
-        <div className="w-full" style={{ height: 120, background: gradient }} />
+        <div className="w-full aspect-video" style={{ background: gradient }} />
       )}
 
       {/* Title + footer */}

@@ -41,9 +41,10 @@ interface FeedProps {
   initialPosts: PostWithCount[];
   profile?: UserProfile | null;
   variant?: AbVariant;
+  onCardClick?: (post: PostWithCount) => void;
 }
 
-export default function Feed({ category, searchQuery, initialPosts, profile, variant = "A" }: FeedProps) {
+export default function Feed({ category, searchQuery, initialPosts, profile, variant = "A", onCardClick }: FeedProps) {
   const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
@@ -167,7 +168,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
       variant={variant}
       badgeOverride={getMatchedBadge(post)}
       onLike={(e) => handleLike(e, post)}
-      onClick={() => setOpenPost(post)}
+      onClick={() => onCardClick ? onCardClick(post) : setOpenPost(post)}
     />
   );
 

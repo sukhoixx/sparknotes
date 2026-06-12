@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Feed from "@/components/Feed";
 import ProfileModal from "@/components/ProfileModal";
@@ -16,6 +17,7 @@ export default function WebPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const { profile, loading, isAuthenticated, saveProfile } = useProfile();
+  const router = useRouter();
 
   useEffect(() => {
     const body = document.body;
@@ -68,6 +70,7 @@ export default function WebPage() {
           initialPosts={[] as PostWithCount[]}
           profile={profile}
           variant="A"
+          onCardClick={(post) => router.push(`/web/posts/${post.id}`)}
         />
         {signInOpen && (
           <SignInModal onClose={() => setSignInOpen(false)} />
