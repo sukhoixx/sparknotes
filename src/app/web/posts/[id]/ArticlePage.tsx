@@ -47,9 +47,9 @@ function getSourceName(url: string | null | undefined): string | null {
 }
 
 const FONT_SIZES = [
-  { body: 15, label: "A" },
-  { body: 18, label: "A+" },
-  { body: 21, label: "A++" },
+  { body: 17, label: "A" },
+  { body: 20, label: "A+" },
+  { body: 23, label: "A++" },
 ] as const;
 
 interface Comment { id: number; text: string; screenName: string; createdAt: string; }
@@ -153,87 +153,85 @@ export default function ArticlePage({ post }: { post: Post }) {
         />
       </div>
 
-      {/* Header bar — ✕ | font size | reaction */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 16px", borderBottom: `1px solid ${C.border}`,
-        background: C.surface, position: "sticky", top: 0, zIndex: 100,
-      }}>
-        <a href="/web" style={{
-          width: 32, height: 32, borderRadius: 16, background: C.surfaceAlt,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          textDecoration: "none", color: C.textSub, fontSize: 14, fontWeight: 600,
-        }}>✕</a>
+      {/* Header bar — constrained to article width */}
+      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="/web" style={{
+            width: 32, height: 32, borderRadius: 16, background: C.surfaceAlt,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            textDecoration: "none", color: C.textSub, fontSize: 14, fontWeight: 600,
+          }}>✕</a>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button
-            onClick={() => setFontIdx(i => (i + 1) % FONT_SIZES.length)}
-            style={{
-              width: 36, height: 36, borderRadius: 18,
-              background: fontIdx > 0 ? C.brand + "33" : C.surfaceAlt,
-              border: 0, cursor: "pointer", fontSize: 13, fontWeight: 700,
-              color: fontIdx > 0 ? C.brand : C.textMuted,
-            }}
-          >
-            {FONT_SIZES[fontIdx].label}
-          </button>
-        </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => setFontIdx(i => (i + 1) % FONT_SIZES.length)}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                background: fontIdx > 0 ? C.brand + "33" : C.surfaceAlt,
+                border: 0, cursor: "pointer", fontSize: 13, fontWeight: 700,
+                color: fontIdx > 0 ? C.brand : C.textMuted,
+              }}
+            >
+              {FONT_SIZES[fontIdx].label}
+            </button>
+          </div>
 
-        {/* Reaction button */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setPickerOpen(o => !o)}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: "none", border: 0, cursor: "pointer", padding: "4px 8px",
-            }}
-          >
-            {reactionEntries.length > 0
-              ? reactionEntries.map(([emoji, count]) => (
-                  <span key={emoji} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <span style={{ fontSize: 22 }}>{emoji}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: C.textSub }}>{count}</span>
-                  </span>
-                ))
-              : <span style={{ fontSize: 22, opacity: 0.35 }}>😮</span>
-            }
-          </button>
-          {pickerOpen && (
-            <div style={{
-              position: "absolute", right: 0, top: 44, zIndex: 200,
-              background: C.surface, borderRadius: 32,
-              padding: "6px 8px", display: "flex", gap: 2,
-              boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-            }}>
-              {REACTIONS.map(emoji => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReact(emoji)}
-                  style={{
-                    width: 44, height: 44, borderRadius: 22, border: 0, cursor: "pointer",
-                    fontSize: 26, background: myReaction === emoji ? C.surfaceAlt : "transparent",
-                    transform: myReaction === emoji ? "scale(1.2)" : "scale(1)",
-                    transition: "transform 0.15s",
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Reaction button */}
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setPickerOpen(o => !o)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                background: "none", border: 0, cursor: "pointer", padding: "4px 8px",
+              }}
+            >
+              {reactionEntries.length > 0
+                ? reactionEntries.map(([emoji, count]) => (
+                    <span key={emoji} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <span style={{ fontSize: 22 }}>{emoji}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: C.textSub }}>{count}</span>
+                    </span>
+                  ))
+                : <span style={{ fontSize: 22, opacity: 0.35 }}>😮</span>
+              }
+            </button>
+            {pickerOpen && (
+              <div style={{
+                position: "absolute", right: 0, top: 44, zIndex: 200,
+                background: C.surface, borderRadius: 32,
+                padding: "6px 8px", display: "flex", gap: 2,
+                boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+              }}>
+                {REACTIONS.map(emoji => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReact(emoji)}
+                    style={{
+                      width: 44, height: 44, borderRadius: 22, border: 0, cursor: "pointer",
+                      fontSize: 26, background: myReaction === emoji ? C.surfaceAlt : "transparent",
+                      transform: myReaction === emoji ? "scale(1.2)" : "scale(1)",
+                      transition: "transform 0.15s",
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Scrollable article content */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: 16, paddingBottom: 120 }}>
         {/* Date + source */}
-        <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
+        <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 12 }}>
           {new Date(post.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
           {sourceName && <span style={{ color: C.textMuted }}>{`  |  ${sourceName}`}</span>}
         </p>
 
         {/* Title */}
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1.3, marginBottom: 16 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: C.text, lineHeight: 1.3, marginBottom: 16 }}>
           {post.title}
         </h1>
 
@@ -256,7 +254,7 @@ export default function ArticlePage({ post }: { post: Post }) {
         {post.funFact && (
           <div style={{
             background: "#fffbeb", borderRadius: 12, padding: 14, marginBottom: 16,
-            borderLeft: "3px solid #f59e0b", fontSize: 13, lineHeight: 1.6, color: "#92400e",
+            borderLeft: "3px solid #f59e0b", fontSize: 15, lineHeight: 1.6, color: "#92400e",
           }}
             dangerouslySetInnerHTML={{ __html: post.funFact }}
           />
@@ -266,7 +264,7 @@ export default function ArticlePage({ post }: { post: Post }) {
         {tags.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
             {tags.map(tag => (
-              <span key={tag} style={{ background: C.surfaceAlt, color: "#6b7280", fontSize: 12, padding: "4px 10px", borderRadius: 12 }}>
+              <span key={tag} style={{ background: C.surfaceAlt, color: "#6b7280", fontSize: 14, padding: "4px 10px", borderRadius: 12 }}>
                 {tag}
               </span>
             ))}
@@ -280,7 +278,7 @@ export default function ArticlePage({ post }: { post: Post }) {
               href={post.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ border: `1.5px solid ${C.brand}`, borderRadius: 16, padding: "7px 16px", color: C.brand, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+              style={{ border: `1.5px solid ${C.brand}`, borderRadius: 16, padding: "7px 16px", color: C.brand, fontSize: 15, fontWeight: 700, textDecoration: "none" }}
             >
               View Source
             </a>
@@ -309,7 +307,7 @@ export default function ArticlePage({ post }: { post: Post }) {
         )}
 
         {/* Comments header */}
-        <p style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 16 }}>
+        <p style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 16 }}>
           {comments.length} Comment{comments.length === 1 ? "" : "s"}
         </p>
 
@@ -320,10 +318,10 @@ export default function ArticlePage({ post }: { post: Post }) {
         {comments.map(c => (
           <div key={c.id} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.brand }}>{c.screenName}</span>
-              <span style={{ fontSize: 11, color: C.textMuted }}>{timeAgo(c.createdAt)}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: C.brand }}>{c.screenName}</span>
+              <span style={{ fontSize: 13, color: C.textMuted }}>{timeAgo(c.createdAt)}</span>
             </div>
-            <p style={{ fontSize: 14, color: C.textSub, lineHeight: 1.5, margin: 0 }}>{c.text}</p>
+            <p style={{ fontSize: 16, color: C.textSub, lineHeight: 1.5, margin: 0 }}>{c.text}</p>
           </div>
         ))}
       </div>
