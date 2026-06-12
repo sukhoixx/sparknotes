@@ -20,50 +20,60 @@ function formatNum(n: number): string {
 
 export default function Card({ post, liked, likeCount, variant, badgeOverride, onLike, onClick }: CardProps) {
   const isLight = variant === "B";
-  const isDark = variant === "A";
   const catMeta = CATEGORY_LIST.find((c) => c.id === post.category);
   const gradient = isLight
     ? (catMeta?.lightGradient ?? post.gradient)
-    : isDark
-    ? (catMeta?.darkGradient ?? post.gradient)
-    : post.gradient;
+    : (catMeta?.darkGradient ?? post.gradient);
+
+  const surface = isLight ? "#ffffff" : "#1c1c1e";
+  const textColor = isLight ? "#1a1a1a" : "#f2f2f7";
+  const faintColor = isLight ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)";
 
   return (
     <div
-      className="card break-inside-avoid bg-white rounded-[14px] overflow-hidden mb-2 cursor-pointer shadow-sm transition-transform active:scale-[.97]"
+      className="card break-inside-avoid rounded-[14px] overflow-hidden mb-2 cursor-pointer shadow-sm transition-transform active:scale-[.97]"
+      style={{ background: surface }}
       onClick={onClick}
     >
-      <div
-        className="w-full relative px-3 pt-8 pb-3 flex flex-col"
-        style={{ background: gradient }}
-      >
-        <span
-          className={`absolute top-2 left-2 text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] backdrop-blur-sm ${
-            isLight ? "bg-black/10 text-black/70" : "bg-black/40 text-white"
-          }`}
-        >
+      {/* Badge */}
+      <div className="px-2 pt-[6px] pb-[4px]" style={{ background: surface }}>
+        <span className="text-[9px] font-semibold" style={{ color: faintColor }}>
           {badgeOverride ?? post.badge}
         </span>
-        <p
-          className={`font-bold text-[15px] leading-[1.4] drop-shadow-sm mb-3 ${
-            isLight ? "text-gray-900" : "text-white"
-          }`}
-        >
+      </div>
+
+      {/* Image or gradient fallback */}
+      {post.imageUrl ? (
+        <img
+          src={post.imageUrl}
+          alt=""
+          className="w-full object-cover"
+          style={{ height: 120, display: "block" }}
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full" style={{ height: 120, background: gradient }} />
+      )}
+
+      {/* Title + footer */}
+      <div className="px-[10px] pt-2 pb-[10px]" style={{ minHeight: 80 }}>
+        <p className="font-bold text-[14px] leading-[1.35] mb-[10px]" style={{ color: textColor }}>
           {post.title}
         </p>
-        <div className="flex items-center gap-[6px]">
-          <span className={`text-[11px] flex-1 ${isLight ? "text-black/50" : "text-white/70"}`}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] flex-1 mr-1" style={{ color: faintColor }}>
             {post._count.comments > 0 ? `${post._count.comments} comment${post._count.comments === 1 ? "" : "s"}` : ""}
           </span>
-          <div className={`flex items-center gap-[3px] text-[11px] ${isLight ? "text-black/50" : "text-white/70"}`}>
+          <div className="flex items-center gap-[3px] text-[11px]">
             <button
-              className="bg-transparent border-0 cursor-pointer text-base p-0"
+              className="bg-transparent border-0 cursor-pointer text-[14px] p-0"
               onClick={onLike}
               aria-label="Like"
+              style={{ color: faintColor }}
             >
               {liked ? "❤️" : "🤍"}
             </button>
-            <span>{formatNum(likeCount)}</span>
+            <span className="text-[10px]" style={{ color: faintColor }}>{formatNum(likeCount)}</span>
           </div>
         </div>
       </div>
@@ -74,7 +84,8 @@ export default function Card({ post, liked, likeCount, variant, badgeOverride, o
 export function CardSkeleton() {
   return (
     <div className="break-inside-avoid bg-white rounded-[14px] overflow-hidden mb-2">
-      <div className="w-full bg-shimmer" style={{ height: `${100 + Math.random() * 60}px` }} />
+      <div className="w-full bg-shimmer" style={{ height: 14, margin: "6px 8px 4px", borderRadius: 4, width: "40%" }} />
+      <div className="w-full bg-shimmer" style={{ height: 120 }} />
       <div className="px-[10px] pb-3 pt-2 space-y-[6px]">
         <div className="h-3 rounded bg-shimmer w-full" />
         <div className="h-3 rounded bg-shimmer w-[65%]" />

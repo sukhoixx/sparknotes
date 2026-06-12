@@ -84,13 +84,27 @@ export default function ArticleModal({ post, liked, likeCount, onClose, onLike, 
         {/* Handle */}
         <div className="w-10 h-1 bg-gray-200 rounded mx-auto mt-3" />
 
-        {/* Header strip */}
-        <div
-          className="mx-4 mt-3 rounded-2xl px-4 pt-6 pb-4"
-          style={{ background: post.gradient }}
-        >
-          <h1 className="text-white text-[18px] font-extrabold leading-[1.3] drop-shadow-sm">{post.title}</h1>
-        </div>
+        {/* Hero image or gradient strip */}
+        {post.imageUrl ? (
+          <div className="mx-4 mt-3 rounded-2xl overflow-hidden">
+            <img
+              src={post.imageUrl}
+              alt=""
+              className="w-full object-cover"
+              style={{ height: 200, display: "block" }}
+            />
+            <div className="px-4 pt-3 pb-4" style={{ background: post.gradient }}>
+              <h1 className="text-white text-[18px] font-extrabold leading-[1.3] drop-shadow-sm">{post.title}</h1>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="mx-4 mt-3 rounded-2xl px-4 pt-6 pb-4"
+            style={{ background: post.gradient }}
+          >
+            <h1 className="text-white text-[18px] font-extrabold leading-[1.3] drop-shadow-sm">{post.title}</h1>
+          </div>
+        )}
 
         {/* Content */}
         <div className="p-4">

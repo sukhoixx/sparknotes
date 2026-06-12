@@ -28,8 +28,8 @@ export default function WebPage() {
     };
     body.style.maxWidth = "none";
     body.style.margin = "0";
-    body.style.background = "#111111";
-    html.style.background = "#111111";
+    body.style.background = "#000000";
+    html.style.background = "#000000";
     return () => {
       body.style.maxWidth = orig.bodyMax;
       body.style.margin = orig.bodyMargin;
@@ -48,7 +48,7 @@ export default function WebPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111111]">
+    <div className="min-h-screen bg-[#000000]">
       <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto" }}>
         <Header
           category={category}
@@ -60,6 +60,7 @@ export default function WebPage() {
           profile={profile}
           onProfileClick={handleProfileClick}
           variant="A"
+          iosStyle
         />
         <Feed
           category={category}

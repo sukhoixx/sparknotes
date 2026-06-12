@@ -32,9 +32,10 @@ interface HeaderProps {
   profile?: { screenName: string } | null;
   onProfileClick?: () => void;
   variant?: AbVariant;
+  iosStyle?: boolean;
 }
 
-export default function Header({ category, onCategoryChange, onSearch, profile, onProfileClick, variant }: HeaderProps) {
+export default function Header({ category, onCategoryChange, onSearch, profile, onProfileClick, variant, iosStyle }: HeaderProps) {
   const dark = variant === "A";
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -131,11 +132,20 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
               <button
                 key={tab.id}
                 onClick={() => onCategoryChange(tab.id)}
-                className="px-4 py-[6px] rounded-[20px] border-0 text-[14px] font-medium whitespace-nowrap cursor-pointer transition-all"
+                className="border-0 whitespace-nowrap cursor-pointer transition-all"
                 style={
-                  category === tab.id
-                    ? { background: "#ff2442", color: "#ffffff", fontWeight: 700 }
-                    : { background: "transparent", color: dark ? "#8e8e93" : "#9ca3af" }
+                  iosStyle
+                    ? {
+                        background: "transparent",
+                        color: category === tab.id ? "#ff2442" : (dark ? "#6b6b6b" : "#9ca3af"),
+                        fontWeight: category === tab.id ? 600 : 400,
+                        fontSize: 13,
+                        padding: "7px 14px",
+                        borderBottom: category === tab.id ? "2px solid #ff2442" : "2px solid transparent",
+                      }
+                    : category === tab.id
+                    ? { background: "#ff2442", color: "#ffffff", fontWeight: 700, fontSize: 14, borderRadius: 20, padding: "6px 16px" }
+                    : { background: "transparent", color: dark ? "#8e8e93" : "#9ca3af", fontSize: 14, borderRadius: 20, padding: "6px 16px" }
                 }
               >
                 {tab.label}
