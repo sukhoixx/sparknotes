@@ -30,8 +30,8 @@ export default function WebPage() {
     };
     body.style.maxWidth = "none";
     body.style.margin = "0";
-    body.style.background = "#000000";
-    html.style.background = "#000000";
+    body.style.background = "#f5f5f7";
+    html.style.background = "#f5f5f7";
     return () => {
       body.style.maxWidth = orig.bodyMax;
       body.style.margin = orig.bodyMargin;
@@ -50,7 +50,7 @@ export default function WebPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000000]">
+    <div className="min-h-screen bg-[#f5f5f7]">
       <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto" }}>
         <Header
           category={category}
@@ -61,7 +61,7 @@ export default function WebPage() {
           onSearch={setSearchQuery}
           profile={profile}
           onProfileClick={handleProfileClick}
-          variant="A"
+          variant="B"
           iosStyle
         />
         <Feed
@@ -69,7 +69,7 @@ export default function WebPage() {
           searchQuery={searchQuery}
           initialPosts={[] as PostWithCount[]}
           profile={profile}
-          variant="A"
+          variant="B"
           onCardClick={(post) => router.push(`/web/posts/${post.id}`)}
         />
         {signInOpen && (

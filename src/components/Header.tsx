@@ -67,40 +67,13 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
       }}
     >
       <div className="px-4 pt-3">
-        {/* Top row */}
+        {/* Top row — logo and profile always visible, search expands in place */}
         <div className="flex items-center gap-[10px] mb-3">
-          {!searchOpen ? (
-            <>
-              <a className="flex items-center gap-[6px] text-[20px] font-extrabold text-[#ff2442] no-underline whitespace-nowrap" href="#">
-                <div className="w-8 h-8 bg-[#ff2442] rounded-lg flex items-center justify-center text-[18px]">📰</div>
-                NewsBlock
-              </a>
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="flex-1 flex items-center rounded-[20px] px-[14px] py-2 gap-[6px] border-0 text-[14px] cursor-text"
-                style={{
-                  background: dark ? "#2c2c2e" : "#f3f4f6",
-                  color: dark ? "#8e8e93" : "#9ca3af",
-                }}
-              >
-                <span>🔍</span>
-                Search the latest news…
-              </button>
-              <button
-                onClick={onProfileClick}
-                className="w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer shrink-0 overflow-hidden"
-                style={profile ? { background: "#ff2442" } : { background: dark ? "#2c2c2e" : "#f3f4f6" }}
-              >
-                {profile ? (
-                  <span className="text-white text-[15px] font-bold leading-none">
-                    {profile.screenName[0].toUpperCase()}
-                  </span>
-                ) : (
-                  <span className="text-[18px]">👤</span>
-                )}
-              </button>
-            </>
-          ) : (
+          <a className="flex items-center gap-[6px] text-[20px] font-extrabold text-[#ff2442] no-underline whitespace-nowrap" href="#">
+            <div className="w-8 h-8 bg-[#ff2442] rounded-lg flex items-center justify-center text-[18px]">📰</div>
+            NewsBlock
+          </a>
+          {searchOpen ? (
             <div
               className="flex-1 flex items-center rounded-[20px] px-[14px] py-2 gap-[6px]"
               style={{ background: dark ? "#2c2c2e" : "#f3f4f6" }}
@@ -122,7 +95,32 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
                 ✕
               </button>
             </div>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex-1 flex items-center rounded-[20px] px-[14px] py-2 gap-[6px] border-0 text-[14px] cursor-text"
+              style={{
+                background: dark ? "#2c2c2e" : "#f3f4f6",
+                color: dark ? "#8e8e93" : "#9ca3af",
+              }}
+            >
+              <span>🔍</span>
+              Search the latest news…
+            </button>
           )}
+          <button
+            onClick={onProfileClick}
+            className="w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer shrink-0 overflow-hidden"
+            style={profile ? { background: "#ff2442" } : { background: dark ? "#2c2c2e" : "#f3f4f6" }}
+          >
+            {profile ? (
+              <span className="text-white text-[15px] font-bold leading-none">
+                {profile.screenName[0].toUpperCase()}
+              </span>
+            ) : (
+              <span className="text-[18px]">👤</span>
+            )}
+          </button>
         </div>
 
         {/* Category tabs */}
