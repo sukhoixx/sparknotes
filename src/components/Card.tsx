@@ -34,7 +34,7 @@ export default function Card({ post, liked, likeCount, variant, badgeOverride, o
 
   return (
     <div
-      className="card break-inside-avoid rounded-[14px] overflow-hidden mb-2 cursor-pointer transition-transform active:scale-[.97]"
+      className="card break-inside-avoid overflow-hidden cursor-pointer transition-transform active:scale-[.97]"
       style={{ background: surface, boxShadow: isLight ? "0 1px 4px rgba(0,0,0,0.07)" : "none" }}
       onClick={onClick}
     >
@@ -97,7 +97,7 @@ export default function Card({ post, liked, likeCount, variant, badgeOverride, o
 
 export function CardSkeleton() {
   return (
-    <div className="break-inside-avoid bg-white rounded-[14px] overflow-hidden mb-2" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
+    <div className="break-inside-avoid bg-white overflow-hidden" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
       <div style={{ height: 14, margin: "6px 8px 4px", borderRadius: 4, width: "40%" }} className="bg-shimmer" />
       <div className="w-full aspect-video bg-shimmer" />
       <div className="px-[10px] pb-3 pt-2 space-y-[6px]">

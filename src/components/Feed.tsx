@@ -175,13 +175,13 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
   return (
     <>
       {/* Two explicit columns — appending to one never reflows the other */}
-      <div className="flex gap-2 px-2 pb-24 pt-[6px]">
-        <div className="flex-1 flex flex-col gap-2">
+      <div className="flex gap-1 px-1 pb-24 pt-[3px]">
+        <div className="flex-1 flex flex-col gap-1">
           {leftPosts.map(renderCard)}
           {isLoadingMore && <CardSkeleton />}
           {isLoadingMore && <CardSkeleton />}
         </div>
-        <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 flex flex-col gap-1">
           {rightPosts.map(renderCard)}
           {isLoadingMore && <CardSkeleton />}
           {isLoadingMore && <CardSkeleton />}
