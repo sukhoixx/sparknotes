@@ -9,14 +9,19 @@ interface ProfileModalProps {
   profile: UserProfile | null;
   onSave: (screenName: string, categories: string[]) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
+  isAuthenticated?: boolean;
+  onSignIn?: () => void;
 }
 
-export default function ProfileModal({ profile, onSave, onClose }: ProfileModalProps) {
+export default function ProfileModal({ profile, onSave, onClose, isAuthenticated = false, onSignIn }: ProfileModalProps) {
   const [name, setName] = useState(profile?.screenName ?? "");
   const [selectedCats, setSelectedCats] = useState<Set<string>>(
     new Set(profile?.categories ?? [])
   );
-  const [nameAvailable, setNameAvailable] = useState<boolean | null>(profile ? true : null);
+  const [nameAvailable, setNameAvailable] = useState<boolean | null>(
+    // guests: any name ≥2 chars is fine; authenticated: check uniqueness
+    !isAuthenticated ? (profile ? true : null) : (profile ? true : null)
+  );
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +29,11 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
   const isFirstTime = !profile;
 
   const checkName = useCallback((value: string) => {
+    if (!isAuthenticated) {
+      // Guests: no server check needed
+      setNameAvailable(value.trim().length >= 2 ? true : null);
+      return;
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (value.trim().length < 2) { setNameAvailable(null); return; }
     setChecking(true);
@@ -33,7 +43,7 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
       setNameAvailable(d.available);
       setChecking(false);
     }, 400);
-  }, []);
+  }, [isAuthenticated]);
 
   const toggleCat = (id: string) => {
     setSelectedCats((prev) => {
@@ -62,7 +72,6 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
     }
   }
 
-  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -89,22 +98,36 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
             )}
           </div>
 
+          {/* Guest banner */}
+          {!isAuthenticated && (
+            <div className="bg-amber-50 border-l-[3px] border-amber-400 rounded-r-[10px] px-3 py-2 mb-4 text-[12px] text-amber-800">
+              You&apos;re browsing as a guest. Your preferences are saved locally.{" "}
+              {onSignIn && (
+                <button onClick={onSignIn} className="bg-transparent border-0 cursor-pointer text-[#ff2442] font-semibold p-0 underline">
+                  Sign in to sync across devices.
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Screen name */}
           <label className="block text-[13px] font-semibold text-gray-600 mb-1">Screen name</label>
           <div className="relative mb-1">
             <input
               autoFocus
               value={name}
-              onChange={(e) => { setName(e.target.value); checkName(e.target.value); setNameAvailable(null); }}
+              onChange={(e) => { setName(e.target.value); setNameAvailable(null); checkName(e.target.value); }}
               placeholder="e.g. CosmicReader42"
               maxLength={50}
               className="w-full bg-gray-100 rounded-[14px] px-4 py-[10px] text-[15px] text-gray-900 outline-none border-0 pr-10"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]">
-              {checking ? "⏳" : nameAvailable === true ? "✅" : nameAvailable === false ? "❌" : ""}
-            </span>
+            {isAuthenticated && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]">
+                {checking ? "⏳" : nameAvailable === true ? "✅" : nameAvailable === false ? "❌" : ""}
+              </span>
+            )}
           </div>
-          {nameAvailable === false && (
+          {isAuthenticated && nameAvailable === false && (
             <p className="text-[12px] text-[#ff2442] mb-3">That name is taken — try another.</p>
           )}
           {nameAvailable === true && name.trim().length >= 2 && (
@@ -128,11 +151,7 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
                   key={cat.id}
                   onClick={() => toggleCat(cat.id)}
                   className="flex items-center gap-[5px] px-3 py-[6px] rounded-[20px] text-[13px] font-semibold border-0 cursor-pointer transition-all"
-                  style={
-                    on
-                      ? { background: cat.gradient, color: "#fff" }
-                      : { background: "#f3f4f6", color: "#6b7280" }
-                  }
+                  style={on ? { background: cat.gradient, color: "#fff" } : { background: "#f3f4f6", color: "#6b7280" }}
                 >
                   {cat.emoji} {cat.label}
                 </button>
@@ -156,10 +175,10 @@ export default function ProfileModal({ profile, onSave, onClose }: ProfileModalP
             {saving ? "Saving…" : isFirstTime ? "Create Profile" : "Save Changes"}
           </button>
 
-          {!isFirstTime && (
+          {!isFirstTime && isAuthenticated && (
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="w-full mt-3 bg-transparent border-0 cursor-pointer text-[13px] text-gray-400 hover:text-[#ff2442] transition-colors py-2"
+              className="w-full mt-3 bg-transparent border-0 cursor-pointer text-[13px] text-gray-400 py-2"
             >
               Sign out
             </button>

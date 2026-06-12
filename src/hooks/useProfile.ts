@@ -8,15 +8,34 @@ export interface UserProfile {
   categories: string[];
 }
 
+const GUEST_KEY = "newsblock_guest_profile";
+
+function loadGuestProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(GUEST_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (p?.screenName && Array.isArray(p.categories)) return p;
+    return null;
+  } catch { return null; }
+}
+
+function saveGuestProfile(p: UserProfile) {
+  try { localStorage.setItem(GUEST_KEY, JSON.stringify(p)); } catch {}
+}
+
 export function useProfile() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (status === "unauthenticated") { setLoading(false); return; }
-
+    if (status === "unauthenticated") {
+      setProfile(loadGuestProfile());
+      setLoading(false);
+      return;
+    }
     fetch("/api/profile")
       .then((r) => r.json())
       .then((d) => { setProfile(d.profile ?? null); setLoading(false); })
@@ -27,6 +46,12 @@ export function useProfile() {
     screenName: string,
     categories: string[]
   ): Promise<{ ok: boolean; error?: string }> {
+    if (status === "unauthenticated") {
+      const p = { screenName, categories };
+      saveGuestProfile(p);
+      setProfile(p);
+      return { ok: true };
+    }
     const res = await fetch("/api/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

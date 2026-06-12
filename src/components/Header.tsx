@@ -123,9 +123,8 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
           </button>
         </div>
 
-        {/* Category tabs */}
-        {!searchOpen && (
-          <div className="flex gap-1 overflow-x-auto scrollbar-none pb-3">
+        {/* Category tabs — always visible */}
+        <div className="flex gap-1 overflow-x-auto scrollbar-none pb-3">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -150,7 +149,6 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
               </button>
             ))}
           </div>
-        )}
       </div>
     </header>
   );

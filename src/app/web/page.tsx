@@ -45,8 +45,7 @@ export default function WebPage() {
   }, [loading, isAuthenticated, profile]);
 
   function handleProfileClick() {
-    if (!isAuthenticated) setSignInOpen(true);
-    else setProfileOpen(true);
+    setProfileOpen(true);
   }
 
   return (
@@ -75,11 +74,13 @@ export default function WebPage() {
         {signInOpen && (
           <SignInModal onClose={() => setSignInOpen(false)} />
         )}
-        {profileOpen && isAuthenticated && (
+        {profileOpen && (
           <ProfileModal
             profile={profile}
             onSave={saveProfile}
             onClose={() => setProfileOpen(false)}
+            isAuthenticated={isAuthenticated}
+            onSignIn={() => { setProfileOpen(false); setSignInOpen(true); }}
           />
         )}
       </div>
