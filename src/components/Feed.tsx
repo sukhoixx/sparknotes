@@ -173,32 +173,29 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
     />
   );
 
-  // Build rows with ad injection every AD_EVERY cards across both columns
+  // Split posts into segments of AD_EVERY, with a full-width ad between segments.
+  // Within each segment the two columns are independent so cards stack at natural heights.
   const AD_EVERY = 16;
-  const rows: React.ReactNode[] = [];
-  for (let i = 0; i < posts.length; i += 2) {
-    const left = posts[i];
-    const right = posts[i + 1];
-    rows.push(
-      <div key={`row-${i}`} className="flex gap-1">
-        <div className="flex-1">{left && renderCard(left)}</div>
-        <div className="flex-1">{right && renderCard(right)}</div>
+  const segments: React.ReactNode[] = [];
+  for (let start = 0; start < posts.length; start += AD_EVERY) {
+    const chunk = posts.slice(start, start + AD_EVERY);
+    const leftChunk  = chunk.filter((_, i) => i % 2 === 0);
+    const rightChunk = chunk.filter((_, i) => i % 2 === 1);
+    segments.push(
+      <div key={`seg-${start}`} className="flex gap-1">
+        <div className="flex-1 flex flex-col gap-1">{leftChunk.map(renderCard)}</div>
+        <div className="flex-1 flex flex-col gap-1">{rightChunk.map(renderCard)}</div>
       </div>
     );
-    // Insert ad after every AD_EVERY cards (i is the left card index, so i+2 = cards processed)
-    if ((i + 2) % AD_EVERY === 0) {
-      rows.push(
-        <div key={`ad-${i}`} className="w-full">
-          <AdCard />
-        </div>
-      );
+    if (start + AD_EVERY < posts.length) {
+      segments.push(<div key={`ad-${start}`} className="w-full"><AdCard /></div>);
     }
   }
 
   return (
     <>
       <div className="flex flex-col gap-1 px-1 pb-24 pt-[3px]">
-        {rows}
+        {segments}
         {isLoadingMore && (
           <div className="flex gap-1">
             <div className="flex-1"><CardSkeleton /></div>
