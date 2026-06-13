@@ -44,12 +44,49 @@ export default function WebPage() {
     if (!loading && isAuthenticated && !profile) setProfileOpen(true);
   }, [loading, isAuthenticated, profile]);
 
+  useEffect(() => {
+    try {
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+    } catch {}
+  }, []);
+
   function handleProfileClick() {
     setProfileOpen(true);
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
+    <div className="min-h-screen bg-[#f5f5f7]" style={{ position: "relative" }}>
+      {/* Left sidebar ad — only shown when viewport > 1080px */}
+      <div style={{
+        position: "fixed", top: 120, left: "calc(50% - 360px - 170px)",
+        width: 160, display: "flex", flexDirection: "column", gap: 16,
+        zIndex: 10,
+      }} className="hidden xl:flex">
+        <ins
+          className="adsbygoogle"
+          style={{ display: "block", width: 160, height: 600 }}
+          data-ad-client="ca-pub-2618352557321545"
+          data-ad-slot="6335999163"
+          data-ad-format="vertical"
+        />
+      </div>
+
+      {/* Right sidebar ad — only shown when viewport > 1080px */}
+      <div style={{
+        position: "fixed", top: 120, left: "calc(50% + 360px + 10px)",
+        width: 160, display: "flex", flexDirection: "column", gap: 16,
+        zIndex: 10,
+      }} className="hidden xl:flex">
+        <ins
+          className="adsbygoogle"
+          style={{ display: "block", width: 160, height: 600 }}
+          data-ad-client="ca-pub-2618352557321545"
+          data-ad-slot="6335999163"
+          data-ad-format="vertical"
+        />
+      </div>
+
       <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto" }}>
         <Header
           category={category}
