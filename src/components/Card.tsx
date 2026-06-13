@@ -40,7 +40,7 @@ export default function Card({ post, liked, likeCount, variant, badgeOverride, o
     >
       {/* Badge — small, faint, top */}
       <div className="px-2 pt-[6px] pb-1">
-        <span style={{ fontSize: 9, fontWeight: 600, color: faintColor }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: faintColor }}>
           {badgeOverride ?? post.badge}
         </span>
       </div>
@@ -61,7 +61,7 @@ export default function Card({ post, liked, likeCount, variant, badgeOverride, o
 
       {/* Content */}
       <div className="px-[10px] pt-2 pb-[10px]" style={{ minHeight: 80 }}>
-        <p className="font-bold leading-[1.35] mb-[10px]" style={{ fontSize: 14, color: textColor }}>
+        <p className="font-bold leading-[1.35] mb-[10px]" style={{ fontSize: 16, color: textColor }}>
           {post.title}
         </p>
 

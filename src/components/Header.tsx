@@ -69,8 +69,8 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
       <div className="px-4 pt-3">
         {/* Top row — logo and profile always visible, search expands in place */}
         <div className="flex items-center gap-[10px] mb-3">
-          <a className="flex items-center gap-[6px] text-[20px] font-extrabold text-[#ff2442] no-underline whitespace-nowrap" href="#">
-            <div className="w-8 h-8 bg-[#ff2442] rounded-lg flex items-center justify-center text-[18px]">📰</div>
+          <a className="flex items-center gap-[8px] text-[24px] font-extrabold text-[#ff2442] no-underline whitespace-nowrap" href="#">
+            <div className="w-9 h-9 bg-[#ff2442] rounded-lg flex items-center justify-center text-[20px]">📰</div>
             NewsBlock
           </a>
           {searchOpen ? (
@@ -136,13 +136,13 @@ export default function Header({ category, onCategoryChange, onSearch, profile, 
                         background: "transparent",
                         color: category === tab.id ? "#ff2442" : (dark ? "#6b6b6b" : "#9ca3af"),
                         fontWeight: category === tab.id ? 600 : 400,
-                        fontSize: 13,
+                        fontSize: 15,
                         padding: "7px 14px",
                         borderBottom: category === tab.id ? "2px solid #ff2442" : "2px solid transparent",
                       }
                     : category === tab.id
-                    ? { background: "#ff2442", color: "#ffffff", fontWeight: 700, fontSize: 14, borderRadius: 20, padding: "6px 16px" }
-                    : { background: "transparent", color: dark ? "#8e8e93" : "#9ca3af", fontSize: 14, borderRadius: 20, padding: "6px 16px" }
+                    ? { background: "#ff2442", color: "#ffffff", fontWeight: 700, fontSize: 15, borderRadius: 20, padding: "6px 16px" }
+                    : { background: "transparent", color: dark ? "#8e8e93" : "#9ca3af", fontSize: 15, borderRadius: 20, padding: "6px 16px" }
                 }
               >
                 {tab.label}

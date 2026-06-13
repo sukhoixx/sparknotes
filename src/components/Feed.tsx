@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import type { Post } from "@prisma/client";
 
@@ -11,6 +11,7 @@ export type PostWithCount = Post & {
 };
 
 import Card, { CardSkeleton } from "./Card";
+import AdCard from "./AdCard";
 import ArticleModal from "./ArticleModal";
 import type { UserProfile } from "@/hooks/useProfile";
 import type { AbVariant } from "@/hooks/useAbVariant";
@@ -172,20 +173,38 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
     />
   );
 
+  // Build rows with ad injection every AD_EVERY cards across both columns
+  const AD_EVERY = 16;
+  const rows: React.ReactNode[] = [];
+  for (let i = 0; i < posts.length; i += 2) {
+    const left = posts[i];
+    const right = posts[i + 1];
+    rows.push(
+      <div key={`row-${i}`} className="flex gap-1">
+        <div className="flex-1">{left && renderCard(left)}</div>
+        <div className="flex-1">{right && renderCard(right)}</div>
+      </div>
+    );
+    // Insert ad after every AD_EVERY cards (i is the left card index, so i+2 = cards processed)
+    if ((i + 2) % AD_EVERY === 0) {
+      rows.push(
+        <div key={`ad-${i}`} className="w-full">
+          <AdCard />
+        </div>
+      );
+    }
+  }
+
   return (
     <>
-      {/* Two explicit columns — appending to one never reflows the other */}
-      <div className="flex gap-1 px-1 pb-24 pt-[3px]">
-        <div className="flex-1 flex flex-col gap-1">
-          {leftPosts.map(renderCard)}
-          {isLoadingMore && <CardSkeleton />}
-          {isLoadingMore && <CardSkeleton />}
-        </div>
-        <div className="flex-1 flex flex-col gap-1">
-          {rightPosts.map(renderCard)}
-          {isLoadingMore && <CardSkeleton />}
-          {isLoadingMore && <CardSkeleton />}
-        </div>
+      <div className="flex flex-col gap-1 px-1 pb-24 pt-[3px]">
+        {rows}
+        {isLoadingMore && (
+          <div className="flex gap-1">
+            <div className="flex-1"><CardSkeleton /></div>
+            <div className="flex-1"><CardSkeleton /></div>
+          </div>
+        )}
       </div>
 
       {/* Empty state */}
