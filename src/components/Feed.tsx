@@ -173,35 +173,30 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
     />
   );
 
-  // Split posts into segments of AD_EVERY, with a full-width ad between segments.
-  // Within each segment the two columns are independent so cards stack at natural heights.
+  // Two independent columns with an AdCard injected into the left column every AD_EVERY cards.
   const AD_EVERY = 16;
-  const segments: React.ReactNode[] = [];
-  for (let start = 0; start < posts.length; start += AD_EVERY) {
-    const chunk = posts.slice(start, start + AD_EVERY);
-    const leftChunk  = chunk.filter((_, i) => i % 2 === 0);
-    const rightChunk = chunk.filter((_, i) => i % 2 === 1);
-    segments.push(
-      <div key={`seg-${start}`} className="flex gap-1">
-        <div className="flex-1 flex flex-col gap-1">{leftChunk.map(renderCard)}</div>
-        <div className="flex-1 flex flex-col gap-1">{rightChunk.map(renderCard)}</div>
-      </div>
-    );
-    if (start + AD_EVERY < posts.length) {
-      segments.push(<div key={`ad-${start}`} className="w-full"><AdCard /></div>);
+  const leftItems: React.ReactNode[] = [];
+  const rightItems: React.ReactNode[] = [];
+  posts.forEach((post, i) => {
+    const col = i % 2 === 0 ? leftItems : rightItems;
+    col.push(renderCard(post));
+    // After every AD_EVERY cards inject an ad into the left column
+    if ((i + 1) % AD_EVERY === 0) {
+      leftItems.push(<AdCard key={`ad-${i}`} />);
     }
-  }
+  });
 
   return (
     <>
-      <div className="flex flex-col gap-1 px-1 pb-24 pt-[3px]">
-        {segments}
-        {isLoadingMore && (
-          <div className="flex gap-1">
-            <div className="flex-1"><CardSkeleton /></div>
-            <div className="flex-1"><CardSkeleton /></div>
-          </div>
-        )}
+      <div className="flex gap-1 px-1 pb-24 pt-[3px]">
+        <div className="flex-1 flex flex-col gap-1">
+          {leftItems}
+          {isLoadingMore && <CardSkeleton />}
+        </div>
+        <div className="flex-1 flex flex-col gap-1">
+          {rightItems}
+          {isLoadingMore && <CardSkeleton />}
+        </div>
       </div>
 
       {/* Empty state */}
