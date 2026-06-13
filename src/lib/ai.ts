@@ -245,18 +245,44 @@ const CATEGORY_SELECTION_PROMPTS: Record<Category, string> = {
   asia: `You are the senior editor for Asia-Pacific coverage at a major international outlet. ${AUDIENCE} Select articles covering: major political or diplomatic developments across East Asia, Southeast Asia, or South Asia; economic policy decisions by China, Japan, South Korea, or ASEAN nations with regional or global impact; Taiwan Strait tensions, cross-strait relations, or Taiwan domestic politics; military or security developments in the Indo-Pacific; significant elections or leadership changes across Asia. Slightly prefer stories directly about China, Taiwan, or Hong Kong when choosing between similarly newsworthy articles. Reject purely local human-interest stories with no regional significance, generic travel or culture pieces, and entertainment news. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
 };
 
+const META_ROUNDUP_PATTERNS = [
+  /headline news$/i,
+  /what (the |)(newspapers?|media|press) (say|said|are saying|cover)/i,
+  /morning (headlines?|briefing|digest|roundup)/i,
+  /evening (headlines?|briefing|digest|roundup)/i,
+  /today'?s? (headlines?|news digest|top stories|front pages?)/i,
+  /what to (read|know) today/i,
+  /news (digest|roundup|summary) /i,
+  /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)'?s? (headlines?|news)/i,
+];
+
+function isMetaRoundup(title: string): boolean {
+  return META_ROUNDUP_PATTERNS.some((p) => p.test(title));
+}
+
 export async function selectArticlesForCategory(articles: RawArticle[], category: Category, n: number): Promise<RawArticle[]> {
   if (articles.length === 0) return [];
-  if (articles.length <= n) return articles;
 
+  // Pre-filter obvious meta-roundup articles before sending to AI
+  const filtered = articles.filter((a) => !isMetaRoundup(a.title));
+
+  if (filtered.length === 0) return [];
+  if (filtered.length <= n) return filtered;
 
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
-  const articleList = articles
+  const articleList = filtered
     .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 200)}`)
     .join("\n\n");
 
-  const userPrompt = `Here are ${articles.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.\n\n${articleList}`;
+  const userPrompt = `Here are ${filtered.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.
+
+ALWAYS REJECT regardless of category:
+- Articles that are meta-roundups about what news outlets are covering (e.g. "Taiwan headline news", "What newspapers say today", "Morning headlines digest", "What to read today")
+- Articles whose subject is news organizations or media coverage rather than an actual event
+- RSS feed description pages or source introduction articles
+
+\n\n${articleList}`;
 
   try {
     const res = await client.chat.completions.create({
@@ -273,18 +299,18 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
     const match = raw.match(/\[[\d,\s]+\]/);
     if (!match) {
       console.error("[select] could not parse indices from response:", raw);
-      return articles.slice(0, n);
+      return filtered.slice(0, n);
     }
 
     const indices: number[] = JSON.parse(match[0]);
     const selected = indices
-      .filter((i) => i >= 1 && i <= articles.length)
-      .map((i) => articles[i - 1]);
+      .filter((i) => i >= 1 && i <= filtered.length)
+      .map((i) => filtered[i - 1]);
 
     return selected.slice(0, n);
   } catch (err) {
     console.error("[select] error:", err);
-    return articles.slice(0, n);
+    return filtered.slice(0, n);
   }
 }
 
@@ -297,6 +323,7 @@ function buildSystemPrompt(categoryFreqOrder?: string[]) {
 
 Rules:
 - Write in plain, direct language. Explain any technical term or abbreviation on first use.
+- If the source article is a meta-roundup about what news outlets are covering (e.g. "Taiwan headline news", "Morning headlines digest", "What newspapers say today"), return null — do not generate a post for it.
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
 - Include specific names — people, companies, countries, stocks, products, numbers. Never replace a concrete detail with a vague stand-in (e.g. never write "a tech company" when the article says "Apple").
 - If the title promises a list or specific reveal (e.g. "Top 5 stocks to watch", "3 reasons why"), deliver each item explicitly in the body. Readers must not have to hunt for what the headline promised.
