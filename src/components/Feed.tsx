@@ -174,7 +174,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
   );
 
   // Two independent columns with an AdCard injected into the left column every AD_EVERY cards.
-  const AD_EVERY = 16;
+  const AD_EVERY = 12;
   const leftItems: React.ReactNode[] = [];
   const rightItems: React.ReactNode[] = [];
   posts.forEach((post, i) => {
