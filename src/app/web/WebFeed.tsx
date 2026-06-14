@@ -101,6 +101,7 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
           profile={profile}
           variant="B"
           onCardClick={(post) => router.push(`/web/posts/${post.id}`)}
+          showAds={false}
         />
         {signInOpen && (
           <SignInModal onClose={() => setSignInOpen(false)} />
