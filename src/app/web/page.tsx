@@ -8,7 +8,7 @@ async function getInitialPosts(): Promise<PostWithCount[]> {
   try {
     const raw = await prisma.post.findMany({
       orderBy: { id: "desc" },
-      take: 10,
+      take: 30,
       select: {
         id: true, title: true, snippet: true, body: true, funFact: true,
         tags: true, category: true, categories: true, emoji: true,
