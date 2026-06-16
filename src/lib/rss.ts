@@ -439,14 +439,14 @@ async function isValidImageUrl(url: string): Promise<boolean> {
 
 async function fetchFeed(url: string, source: string, cutoff: Date): Promise<RawArticle[]> {
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
-    let feed: Awaited<ReturnType<typeof parser.parseURL>>;
-    try {
-      feed = await parser.parseURL(url, { signal: controller.signal } as any);
-    } finally {
-      clearTimeout(timer);
-    }
+    // Fetch the raw XML with a proper abort signal, then parse the string —
+    // rss-parser's parseURL doesn't accept an AbortSignal and crashes if passed one.
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0)" },
+      signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+    });
+    const xml = await res.text();
+    const feed = await parser.parseString(xml);
     const items = feed.items.filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff);
     const articles = await Promise.all(
       items.map(async (item) => {
