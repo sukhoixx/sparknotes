@@ -409,7 +409,9 @@ export async function fetchOgImage(articleUrl: string): Promise<string | null> {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0)", "Range": "bytes=0-16383" },
       signal: AbortSignal.timeout(5000),
     });
-    const html = await res.text();
+    const html = await res.text().catch(() => "");
+    // Ensure body is fully consumed / released
+    await res.body?.cancel().catch(() => {});
     const match =
       html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
@@ -421,10 +423,9 @@ export async function fetchOgImage(articleUrl: string): Promise<string | null> {
 
 async function isValidImageUrl(url: string): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), IMAGE_CHECK_TIMEOUT_MS);
-    const res = await fetch(url, { method: "HEAD", signal: controller.signal });
-    clearTimeout(timer);
+    const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(IMAGE_CHECK_TIMEOUT_MS) });
+    // Consume body so the connection is released back to the pool
+    await res.body?.cancel();
     if (!res.ok) return false;
     const ct = res.headers.get("content-type") ?? "";
     if (!ct.startsWith("image/")) return false;
@@ -438,12 +439,14 @@ async function isValidImageUrl(url: string): Promise<boolean> {
 
 async function fetchFeed(url: string, source: string, cutoff: Date): Promise<RawArticle[]> {
   try {
-    const feed = await Promise.race([
-      parser.parseURL(url),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("feed timeout")), FEED_TIMEOUT_MS)
-      ),
-    ]);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
+    let feed: Awaited<ReturnType<typeof parser.parseURL>>;
+    try {
+      feed = await parser.parseURL(url, { signal: controller.signal } as any);
+    } finally {
+      clearTimeout(timer);
+    }
     const items = feed.items.filter((item) => item.pubDate && new Date(item.pubDate) >= cutoff);
     const articles = await Promise.all(
       items.map(async (item) => {
