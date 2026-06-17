@@ -33,9 +33,9 @@ function stripHtml(s: string | null | undefined): string | null {
   return s ? decodeHtml(s.replace(/<[^>]*>/g, "")) : null;
 }
 
-const NEW_PER_RUN = 1;
+const NEW_PER_RUN = 5;
 const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia"]);
-const HIGH_VOLUME_PER_RUN = 1;
+const HIGH_VOLUME_PER_RUN = 8;
 
 let isRunning = false;
 
