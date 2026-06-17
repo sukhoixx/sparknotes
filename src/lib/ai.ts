@@ -360,7 +360,7 @@ URL: ${article.link}`;
     const res = await client.chat.completions.create({
       model,
       max_tokens: 1200,
-      temperature: 0.3,
+      temperature: 0.7,
       messages: [
         { role: "system", content: buildSystemPrompt(categoryFreqOrder) },
         { role: "user", content: userPrompt },
