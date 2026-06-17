@@ -272,7 +272,7 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const articleList = filtered
-    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 200)}`)
+    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 400)}`)
     .join("\n\n");
 
   const userPrompt = `Here are ${filtered.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.
@@ -353,7 +353,7 @@ export async function summarizeArticle(article: RawArticle, category: Category, 
 Source: ${article.source}
 Published: ${article.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
 Title: ${article.title}
-Content: ${article.content.slice(0, 1500)}
+Content: ${article.content.slice(0, 4000)}
 URL: ${article.link}`;
 
   try {

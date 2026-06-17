@@ -457,9 +457,16 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
           (item as any).mediaThumbnail?.$?.url ??
           undefined;
         const imageUrl = rawImageUrl && await isValidImageUrl(rawImageUrl) ? rawImageUrl : undefined;
+        // Prefer full content:encoded body; fall back to snippet/summary/title.
+        // Strip HTML tags so the AI receives clean prose.
+        const fullContent = (item as any).content as string | undefined;
+        const rawContent = fullContent
+          ? fullContent.replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim()
+          : (item.contentSnippet ?? item.summary ?? item.title ?? "");
+
         return {
           title: (item.title ?? "").trim(),
-          content: item.contentSnippet ?? item.summary ?? item.title ?? "",
+          content: rawContent,
           link: (item.link ?? "").trim(),
           pubDate: new Date(item.pubDate!),
           source,
