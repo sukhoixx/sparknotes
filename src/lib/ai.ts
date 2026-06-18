@@ -334,6 +334,7 @@ Rules:
 - Pick 1-2 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
 - Only assign "asia" if the article is directly about events, people, governments, or companies based in an Asian country (e.g. China, Japan, South Korea, Taiwan, India, Southeast Asia). Asia does NOT include the Middle East. Do NOT assign "asia" just because a Western company has Asian operations, customers, or revenue exposure.
 - Gaming articles must be categorized as "gaming" only. Do NOT add "technology" as a secondary category unless the article is specifically about a breakthrough in gaming technology (e.g. a new graphics API, hardware architecture, or AI advancement applied to games) — not a game release, studio news, or industry business story.
+- For sports articles: NEVER invent scores, stats, player performance details, or game events not explicitly stated in the provided content. If the source only gives you the headline and no game details, write about the significance of the result or the broader storyline — do NOT fabricate who scored, when, or how. Invented sports facts are worse than no facts.
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
@@ -357,10 +358,14 @@ Content: ${article.content.slice(0, 4000)}
 URL: ${article.link}`;
 
   try {
+    // Sports gets lower temperature — it's the category most prone to fabricating
+    // specific game stats, scores, and player details from thin source content.
+    const temperature = category === "sports" ? 0.3 : 0.7;
+
     const res = await client.chat.completions.create({
       model,
       max_tokens: 1200,
-      temperature: 0.7,
+      temperature,
       messages: [
         { role: "system", content: buildSystemPrompt(categoryFreqOrder) },
         { role: "user", content: userPrompt },
