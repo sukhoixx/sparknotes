@@ -57,7 +57,7 @@ export default function LabClient({ items }: { items: FeedItem[] }) {
 
   return (
     <div style={{ fontFamily: F, background: C.bg, minHeight: "100vh", padding: "24px 16px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: C.brand, margin: "0 0 4px" }}>
@@ -70,7 +70,7 @@ export default function LabClient({ items }: { items: FeedItem[] }) {
 
         <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
           {/* Feed list */}
-          <div style={{ width: 320, flexShrink: 0, background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+          <div style={{ width: 260, flexShrink: 0, background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
             <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               BBC News — Latest Headlines
             </div>
@@ -111,11 +111,15 @@ export default function LabClient({ items }: { items: FeedItem[] }) {
                   <h2 style={{ fontSize: 20, fontWeight: 800, color: C.text, margin: "0 0 8px", lineHeight: 1.3 }}>
                     {selected.title}
                   </h2>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                     <span style={{ fontSize: 12, color: C.textMuted }}>{selected.pubDate}</span>
                     <a href={selected.link} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, color: C.brand, textDecoration: "none", fontWeight: 600 }}>
-                      View original ↗
+                      style={{
+                        fontSize: 13, fontWeight: 700, color: "#fff",
+                        background: C.brand, textDecoration: "none",
+                        padding: "5px 14px", borderRadius: 20, display: "inline-flex", alignItems: "center", gap: 4,
+                      }}>
+                      View source article ↗
                     </a>
                   </div>
                 </div>
