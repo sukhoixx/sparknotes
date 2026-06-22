@@ -4,6 +4,7 @@ import type { Category } from "./ai";
 export interface RawArticle {
   title: string;
   content: string;
+  fullContent: boolean; // true if content came from content:encoded (not just RSS snippet)
   link: string;
   pubDate: Date;
   source: string;
@@ -402,6 +403,30 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
 const FEED_TIMEOUT_MS = 6000;
 const IMAGE_CHECK_TIMEOUT_MS = 2000;
 const IMAGE_MIN_BYTES = 5000;
+const JINA_TIMEOUT_MS = 15000;
+const JINA_MIN_LENGTH = 200;
+
+// Fetch full article text via Jina AI reader for articles without content:encoded
+export async function fetchFullArticle(url: string): Promise<string | null> {
+  try {
+    const jinaUrl = `https://r.jina.ai/${url}`;
+    const headers: Record<string, string> = {
+      "Accept": "text/plain",
+      "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0)",
+      "X-Return-Format": "text",
+    };
+    if (process.env.JINA_API_KEY) headers["Authorization"] = `Bearer ${process.env.JINA_API_KEY}`;
+
+    const res = await fetch(jinaUrl, { headers, signal: AbortSignal.timeout(JINA_TIMEOUT_MS) });
+    if (!res.ok) return null;
+    const text = await res.text();
+    // Trim to 6000 chars — enough for a full article without burning tokens
+    const trimmed = text.slice(0, 6000).trim();
+    return trimmed.length >= JINA_MIN_LENGTH ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function fetchOgImage(articleUrl: string): Promise<string | null> {
   try {
@@ -465,14 +490,16 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
         const imageUrl = rawImageUrl && await isValidImageUrl(rawImageUrl) ? rawImageUrl : undefined;
         // Prefer full content:encoded body; fall back to snippet/summary/title.
         // Strip HTML tags so the AI receives clean prose.
-        const fullContent = (item as any).content as string | undefined;
-        const rawContent = fullContent
-          ? fullContent.replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim()
+        const encodedContent = (item as any).content as string | undefined;
+        const hasFullContent = !!(encodedContent && encodedContent.length > 500);
+        const rawContent = hasFullContent
+          ? encodedContent!.replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim()
           : (item.contentSnippet ?? item.summary ?? item.title ?? "");
 
         return {
           title: (item.title ?? "").trim(),
           content: rawContent,
+          fullContent: hasFullContent,
           link: (item.link ?? "").trim(),
           pubDate: new Date(item.pubDate!),
           source,

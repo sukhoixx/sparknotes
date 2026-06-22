@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage } from "@/lib/rss";
+import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 
@@ -74,7 +74,7 @@ async function runGeneration() {
       const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : NEW_PER_RUN;
       console.log(`[generate] ${category}: generating ${perRun} new posts`);
 
-      const articles = await fetchArticlesByCategory(category as Category, 3);
+      const articles = await fetchArticlesByCategory(category as Category, 2);
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
       const clustered = selectTopArticles(deduped, perRun * 3);
@@ -83,6 +83,17 @@ async function runGeneration() {
 
       let generated = 0;
       for (const article of topArticles) {
+        // Enrich thin articles with full text from Jina before summarizing
+        if (!article.fullContent) {
+          const fullText = await fetchFullArticle(article.link);
+          if (fullText) {
+            article.content = fullText;
+            article.fullContent = true;
+            console.log(`[generate] ${category}: fetched full article via Jina (${fullText.length} chars) for "${article.title.slice(0, 60)}"`);
+          } else {
+            console.log(`[generate] ${category}: Jina fetch failed, using RSS snippet for "${article.title.slice(0, 60)}"`);
+          }
+        }
 
         const post = await summarizeArticle(article, category as Category, categoryFreqOrder);
         if (!post) continue;
