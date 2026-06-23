@@ -44,11 +44,12 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
     if (!loading && isAuthenticated && !profile) setProfileOpen(true);
   }, [loading, isAuthenticated, profile]);
 
+  // Push each sidebar ad unit separately after mount
   useEffect(() => {
-    try {
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-    } catch {}
+    try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
+  }, []);
+  useEffect(() => {
+    try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
   }, []);
 
   return (
@@ -60,11 +61,11 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
       }} className="hidden xl:block">
         <ins
           className="adsbygoogle"
-          style={{ display: "block", width: 160, height: 600 }}
+          style={{ display: "block", width: "160px", minHeight: 600 }}
           data-ad-client="ca-pub-2618352557321545"
           data-ad-slot="3829122849"
           data-ad-format="auto"
-          data-full-width-responsive="true"
+          data-full-width-responsive="false"
         />
       </div>
 
@@ -75,11 +76,11 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
       }} className="hidden xl:block">
         <ins
           className="adsbygoogle"
-          style={{ display: "block", width: 160, height: 600 }}
+          style={{ display: "block", width: "160px", minHeight: 600 }}
           data-ad-client="ca-pub-2618352557321545"
           data-ad-slot="3829122849"
           data-ad-format="auto"
-          data-full-width-responsive="true"
+          data-full-width-responsive="false"
         />
       </div>
 
