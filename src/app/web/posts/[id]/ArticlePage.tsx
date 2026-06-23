@@ -86,6 +86,10 @@ export default function ArticlePage({ post }: { post: Post }) {
   const appLink = `https://sparknotes-production.up.railway.app/posts/${post.id}`;
 
   useEffect(() => {
+    try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
+  }, []);
+
+  useEffect(() => {
     fetch("/api/me/likes").then(r => r.json()).then(d => {
       setIsAuthenticated(true);
       const myEntry = (d.reactions ?? []).find((r: { postId: number; emoji: string }) => r.postId === post.id);
@@ -141,20 +145,24 @@ export default function ArticlePage({ post }: { post: Post }) {
 
   return (
     <div style={{ fontFamily: F, background: C.bg, minHeight: "100vh" }}>
-      {/* Ad banner placeholder — matches iOS top ad slot */}
-      <div style={{ background: C.surfaceAlt, minHeight: 60, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block", width: "100%", minHeight: 60 }}
-          data-ad-client="ca-pub-2618352557321545"
-          data-ad-slot="6335999163"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      </div>
+      {/* Sticky header bar with ad banner on top — stays visible while scrolling */}
+      <div style={{ position: "sticky", top: 0, zIndex: 100 }}>
+        {/* Ad banner */}
+        <div style={{ background: C.surfaceAlt }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <ins
+              className="adsbygoogle"
+              style={{ display: "block" }}
+              data-ad-client="ca-pub-2618352557321545"
+              data-ad-slot="4861334618"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            />
+          </div>
+        </div>
 
-      {/* Header bar — constrained to article width */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, zIndex: 100 }}>
+        {/* Header bar — constrained to article width */}
+        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/web" style={{
             width: 32, height: 32, borderRadius: 16, background: C.surfaceAlt,
@@ -219,6 +227,7 @@ export default function ArticlePage({ post }: { post: Post }) {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
 
