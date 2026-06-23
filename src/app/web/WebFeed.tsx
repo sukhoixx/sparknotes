@@ -62,8 +62,9 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
           className="adsbygoogle"
           style={{ display: "block", width: 160, height: 600 }}
           data-ad-client="ca-pub-2618352557321545"
-          data-ad-slot="6335999163"
-          data-ad-format="vertical"
+          data-ad-slot="3829122849"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
         />
       </div>
 
@@ -76,8 +77,9 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
           className="adsbygoogle"
           style={{ display: "block", width: 160, height: 600 }}
           data-ad-client="ca-pub-2618352557321545"
-          data-ad-slot="6335999163"
-          data-ad-format="vertical"
+          data-ad-slot="3829122849"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
         />
       </div>
 
@@ -101,7 +103,7 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
           profile={profile}
           variant="B"
           onCardClick={(post) => router.push(`/web/posts/${post.id}`)}
-          showAds={false}
+          showAds={true}
         />
         {signInOpen && (
           <SignInModal onClose={() => setSignInOpen(false)} />
