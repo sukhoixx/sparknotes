@@ -152,7 +152,7 @@ export default function ArticlePage({ post }: { post: Post }) {
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <ins
               className="adsbygoogle"
-              style={{ display: "block", minHeight: 90 }}
+              style={{ display: "block" }}
               data-ad-client="ca-pub-2618352557321545"
               data-ad-slot="4861334618"
               data-ad-format="auto"

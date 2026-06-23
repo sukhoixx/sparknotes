@@ -61,11 +61,11 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
       }} className="hidden xl:block">
         <ins
           className="adsbygoogle"
-          style={{ display: "block", width: "160px", minHeight: 600 }}
+          style={{ display: "block" }}
           data-ad-client="ca-pub-2618352557321545"
           data-ad-slot="3829122849"
           data-ad-format="auto"
-          data-full-width-responsive="false"
+          data-full-width-responsive="true"
         />
       </div>
 
@@ -76,11 +76,11 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
       }} className="hidden xl:block">
         <ins
           className="adsbygoogle"
-          style={{ display: "block", width: "160px", minHeight: 600 }}
+          style={{ display: "block" }}
           data-ad-client="ca-pub-2618352557321545"
           data-ad-slot="3829122849"
           data-ad-format="auto"
-          data-full-width-responsive="false"
+          data-full-width-responsive="true"
         />
       </div>
 
