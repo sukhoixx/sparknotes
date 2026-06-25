@@ -6,6 +6,9 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "NewsBlock",
   description: "Today's news, explained simply",
+  other: {
+    "google-adsense-account": "ca-pub-2618352557321545",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
