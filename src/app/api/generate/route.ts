@@ -83,8 +83,10 @@ async function runGeneration() {
 
       let generated = 0;
       for (const article of topArticles) {
-        // Enrich thin articles with full text from Jina before summarizing
-        if (!article.fullContent) {
+        // Sports must always use full article — RSS snippets cause the model to hallucinate scores/scorers.
+        // Other categories fetch full article only when RSS didn't provide content:encoded.
+        const needsFullFetch = category === "sports" || !article.fullContent;
+        if (needsFullFetch) {
           const fullText = await fetchFullArticle(article.link);
           if (fullText) {
             article.content = fullText;
