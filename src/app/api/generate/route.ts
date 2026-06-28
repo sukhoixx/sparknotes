@@ -37,6 +37,10 @@ const NEW_PER_RUN = 5;
 const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia"]);
 const HIGH_VOLUME_PER_RUN = 8;
 
+const WORLD_CUP_END = new Date("2026-07-18T23:59:59Z");
+const WORLD_CUP_PATTERN = /world cup|fifa|worldcup/i;
+const WORLD_CUP_MIN = 2;
+
 let isRunning = false;
 
 async function runGeneration() {
@@ -78,8 +82,25 @@ async function runGeneration() {
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
       const clustered = selectTopArticles(deduped, perRun * 3);
-      const topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
+      let topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
       console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${clustered.length} clustered → ${topArticles.length} AI-selected`);
+
+      // Guarantee at least WORLD_CUP_MIN World Cup articles in sports during the tournament
+      if (category === "sports" && new Date() <= WORLD_CUP_END) {
+        const wcSelected = topArticles.filter((a) => WORLD_CUP_PATTERN.test(a.title));
+        if (wcSelected.length < WORLD_CUP_MIN) {
+          const wcPool = deduped.filter((a) =>
+            WORLD_CUP_PATTERN.test(a.title) &&
+            !topArticles.some((s) => s.link === a.link)
+          );
+          const needed = WORLD_CUP_MIN - wcSelected.length;
+          const toAdd = wcPool.slice(0, needed);
+          if (toAdd.length > 0) {
+            topArticles = [...toAdd, ...topArticles];
+            console.log(`[generate] sports: topped up ${toAdd.length} World Cup article(s) to meet minimum`);
+          }
+        }
+      }
 
       let generated = 0;
       for (const article of topArticles) {
