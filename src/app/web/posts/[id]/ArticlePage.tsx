@@ -85,7 +85,10 @@ export default function ArticlePage({ post }: { post: Post }) {
   const sourceName = getSourceName(post.sourceUrl);
   const appLink = `https://sparknotes-production.up.railway.app/posts/${post.id}`;
 
+  const adPushed = useRef(false);
   useEffect(() => {
+    if (adPushed.current) return;
+    adPushed.current = true;
     try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
   }, []);
 
@@ -152,11 +155,11 @@ export default function ArticlePage({ post }: { post: Post }) {
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <ins
               className="adsbygoogle"
-              style={{ display: "block" }}
+              style={{ display: "block", width: "100%" }}
               data-ad-client="ca-pub-2618352557321545"
-              data-ad-slot="4861334618"
-              data-ad-format="auto"
-              data-full-width-responsive="true"
+              data-ad-slot="7698213530"
+              data-ad-format="fluid"
+              data-ad-layout-key="-6e+dq+u-2k+9n"
             />
           </div>
         </div>
