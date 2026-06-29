@@ -20,9 +20,9 @@ export default function AdCard() {
         className="adsbygoogle"
         style={{ display: "block" }}
         data-ad-client="ca-pub-2618352557321545"
-        data-ad-slot="2755714329"
-        data-ad-format="auto"
-        data-full-width-responsive="true"
+        data-ad-slot="7698213530"
+        data-ad-format="fluid"
+        data-ad-layout-key="-6e+dq+u-2k+9n"
       />
     </div>
   );
