@@ -16,8 +16,11 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
   const [searchQuery, setSearchQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { profile, loading, isAuthenticated, saveProfile } = useProfile();
   const router = useRouter();
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const body = document.body;
@@ -44,45 +47,42 @@ export default function WebFeed({ initialPosts }: { initialPosts: PostWithCount[
     if (!loading && isAuthenticated && !profile) setProfileOpen(true);
   }, [loading, isAuthenticated, profile]);
 
-  // Push each sidebar ad unit separately after mount
-  useEffect(() => {
-    try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
-  }, []);
-  useEffect(() => {
-    try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7]" style={{ position: "relative" }}>
       {/* Left sidebar ad */}
-      <div style={{
-        position: "fixed", top: 120, left: "calc(50% - 360px - 170px)",
-        width: 160, zIndex: 10,
-      }} className="hidden xl:block">
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-client="ca-pub-2618352557321545"
-          data-ad-slot="3829122849"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      </div>
+      {mounted && (
+        <div style={{
+          position: "fixed", top: 120, left: "calc(50% - 360px - 170px)",
+          width: 160, zIndex: 10,
+        }} className="hidden xl:block">
+          <ins
+            className="adsbygoogle"
+            style={{ display: "block" }}
+            data-ad-client="ca-pub-2618352557321545"
+            data-ad-slot="3829122849"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
+        </div>
+      )}
 
       {/* Right sidebar ad */}
-      <div style={{
-        position: "fixed", top: 120, left: "calc(50% + 360px + 10px)",
-        width: 160, zIndex: 10,
-      }} className="hidden xl:block">
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-client="ca-pub-2618352557321545"
-          data-ad-slot="3829122849"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      </div>
+      {mounted && (
+        <div style={{
+          position: "fixed", top: 120, left: "calc(50% + 360px + 10px)",
+          width: 160, zIndex: 10,
+        }} className="hidden xl:block">
+          <ins
+            className="adsbygoogle"
+            style={{ display: "block" }}
+            data-ad-client="ca-pub-2618352557321545"
+            data-ad-slot="3829122849"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
+        </div>
+      )}
 
       <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto" }}>
         <Header
