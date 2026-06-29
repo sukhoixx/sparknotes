@@ -149,15 +149,15 @@ export default function ArticlePage({ post }: { post: Post }) {
   return (
     <div style={{ fontFamily: F, background: C.bg, minHeight: "100vh" }}>
       {/* Ad banner above header */}
-      <div style={{ background: C.surfaceAlt, width: "100%" }}>
+      <div style={{ width: "100%" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <ins
             className="adsbygoogle"
-            style={{ display: "block", width: "100%" }}
+            style={{ display: "block" }}
             data-ad-client="ca-pub-2618352557321545"
             data-ad-slot="7698213530"
-            data-ad-format="fluid"
-            data-ad-layout-key="-6e+dq+u-2k+9n"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
           />
         </div>
       </div>
