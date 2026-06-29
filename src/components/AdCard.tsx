@@ -15,7 +15,7 @@ export default function AdCard() {
   }, []);
 
   return (
-    <div style={{ background: "#ffffff", overflow: "hidden", position: "relative" }}>
+    <div style={{ background: "#ffffff", overflow: "hidden", position: "relative", border: "3px solid red", minHeight: 60 }}>
       <span style={{
         position: "absolute", top: 6, right: 8, zIndex: 1,
         border: "1px solid rgba(0,0,0,0.2)", borderRadius: 4,
