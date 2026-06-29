@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function AdCard() {
+  const insRef = useRef<HTMLModElement>(null);
+  const pushed = useRef(false);
+
   useEffect(() => {
+    if (pushed.current) return;
+    pushed.current = true;
     try {
       ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
     } catch {}
@@ -17,6 +22,7 @@ export default function AdCard() {
         padding: "1px 4px", fontSize: 9, fontWeight: 600, color: "rgba(0,0,0,0.35)",
       }}>Ad</span>
       <ins
+        ref={insRef}
         className="adsbygoogle"
         style={{ display: "block" }}
         data-ad-client="ca-pub-2618352557321545"
