@@ -15,16 +15,11 @@ export default function AdCard() {
   }, []);
 
   return (
-    <div style={{ background: "#ffffff", overflow: "hidden", position: "relative", border: "3px solid red", minHeight: 60 }}>
-      <span style={{
-        position: "absolute", top: 6, right: 8, zIndex: 1,
-        border: "1px solid rgba(0,0,0,0.2)", borderRadius: 4,
-        padding: "1px 4px", fontSize: 9, fontWeight: 600, color: "rgba(0,0,0,0.35)",
-      }}>Ad</span>
+    <div style={{ background: "#ffffff", position: "relative", width: "100%" }}>
       <ins
         ref={insRef}
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{ display: "block", width: "100%" }}
         data-ad-client="ca-pub-2618352557321545"
         data-ad-slot="7698213530"
         data-ad-format="fluid"
