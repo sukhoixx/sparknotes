@@ -148,6 +148,20 @@ export default function ArticlePage({ post }: { post: Post }) {
 
   return (
     <div style={{ fontFamily: F, background: C.bg, minHeight: "100vh" }}>
+      {/* Ad banner above header */}
+      <div style={{ background: C.surfaceAlt, width: "100%" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <ins
+            className="adsbygoogle"
+            style={{ display: "block", width: "100%" }}
+            data-ad-client="ca-pub-2618352557321545"
+            data-ad-slot="7698213530"
+            data-ad-format="fluid"
+            data-ad-layout-key="-6e+dq+u-2k+9n"
+          />
+        </div>
+      </div>
+
       {/* Sticky header bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 100 }}>
 
@@ -248,18 +262,6 @@ export default function ArticlePage({ post }: { post: Post }) {
           style={{ fontSize, lineHeight: 1.7, color: C.textSub, marginBottom: 16 }}
           dangerouslySetInnerHTML={{ __html: post.body }}
         />
-
-        {/* In-feed ad after body */}
-        <div style={{ margin: "16px 0" }}>
-          <ins
-            className="adsbygoogle"
-            style={{ display: "block", width: "100%" }}
-            data-ad-client="ca-pub-2618352557321545"
-            data-ad-slot="7698213530"
-            data-ad-format="fluid"
-            data-ad-layout-key="-6e+dq+u-2k+9n"
-          />
-        </div>
 
         {/* Fun fact */}
         {post.funFact && (
