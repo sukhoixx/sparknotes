@@ -86,12 +86,8 @@ export default function ArticlePage({ post }: { post: Post }) {
   const sourceName = getSourceName(post.sourceUrl);
   const appLink = `https://sparknotes-production.up.railway.app/posts/${post.id}`;
 
-  const adPushed = useRef(false);
   useEffect(() => {
     setMounted(true);
-    if (adPushed.current) return;
-    adPushed.current = true;
-    try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
   }, []);
 
   useEffect(() => {
