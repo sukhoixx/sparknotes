@@ -80,6 +80,7 @@ export default function ArticlePage({ post }: { post: Post }) {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
   const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
   const sourceName = getSourceName(post.sourceUrl);
@@ -87,6 +88,7 @@ export default function ArticlePage({ post }: { post: Post }) {
 
   const adPushed = useRef(false);
   useEffect(() => {
+    setMounted(true);
     if (adPushed.current) return;
     adPushed.current = true;
     try { ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({}); } catch {}
@@ -148,19 +150,21 @@ export default function ArticlePage({ post }: { post: Post }) {
 
   return (
     <div style={{ fontFamily: F, background: C.bg, minHeight: "100vh" }}>
-      {/* Ad banner above header */}
-      <div style={{ width: "100%" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <ins
-            className="adsbygoogle"
-            style={{ display: "block" }}
-            data-ad-client="ca-pub-2618352557321545"
-            data-ad-slot="7698213530"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          />
+      {/* Ad banner above header — client-only to avoid hydration mismatch */}
+      {mounted && (
+        <div style={{ width: "100%" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <ins
+              className="adsbygoogle"
+              style={{ display: "block" }}
+              data-ad-client="ca-pub-2618352557321545"
+              data-ad-slot="7698213530"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Sticky header bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 100 }}>

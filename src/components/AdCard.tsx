@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function AdCard() {
-  const insRef = useRef<HTMLModElement>(null);
+  const [mounted, setMounted] = useState(false);
   const pushed = useRef(false);
 
   useEffect(() => {
+    setMounted(true);
     if (pushed.current) return;
     pushed.current = true;
     try {
@@ -14,10 +15,11 @@ export default function AdCard() {
     } catch {}
   }, []);
 
+  if (!mounted) return null;
+
   return (
     <div style={{ background: "#ffffff", position: "relative", width: "100%" }}>
       <ins
-        ref={insRef}
         className="adsbygoogle"
         style={{ display: "block", width: "100%" }}
         data-ad-client="ca-pub-2618352557321545"
