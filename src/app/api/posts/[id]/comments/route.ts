@@ -6,11 +6,17 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const postId = parseInt(params.id);
   if (isNaN(postId)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
-  const comments = await prisma.comment.findMany({
-    where: { postId },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, text: true, screenName: true, createdAt: true },
-  });
+  const [comments] = await Promise.all([
+    prisma.comment.findMany({
+      where: { postId },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, text: true, screenName: true, createdAt: true },
+    }),
+    prisma.post.update({
+      where: { id: postId },
+      data: { views: { increment: 1 } },
+    }),
+  ]);
 
   return NextResponse.json({ comments });
 }
