@@ -36,6 +36,8 @@ function stripHtml(s: string | null | undefined): string | null {
 const NEW_PER_RUN = 5;
 const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia"]);
 const HIGH_VOLUME_PER_RUN = 8;
+const LOW_VOLUME_CATEGORIES = new Set(["entertainment", "beauty", "animals", "travel", "gaming", "celebrity"]);
+const LOW_VOLUME_PER_RUN = 3;
 
 const WORLD_CUP_END = new Date("2026-07-18T23:59:59Z");
 const WORLD_CUP_PATTERN = /world cup|fifa|worldcup/i;
@@ -75,7 +77,7 @@ async function runGeneration() {
     console.log(`[generate] category freq order: ${categoryFreqOrder.join(", ")}`);
 
     for (const category of CATEGORIES) {
-      const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : NEW_PER_RUN;
+      const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : LOW_VOLUME_CATEGORIES.has(category) ? LOW_VOLUME_PER_RUN : NEW_PER_RUN;
       console.log(`[generate] ${category}: generating ${perRun} new posts`);
 
       const articles = await fetchArticlesByCategory(category as Category, 2);
