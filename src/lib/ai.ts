@@ -314,11 +314,7 @@ ALWAYS REJECT regardless of category:
   }
 }
 
-function buildSystemPrompt(categoryFreqOrder?: string[]) {
-  const catList = CATEGORIES.join(", ");
-  const freqHint = categoryFreqOrder
-    ? `\n- These categories are underrepresented — consider adding them as secondary categories when the article is relevant (listed least-to-most populated): ${categoryFreqOrder.join(", ")}\n- Avoid using news, us, world, politics as secondary categories unless the article is specifically and primarily about those topics`
-    : "";
+function buildSystemPrompt() {
   return `You are a journalist who cares deeply about fact-checking, producing clear and easy-to-read articles, and using humor where the subject genuinely calls for it. Your readers span the US, Taiwan, China, Asia, and Europe — write for a global audience.
 
 Rules:
@@ -331,9 +327,6 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (3-4 paragraphs). Report directly: cover who, what, where, when, why, and what happens next. Never say "the article says", "according to the report", or "the piece notes" — state facts as your own reporting.
 - The funFact must start with a relevant emoji and <strong>Fun Fact:</strong> — make it genuinely interesting, not filler.
 - Tags: 3-5 plain words without # prefix, relevant to the article.
-- Pick 1-2 most accurate categories for the article's actual content (most relevant first). Choose from: ${catList}${freqHint}
-- Only assign "asia" if the article is directly about events, people, governments, or companies based in an Asian country (e.g. China, Japan, South Korea, Taiwan, India, Southeast Asia). Asia does NOT include the Middle East. Do NOT assign "asia" just because a Western company has Asian operations, customers, or revenue exposure.
-- Gaming articles must be categorized as "gaming" only. Do NOT add "technology" as a secondary category unless the article is specifically about a breakthrough in gaming technology (e.g. a new graphics API, hardware architecture, or AI advancement applied to games) — not a game release, studio news, or industry business story.
 - For sports articles: NEVER invent scores, stats, player performance details, or game events not explicitly stated in the provided content. If the source only gives you the headline and no game details, write about the significance of the result or the broader storyline — do NOT fabricate who scored, when, or how. Invented sports facts are worse than no facts.
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
@@ -341,12 +334,11 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
   "snippet": "One sentence summarizing the key point of the article (max 150 chars, no hype)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
-  "tags": ["Tag1", "Tag2"],
-  "categories": ["primary_category", "optional_second_category"]
+  "tags": ["Tag1", "Tag2"]
 }`;
 }
 
-export async function summarizeArticle(article: RawArticle, category: Category, categoryFreqOrder?: string[]): Promise<GeneratedPost | null> {
+export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
 
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
@@ -367,7 +359,7 @@ URL: ${article.link}`;
       max_tokens: 1200,
       temperature,
       messages: [
-        { role: "system", content: buildSystemPrompt(categoryFreqOrder) },
+        { role: "system", content: buildSystemPrompt() },
         { role: "user", content: userPrompt },
       ],
     });
@@ -384,12 +376,7 @@ URL: ${article.link}`;
       categories?: string[];
     };
 
-    const rawCats: string[] = Array.isArray(parsed.categories) ? parsed.categories : [category];
-    const resolvedCategory: Category =
-      rawCats.length > 0 && (CATEGORIES as readonly string[]).includes(rawCats[0])
-        ? (rawCats[0] as Category)
-        : category;
-    const meta = CATEGORY_META[resolvedCategory] ?? CATEGORY_META["news"];
+    const meta = CATEGORY_META[category] ?? CATEGORY_META["news"];
 
     return {
       title: article.title,
@@ -397,8 +384,8 @@ URL: ${article.link}`;
       body: parsed.body,
       funFact: parsed.funFact,
       tags: parsed.tags.map((t) => (t.startsWith("#") ? t : `#${t}`)),
-      category: resolvedCategory,
-      categories: rawCats,
+      category: category,
+      categories: [category],
       emoji: meta.emoji,
       gradient: meta.gradient,
       badge: meta.badge,

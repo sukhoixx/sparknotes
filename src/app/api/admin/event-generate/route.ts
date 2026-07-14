@@ -54,7 +54,7 @@ async function runEventGenerate(eventSlug: string, eventLabel: string, maxPosts:
 
     let generated = 0;
     for (const article of top) {
-      const post = await summarizeArticle(article, "news", categoryFreqOrder);
+      const post = await summarizeArticle(article, "news");
       if (!post) continue;
       const zh = await translateToTraditionalChinese(post);
       await prisma.post.create({

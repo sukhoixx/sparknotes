@@ -72,11 +72,6 @@ async function runGeneration() {
       .filter((p) => p.createdAt >= sixHoursAgo)
       .map((p) => p.title);
 
-    // Sort categories least-to-most populated so the AI prefers thin categories as secondary tags
-    const categoryCounts = await prisma.post.groupBy({ by: ["category"], _count: { _all: true } });
-    const countMap = Object.fromEntries(categoryCounts.map((c) => [c.category, c._count._all]));
-    const categoryFreqOrder = [...CATEGORIES].sort((a, b) => (countMap[a] ?? 0) - (countMap[b] ?? 0));
-    console.log(`[generate] category freq order: ${categoryFreqOrder.join(", ")}`);
 
     for (const category of CATEGORIES) {
       const perRun = HIGH_VOLUME_CATEGORIES.has(category) ? HIGH_VOLUME_PER_RUN : LOW_VOLUME_CATEGORIES.has(category) ? LOW_VOLUME_PER_RUN : NEW_PER_RUN;
@@ -122,7 +117,7 @@ async function runGeneration() {
           }
         }
 
-        const post = await summarizeArticle(article, category as Category, categoryFreqOrder);
+        const post = await summarizeArticle(article, category as Category);
         if (!post) continue;
 
         let zh = await translateToTraditionalChinese(post);
