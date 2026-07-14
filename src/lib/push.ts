@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const EXPO_PUSH_URL = "https://exp.host/--/expo-push-notification-handler";
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
 // Quiet hours: don't send between 10pm and 8am UTC
 function isQuietHours(): boolean {
