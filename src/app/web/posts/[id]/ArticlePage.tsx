@@ -297,7 +297,7 @@ export default function ArticlePage({ post }: { post: Post }) {
             </a>
             {/* Share buttons */}
             {[
-              { label: "f", color: "#1877f2", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appLink)}` },
+              { label: "f", color: "#1877f2", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appLink)}&quote=${encodeURIComponent(post.title)}` },
               { label: "𝕏", color: "#000", href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(appLink)}&text=${encodeURIComponent(post.title)}` },
               { label: "🔗", color: C.textMuted, href: appLink, onClick: (e: React.MouseEvent) => { e.preventDefault(); navigator.clipboard?.writeText(appLink); } },
             ].map(({ label, color, href, onClick }) => (

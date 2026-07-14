@@ -17,6 +17,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title: post.title,
       description: post.snippet,
+      url: `https://sparknotes-production.up.railway.app/posts/${id}`,
       images: post.imageUrl ? [{ url: post.imageUrl }] : [],
     },
   };

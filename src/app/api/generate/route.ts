@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
+import { sendBreakingNewsPush } from "@/lib/push";
 
 const _toSimplified = Converter({ from: "tw", to: "cn" });
 function toSimplified(text: string): string {
@@ -46,6 +47,7 @@ const WORLD_CUP_MIN = 2;
 let isRunning = false;
 
 async function runGeneration() {
+  const generatedPostIds: number[] = [];
   try {
     // Backfill categories for posts created before multi-category support
     await prisma.$executeRaw`
@@ -129,7 +131,7 @@ async function runGeneration() {
           zh = await translateToTraditionalChinese(post);
         }
 
-        await prisma.post.create({
+        const created = await prisma.post.create({
           data: {
             title: stripHtml(post.title) ?? decodeHtml(post.title),
             snippet: stripHtml(post.snippet) ?? decodeHtml(post.snippet),
@@ -155,6 +157,7 @@ async function runGeneration() {
             zhFunFactCn: zh?.zhFunFact ? cnField(decodeHtml(zh.zhFunFact)) : null,
           },
         });
+        generatedPostIds.push(created.id);
 
         existingUrls.add(article.link);
         existingTitles.add(article.title);
@@ -163,6 +166,25 @@ async function runGeneration() {
       }
 
       console.log(`[generate] ${category}: done (${generated} generated)`);
+    }
+
+    // Pick the top story from this run: prefer news/world/us categories, then any
+    if (generatedPostIds.length > 0) {
+      const TOP_CATEGORIES = ["news", "world", "us"];
+      let topPost = await prisma.post.findFirst({
+        where: { id: { in: generatedPostIds }, category: { in: TOP_CATEGORIES } },
+        select: { id: true, title: true, snippet: true },
+      });
+      if (!topPost) {
+        topPost = await prisma.post.findFirst({
+          where: { id: { in: generatedPostIds } },
+          select: { id: true, title: true, snippet: true },
+        });
+      }
+      if (topPost) {
+        console.log(`[push] sending push for post ${topPost.id}: "${topPost.title}"`);
+        await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);
+      }
     }
   } catch (err) {
     console.error("[generate] error:", err);
