@@ -145,3 +145,10 @@ model DeviceToken {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model PushLog {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  title     String   @db.VarChar(500)
+  sentAt    DateTime @default(now())
+}

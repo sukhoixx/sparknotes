@@ -163,16 +163,26 @@ async function runGeneration() {
       console.log(`[generate] ${category}: done (${generated} generated)`);
     }
 
-    // Let AI pick the most newsworthy article from this run
+    // Let AI pick the most newsworthy article from this run, avoiding topics pushed today
     if (generatedPostIds.length > 0) {
-      const candidates = await prisma.post.findMany({
-        where: { id: { in: generatedPostIds } },
-        select: { id: true, title: true, snippet: true, category: true },
-      });
-      const topPostId = await pickMostNewsworthyPost(candidates);
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const [candidates, recentPushes] = await Promise.all([
+        prisma.post.findMany({
+          where: { id: { in: generatedPostIds } },
+          select: { id: true, title: true, snippet: true, category: true },
+        }),
+        prisma.pushLog.findMany({
+          where: { sentAt: { gte: oneDayAgo } },
+          select: { title: true },
+          orderBy: { sentAt: "desc" },
+        }),
+      ]);
+      const recentTitles = recentPushes.map((p) => p.title);
+      const topPostId = await pickMostNewsworthyPost(candidates, recentTitles);
       const topPost = candidates.find((p) => p.id === topPostId);
       if (topPost) {
         console.log(`[push] sending push for post ${topPost.id}: "${topPost.title}"`);
+        await prisma.pushLog.create({ data: { postId: topPost.id, title: topPost.title } });
         await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);
       }
     }
