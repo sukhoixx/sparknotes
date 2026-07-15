@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { sendBreakingNewsPush } from "@/lib/push";
 
@@ -163,19 +163,14 @@ async function runGeneration() {
       console.log(`[generate] ${category}: done (${generated} generated)`);
     }
 
-    // Pick the top story from this run: prefer news/world/us categories, then any
+    // Let AI pick the most newsworthy article from this run
     if (generatedPostIds.length > 0) {
-      const TOP_CATEGORIES = ["news", "world", "us"];
-      let topPost = await prisma.post.findFirst({
-        where: { id: { in: generatedPostIds }, category: { in: TOP_CATEGORIES } },
-        select: { id: true, title: true, snippet: true },
+      const candidates = await prisma.post.findMany({
+        where: { id: { in: generatedPostIds } },
+        select: { id: true, title: true, snippet: true, category: true },
       });
-      if (!topPost) {
-        topPost = await prisma.post.findFirst({
-          where: { id: { in: generatedPostIds } },
-          select: { id: true, title: true, snippet: true },
-        });
-      }
+      const topPostId = await pickMostNewsworthyPost(candidates);
+      const topPost = candidates.find((p) => p.id === topPostId);
       if (topPost) {
         console.log(`[push] sending push for post ${topPost.id}: "${topPost.title}"`);
         await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);

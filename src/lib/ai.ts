@@ -399,3 +399,35 @@ URL: ${article.link}`;
     return null;
   }
 }
+
+export async function pickMostNewsworthyPost(
+  posts: { id: number; title: string; snippet: string; category: string }[]
+): Promise<number | null> {
+  if (posts.length === 0) return null;
+  if (posts.length === 1) return posts[0].id;
+
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+  const list = posts.map((p, i) => `${i + 1}. [${p.category}] ${p.title} — ${p.snippet}`).join("\n");
+
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 10,
+      temperature: 0,
+      messages: [
+        {
+          role: "system",
+          content: "You are a global news editor. Pick the single most newsworthy article that the broadest global audience would care about — major world events, significant geopolitical developments, landmark scientific discoveries, or major economic news. Avoid US-only politics, celebrity gossip, sports, or niche topics. Reply with ONLY the number of your choice.",
+        },
+        { role: "user", content: list },
+      ],
+    });
+
+    const raw = res.choices[0]?.message?.content?.trim() ?? "";
+    const idx = parseInt(raw) - 1;
+    if (idx >= 0 && idx < posts.length) return posts[idx].id;
+    return posts[0].id;
+  } catch {
+    return posts[0].id;
+  }
+}
