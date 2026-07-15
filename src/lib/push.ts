@@ -2,10 +2,11 @@ import { prisma } from "@/lib/prisma";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
-// Quiet hours: don't send between 10pm and 8am UTC
+// Quiet hours: don't send between 11pm and 7am PT (UTC-7)
 function isQuietHours(): boolean {
-  const hour = new Date().getUTCHours();
-  return hour >= 22 || hour < 8;
+  const utcHour = new Date().getUTCHours();
+  const ptHour = (utcHour - 7 + 24) % 24; // PT = UTC-7 (PDT)
+  return ptHour >= 23 || ptHour < 7;
 }
 
 export async function sendBreakingNewsPush(postId: number, title: string, snippet: string) {
