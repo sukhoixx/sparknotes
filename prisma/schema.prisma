@@ -142,6 +142,7 @@ model DeviceToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique @db.VarChar(500)
   platform  String   @db.VarChar(10)
+  lang      String   @default("en") @db.VarChar(10)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
