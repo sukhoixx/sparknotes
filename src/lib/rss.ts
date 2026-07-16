@@ -550,6 +550,21 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   return intersection / (a.size + b.size - intersection || 1);
 }
 
+// Filter a list of post titles, returning only those not similar to any title in recentTitles.
+// Lower threshold = stricter (catches remotely similar topics). Used for push deduplication.
+export function filterSimilarTitles(
+  titles: string[],
+  recentTitles: string[],
+  threshold = 0.3,
+): string[] {
+  if (recentTitles.length === 0) return titles;
+  const recentWordSets = recentTitles.map(titleWords);
+  return titles.filter((title) => {
+    const words = titleWords(title);
+    return !recentWordSets.some((recent) => jaccard(words, recent) >= threshold);
+  });
+}
+
 // Filter out articles whose title is very similar (>= threshold) to a recently published post title,
 // within the last windowHours. Prevents re-publishing the same story from a different source
 // across generation runs, while allowing genuine follow-up stories (which have different titles).

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle } from "@/lib/rss";
+import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { sendBreakingNewsPush } from "@/lib/push";
@@ -178,7 +178,10 @@ async function runGeneration() {
         }),
       ]);
       const recentTitles = recentPushes.map((p) => p.title);
-      const topPostId = await pickMostNewsworthyPost(candidates, recentTitles);
+      const eligibleTitles = filterSimilarTitles(candidates.map((p) => p.title), recentTitles);
+      const eligibleCandidates = candidates.filter((p) => eligibleTitles.includes(p.title));
+      console.log(`[push] ${candidates.length} candidates → ${eligibleCandidates.length} after topic dedup (${candidates.length - eligibleCandidates.length} filtered)`);
+      const topPostId = await pickMostNewsworthyPost(eligibleCandidates, recentTitles);
       const topPost = candidates.find((p) => p.id === topPostId);
       if (topPost) {
         console.log(`[push] sending push for post ${topPost.id}: "${topPost.title}"`);
