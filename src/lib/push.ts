@@ -45,6 +45,7 @@ export async function sendBreakingNewsPush(postId: number, title: string, snippe
     return {
       to: token,
       title: "📰 " + pushTitle,
+      body: pushBody.length > 100 ? pushBody.slice(0, 100) + "…" : pushBody,
       data: { postId },
       sound: "default",
       priority: "normal",
