@@ -151,5 +151,6 @@ model PushLog {
   id        Int      @id @default(autoincrement())
   postId    Int
   title     String   @db.VarChar(500)
+  topics    String?  @db.VarChar(500)
   sentAt    DateTime @default(now())
 }

@@ -400,17 +400,38 @@ URL: ${article.link}`;
   }
 }
 
+export async function extractTopicTags(title: string, snippet: string): Promise<string> {
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 20,
+      temperature: 0,
+      messages: [
+        {
+          role: "system",
+          content: `Extract 2-3 short topic tags from this news article (e.g. "Iran conflict, Middle East war"). Tags should be broad enough to match follow-up stories on the same topic. Reply with ONLY the comma-separated tags, nothing else.`,
+        },
+        { role: "user", content: `${title} — ${snippet}` },
+      ],
+    });
+    return res.choices[0]?.message?.content?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export async function pickMostNewsworthyPost(
   posts: { id: number; title: string; snippet: string; category: string }[],
-  recentPushTitles: string[] = []
+  recentTopics: string[] = []
 ): Promise<number | null> {
   if (posts.length === 0) return null;
   if (posts.length === 1) return posts[0].id;
 
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
   const list = posts.map((p, i) => `${i + 1}. [${p.category}] ${p.title} — ${p.snippet}`).join("\n");
-  const recentContext = recentPushTitles.length > 0
-    ? `\n\nAlready pushed today (avoid similar topics):\n${recentPushTitles.map((t) => `- ${t}`).join("\n")}`
+  const recentContext = recentTopics.length > 0
+    ? `\n\nTopics already pushed today — do NOT pick anything related to these:\n${recentTopics.map((t) => `- ${t}`).join("\n")}`
     : "";
 
   try {

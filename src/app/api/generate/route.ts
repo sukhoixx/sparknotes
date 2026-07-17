@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, extractTopicTags, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { sendBreakingNewsPush } from "@/lib/push";
 
@@ -173,20 +173,23 @@ async function runGeneration() {
         }),
         prisma.pushLog.findMany({
           where: { sentAt: { gte: oneDayAgo } },
-          select: { title: true },
+          select: { title: true, topics: true },
           orderBy: { sentAt: "desc" },
         }),
       ]);
       const EXCLUDED_PUSH_CATEGORIES = new Set(["animals", "entertainment", "gaming", "beauty", "travel", "politics", "us"]);
       const recentTitles = recentPushes.map((p) => p.title);
+      const recentTopics = recentPushes.flatMap((p) => p.topics ? p.topics.split(",").map((t) => t.trim()) : [p.title]);
       const eligibleTitles = filterSimilarTitles(candidates.filter((p) => !EXCLUDED_PUSH_CATEGORIES.has(p.category)).map((p) => p.title), recentTitles);
       const eligibleCandidates = candidates.filter((p) => eligibleTitles.includes(p.title));
       console.log(`[push] ${candidates.length} candidates → ${eligibleCandidates.length} after topic dedup (${candidates.length - eligibleCandidates.length} filtered)`);
-      const topPostId = await pickMostNewsworthyPost(eligibleCandidates, recentTitles);
+      const topPostId = await pickMostNewsworthyPost(eligibleCandidates, recentTopics);
       const topPost = candidates.find((p) => p.id === topPostId);
       if (topPost) {
         console.log(`[push] sending push for post ${topPost.id}: "${topPost.title}"`);
-        await prisma.pushLog.create({ data: { postId: topPost.id, title: topPost.title } });
+        const topics = await extractTopicTags(topPost.title, topPost.snippet);
+        console.log(`[push] extracted topics: "${topics}"`);
+        await prisma.pushLog.create({ data: { postId: topPost.id, title: topPost.title, topics } });
         await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);
       }
     }
