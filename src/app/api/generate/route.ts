@@ -177,8 +177,9 @@ async function runGeneration() {
           orderBy: { sentAt: "desc" },
         }),
       ]);
+      const EXCLUDED_PUSH_CATEGORIES = new Set(["animals", "entertainment", "gaming"]);
       const recentTitles = recentPushes.map((p) => p.title);
-      const eligibleTitles = filterSimilarTitles(candidates.map((p) => p.title), recentTitles);
+      const eligibleTitles = filterSimilarTitles(candidates.filter((p) => !EXCLUDED_PUSH_CATEGORIES.has(p.category)).map((p) => p.title), recentTitles);
       const eligibleCandidates = candidates.filter((p) => eligibleTitles.includes(p.title));
       console.log(`[push] ${candidates.length} candidates → ${eligibleCandidates.length} after topic dedup (${candidates.length - eligibleCandidates.length} filtered)`);
       const topPostId = await pickMostNewsworthyPost(eligibleCandidates, recentTitles);

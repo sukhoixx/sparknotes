@@ -421,7 +421,7 @@ export async function pickMostNewsworthyPost(
       messages: [
         {
           role: "system",
-          content: `You are a global news editor. Pick the single most newsworthy article that the broadest global audience would care about — major world events, significant geopolitical developments, landmark scientific discoveries, or major economic news. Avoid US-only politics, celebrity gossip, sports, or niche topics. Do NOT pick articles covering the same topic or event as already-pushed articles. Reply with ONLY the number of your choice.`,
+          content: `You are a global news editor. Pick the single most newsworthy article that the broadest global audience would care about — major world events, significant geopolitical developments, landmark scientific discoveries, major economic news, or major sports events. Avoid celebrity gossip and niche topics. Do NOT pick articles covering the same topic or event as already-pushed articles. Reply with ONLY the number of your choice.`,
         },
         { role: "user", content: list + recentContext },
       ],
