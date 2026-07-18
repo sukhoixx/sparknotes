@@ -180,7 +180,9 @@ async function runGeneration() {
       const EXCLUDED_PUSH_CATEGORIES = new Set(["animals", "entertainment", "gaming", "beauty", "travel", "politics", "us"]);
       const recentTitles = recentPushes.map((p) => p.title);
       const recentTopics = recentPushes.flatMap((p) => p.topics ? p.topics.split(",").map((t) => t.trim()) : [p.title]);
-      const eligibleTitles = filterSimilarTitles(candidates.filter((p) => !EXCLUDED_PUSH_CATEGORIES.has(p.category)).map((p) => p.title), recentTitles);
+      // Filter against both recent titles AND topic tags so "Iranian forces" is blocked by tag "Iran conflict"
+      const filterTerms = [...recentTitles, ...recentTopics];
+      const eligibleTitles = filterSimilarTitles(candidates.filter((p) => !EXCLUDED_PUSH_CATEGORIES.has(p.category)).map((p) => p.title), filterTerms, 0.2);
       const eligibleCandidates = candidates.filter((p) => eligibleTitles.includes(p.title));
       console.log(`[push] ${candidates.length} candidates → ${eligibleCandidates.length} after topic dedup (${candidates.length - eligibleCandidates.length} filtered)`);
       const topPostId = await pickMostNewsworthyPost(eligibleCandidates, recentTopics);

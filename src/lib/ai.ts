@@ -442,7 +442,7 @@ export async function pickMostNewsworthyPost(
       messages: [
         {
           role: "system",
-          content: `You are a global news editor. Pick the single most newsworthy article that the broadest global audience would care about — major world events, significant geopolitical developments, landmark scientific discoveries, major economic news, or major sports events. Avoid celebrity gossip and niche topics. Do NOT pick articles covering the same topic or event as already-pushed articles. Reply with ONLY the number of your choice.`,
+          content: `You are a global news editor. Your TOP priority is topic diversity — you MUST NOT pick any article that is related to the topics already pushed today, even if it seems more important or newsworthy. If in doubt, treat it as related and skip it. Your second priority is newsworthiness — from the remaining articles, pick the one that the broadest global audience would care about: major world events, significant geopolitical developments, technology breakthrough, landmark scientific discoveries, major economic news, or major sports events. Avoid celebrity gossip and niche topics. Reply with ONLY the number of your choice.`,
         },
         { role: "user", content: list + recentContext },
       ],
