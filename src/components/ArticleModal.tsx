@@ -12,6 +12,7 @@ interface ArticleModalProps {
   onLike: () => void;
   profile?: UserProfile | null;
   onProfileNeeded?: () => void;
+  isAuthenticated?: boolean;
 }
 
 interface Comment {
@@ -35,11 +36,12 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function ArticleModal({ post, liked, likeCount, onClose, onLike, profile, onProfileNeeded }: ArticleModalProps) {
+export default function ArticleModal({ post, liked, likeCount, onClose, onLike, profile, onProfileNeeded, isAuthenticated }: ArticleModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const trackedPostId = useRef<number | null>(null);
 
   useEffect(() => {
     if (post) {
@@ -54,6 +56,23 @@ export default function ArticleModal({ post, liked, likeCount, onClose, onLike, 
     }
     return () => { document.body.style.overflow = ""; };
   }, [post]);
+
+  // Track reading session after 3 seconds — only for authenticated users, once per post
+  useEffect(() => {
+    if (!post || !isAuthenticated) return;
+    if (trackedPostId.current === post.id) return;
+
+    const timer = setTimeout(() => {
+      trackedPostId.current = post.id;
+      fetch("/api/reading/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: post.id }),
+      }).catch(() => {});
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [post, isAuthenticated]);
 
   async function submitComment() {
     if (!post || !draft.trim() || submitting) return;

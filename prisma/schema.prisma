@@ -53,12 +53,37 @@ model VerificationToken {
 
 // id = User.id (NextAuth CUID). Old device-UUID rows become unreachable but don't conflict.
 model UserProfile {
-  id         String   @id
-  screenName String   @unique @db.VarChar(50)
-  categories Json
-  lang       String?  @default("en") @db.VarChar(10)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id
+  screenName      String   @unique @db.VarChar(50)
+  categories      Json
+  lang            String?  @default("en") @db.VarChar(10)
+  streak          Int      @default(0)
+  streakUpdatedAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// One row per user per article per day — deduplicates repeated opens
+model ReadingSession {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  postId    Int
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId, date])
+}
+
+// Computed daily totals for rewards display
+model DailyReward {
+  userId       String
+  date         DateTime @db.Date
+  articlesRead Int      @default(0)
+  pointsEarned Float    @default(0)
+  multiplier   Float    @default(1)
+  badge        String?  @db.VarChar(20)
+
+  @@id([userId, date])
 }
 
 model Comment {

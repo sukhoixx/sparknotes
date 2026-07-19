@@ -56,6 +56,7 @@ export default function HomePage() {
         searchQuery={searchQuery}
         initialPosts={[] as PostWithCount[]}
         profile={profile}
+        isAuthenticated={isAuthenticated}
         variant={variant}
       />
       {signInOpen && (

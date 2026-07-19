@@ -41,12 +41,13 @@ interface FeedProps {
   searchQuery: string;
   initialPosts: PostWithCount[];
   profile?: UserProfile | null;
+  isAuthenticated?: boolean;
   variant?: AbVariant;
   onCardClick?: (post: PostWithCount) => void;
   showAds?: boolean;
 }
 
-export default function Feed({ category, searchQuery, initialPosts, profile, variant = "A", onCardClick, showAds = true }: FeedProps) {
+export default function Feed({ category, searchQuery, initialPosts, profile, isAuthenticated, variant = "A", onCardClick, showAds = true }: FeedProps) {
   const [openPost, setOpenPost] = useState<PostWithCount | null>(null);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
@@ -230,6 +231,7 @@ export default function Feed({ category, searchQuery, initialPosts, profile, var
         onClose={() => setOpenPost(null)}
         onLike={handleModalLike}
         profile={profile}
+        isAuthenticated={isAuthenticated}
       />
     </>
   );
