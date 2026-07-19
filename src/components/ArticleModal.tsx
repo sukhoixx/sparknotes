@@ -67,7 +67,7 @@ export default function ArticleModal({ post, liked, likeCount, onClose, onLike, 
       fetch("/api/reading/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: post.id }),
+        body: JSON.stringify({ postId: post.id, tzOffset: new Date().getTimezoneOffset() }),
       }).catch(() => {});
     }, 3000);
 

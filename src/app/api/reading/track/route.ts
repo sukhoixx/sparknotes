@@ -19,17 +19,24 @@ function getMultiplier(streak: number): number {
   return 1;
 }
 
+function localToday(tzOffsetMinutes: number): Date {
+  // tzOffsetMinutes = client's new Date().getTimezoneOffset() (negative for UTC+)
+  const now = new Date();
+  const localMs = now.getTime() - tzOffsetMinutes * 60 * 1000;
+  const local = new Date(localMs);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()));
+}
+
 export async function POST(req: NextRequest) {
   const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { postId } = await req.json();
+  const { postId, tzOffset } = await req.json();
   if (!postId || typeof postId !== "number") {
     return NextResponse.json({ error: "Invalid postId" }, { status: 400 });
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = localToday(typeof tzOffset === "number" ? tzOffset : 0);
 
   // Try to insert a ReadingSession — unique constraint prevents duplicates
   let isNew = false;
@@ -67,28 +74,29 @@ export async function POST(req: NextRequest) {
 }
 
 async function computeStreak(userId: string, today: Date): Promise<number> {
-  // Fetch last 60 days of activity to find the streak
+  // Use ReadingSession dates (not Activity) — streak = consecutive days with at least 1 article read
   const since = new Date(today);
   since.setDate(since.getDate() - 60);
 
-  const activities = await prisma.activity.findMany({
+  const sessions = await prisma.readingSession.findMany({
     where: { userId, date: { gte: since, lte: today } },
     orderBy: { date: "desc" },
+    distinct: ["date"],
     select: { date: true },
   });
 
-  if (activities.length === 0) return 0;
+  if (sessions.length === 0) return 0;
 
-  // Check today is present (profile GET upserts it on app load, but track may fire before)
+  // Today must have a reading session for the streak to be active
   const todayMs = today.getTime();
-  const hasTodayActivity = activities.some((a) => new Date(a.date).getTime() === todayMs);
-  if (!hasTodayActivity) return 0;
+  const hasTodaySession = sessions.some((s) => new Date(s.date).getTime() === todayMs);
+  if (!hasTodaySession) return 0;
 
   let streak = 1;
   let cursor = new Date(today);
   cursor.setDate(cursor.getDate() - 1);
 
-  for (const row of activities.slice(1)) {
+  for (const row of sessions.slice(1)) {
     const rowMs = new Date(row.date).getTime();
     const cursorMs = cursor.getTime();
     if (rowMs === cursorMs) {

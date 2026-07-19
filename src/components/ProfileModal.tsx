@@ -40,7 +40,7 @@ function RewardsTab({ isAuthenticated, onSignIn }: { isAuthenticated: boolean; o
 
   useEffect(() => {
     if (!isAuthenticated) { setLoading(false); return; }
-    fetch("/api/rewards")
+    fetch(`/api/rewards?tz=${new Date().getTimezoneOffset()}`)
       .then((r) => r.json())
       .then((d) => {
         setRewards(d.rewards ?? []);
@@ -86,12 +86,15 @@ function RewardsTab({ isAuthenticated, onSignIn }: { isAuthenticated: boolean; o
   // Total points over 30 days
   const totalPoints = rewards.reduce((s, r) => s + r.pointsEarned, 0);
 
+  function localDateKey(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
   // Build a 30-slot grid: fill in rewards by date, gaps = 0
   const slots: (DailyReward | null)[] = Array.from({ length: 30 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (29 - i));
-    d.setHours(0, 0, 0, 0);
-    const key = d.toISOString().slice(0, 10);
+    const key = localDateKey(d);
     return rewards.find((r) => r.date.slice(0, 10) === key) ?? null;
   });
 
