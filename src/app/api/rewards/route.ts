@@ -9,6 +9,14 @@ function localToday(tzOffsetMinutes: number): Date {
   return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()));
 }
 
+// Returns the percentage of other users the given score beats (0–100, floored).
+// Excludes the current user so they don't count against themselves.
+function percentile(userScore: number, others: number[]): number {
+  if (others.length === 0) return 0;
+  const beaten = others.filter((s) => userScore > s).length;
+  return Math.floor((beaten / others.length) * 100);
+}
+
 export async function GET(req: NextRequest) {
   const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,12 +24,15 @@ export async function GET(req: NextRequest) {
   const tzOffset = parseInt(req.nextUrl.searchParams.get("tz") ?? "0", 10);
   const today = localToday(isNaN(tzOffset) ? 0 : tzOffset);
 
-  const since = new Date(today);
-  since.setDate(since.getDate() - 29); // 30 days inclusive
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 6); // 7 days inclusive
 
-  const [rewards, profile] = await Promise.all([
+  const since30 = new Date(today);
+  since30.setDate(since30.getDate() - 29); // 30 days inclusive
+
+  const [rewards, profile, dailyAll, weeklyAll, allTimeAll] = await Promise.all([
     prisma.dailyReward.findMany({
-      where: { userId, date: { gte: since, lte: today } },
+      where: { userId, date: { gte: since30, lte: today } },
       orderBy: { date: "desc" },
       select: { date: true, articlesRead: true, pointsEarned: true, multiplier: true, badge: true },
     }),
@@ -29,7 +40,41 @@ export async function GET(req: NextRequest) {
       where: { id: userId },
       select: { streak: true },
     }),
+    // Daily: all users' points for today
+    prisma.dailyReward.groupBy({
+      by: ["userId"],
+      where: { date: today, userId: { not: userId } },
+      _sum: { pointsEarned: true },
+    }),
+    // Weekly: sum per user over last 7 days
+    prisma.dailyReward.groupBy({
+      by: ["userId"],
+      where: { date: { gte: weekAgo, lte: today }, userId: { not: userId } },
+      _sum: { pointsEarned: true },
+    }),
+    // All-time: sum per user across all history
+    prisma.dailyReward.groupBy({
+      by: ["userId"],
+      where: { userId: { not: userId } },
+      _sum: { pointsEarned: true },
+    }),
   ]);
 
-  return NextResponse.json({ rewards, streak: profile?.streak ?? 0 });
+  const todayRow = rewards[0]?.date.toISOString?.().slice(0, 10) === today.toISOString().slice(0, 10)
+    ? rewards[0]
+    : rewards.find((r) => r.date.toString().slice(0, 10) === today.toISOString().slice(0, 10));
+
+  const userDailyPts = todayRow?.pointsEarned ?? 0;
+  const userWeeklyPts = rewards
+    .filter((r) => new Date(r.date) >= weekAgo)
+    .reduce((s, r) => s + r.pointsEarned, 0);
+  const userAllTimePts = rewards.reduce((s, r) => s + r.pointsEarned, 0);
+
+  const rank = {
+    daily: percentile(userDailyPts, dailyAll.map((r) => r._sum.pointsEarned ?? 0)),
+    weekly: percentile(userWeeklyPts, weeklyAll.map((r) => r._sum.pointsEarned ?? 0)),
+    allTime: percentile(userAllTimePts, allTimeAll.map((r) => r._sum.pointsEarned ?? 0)),
+  };
+
+  return NextResponse.json({ rewards, streak: profile?.streak ?? 0, rank });
 }
