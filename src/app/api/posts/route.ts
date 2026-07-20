@@ -179,22 +179,51 @@ export async function GET(req: NextRequest) {
   let posts;
 
   if (category === "all") {
-    const raw = await prisma.$queryRaw<RawRow[]>`
-      SELECT p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
-             p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
-             p.sourceUrl, p.imageUrl, p.publishedAt, p.createdAt,
-             p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
-             p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
-             (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
-      FROM \`Post\` p
+    const catJson = JSON.stringify(activeCats);
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+    const selectCols = Prisma.sql`
+      p.id, p.title, p.snippet, p.body, p.funFact, p.tags, p.categories, p.category,
+      p.emoji, p.gradient, p.badge, p.authorEmoji, p.authorBg,
+      p.sourceUrl, p.imageUrl, p.publishedAt, p.createdAt,
+      p.zhTitle, p.zhSnippet, p.zhBody, p.zhFunFact,
+      p.zhTitleCn, p.zhSnippetCn, p.zhBodyCn, p.zhFunFactCn,
+      (SELECT COUNT(*) FROM \`Comment\` c WHERE c.postId = p.id) AS commentCount
+    `;
+
+    // Fetch all posts from the last 2 hours (cap at 100) and fully randomize them.
+    // This prevents category-clumping caused by sequential generation order.
+    const recentRaw = await prisma.$queryRaw<RawRow[]>`
+      SELECT ${selectCols} FROM \`Post\` p
       WHERE p.eventSlug IS NULL
+        AND p.createdAt >= ${twoHoursAgo}
         AND JSON_OVERLAPS(
           IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
-          CAST(${JSON.stringify(activeCats)} AS JSON))
+          CAST(${catJson} AS JSON))
       ORDER BY p.id DESC
-      LIMIT ${LIMIT} OFFSET ${page * LIMIT}
+      LIMIT 100
     `;
-    posts = bucketShuffle(mapRaw(raw as RawRow[], activeCats));
+    const recent = mapRaw(recentRaw as RawRow[], activeCats).sort(() => Math.random() - 0.5);
+    const recentPages = Math.ceil(recent.length / LIMIT);
+
+    if (page < recentPages) {
+      // Serve from the shuffled recent pool
+      posts = recent.slice(page * LIMIT, (page + 1) * LIMIT);
+    } else {
+      // Older posts: use bucketShuffle to mix categories within 3-hour windows
+      const olderPage = page - recentPages;
+      const olderRaw = await prisma.$queryRaw<RawRow[]>`
+        SELECT ${selectCols} FROM \`Post\` p
+        WHERE p.eventSlug IS NULL
+          AND p.createdAt < ${twoHoursAgo}
+          AND JSON_OVERLAPS(
+            IF(p.categories IS NULL OR JSON_LENGTH(p.categories) = 0, JSON_ARRAY(p.category), p.categories),
+            CAST(${catJson} AS JSON))
+        ORDER BY p.id DESC
+        LIMIT ${LIMIT} OFFSET ${olderPage * LIMIT}
+      `;
+      posts = bucketShuffle(mapRaw(olderRaw as RawRow[], activeCats));
+    }
   } else {
     // Single category tab — filter by categories array so cross-tagged posts appear
     const [{ n: todayCount }] = await prisma.$queryRaw<[{ n: bigint }]>`
