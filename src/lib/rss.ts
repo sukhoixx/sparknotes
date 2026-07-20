@@ -354,11 +354,46 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
 const FEED_TIMEOUT_MS = 6000;
 const IMAGE_CHECK_TIMEOUT_MS = 2000;
 const IMAGE_MIN_BYTES = 5000;
+const FETCH_TIMEOUT_MS = 10000;
 const JINA_TIMEOUT_MS = 15000;
-const JINA_MIN_LENGTH = 200;
+const MIN_LENGTH = 200;
+const MAX_LENGTH = 6000;
 
-// Fetch full article text via Jina AI reader for articles without content:encoded
-export async function fetchFullArticle(url: string): Promise<string | null> {
+function stripHtml(html: string): string {
+  // Remove scripts, styles, nav, footer, header, aside blocks entirely
+  const cleaned = html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<(nav|footer|header|aside|figure|figcaption|form|button|noscript)[^>]*>[\s\S]*?<\/\1>/gi, "");
+
+  // Extract text from <p>, <h1>-<h6>, <li> tags to preserve article structure
+  const paragraphs: string[] = [];
+  const tagRe = /<(p|h[1-6]|li)[^>]*>([\s\S]*?)<\/\1>/gi;
+  let match;
+  while ((match = tagRe.exec(cleaned)) !== null) {
+    const text = match[2].replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#?\w+;/g, " ").replace(/\s+/g, " ").trim();
+    if (text.length > 30) paragraphs.push(text);
+  }
+
+  return paragraphs.join("\n\n").slice(0, MAX_LENGTH).trim();
+}
+
+async function fetchDirect(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0; +https://sparknotes-production.up.railway.app)" },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const text = stripHtml(html);
+    return text.length >= MIN_LENGTH ? text : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchJina(url: string): Promise<string | null> {
   try {
     const jinaUrl = `https://r.jina.ai/${url}`;
     const headers: Record<string, string> = {
@@ -367,16 +402,21 @@ export async function fetchFullArticle(url: string): Promise<string | null> {
       "X-Return-Format": "text",
     };
     if (process.env.JINA_API_KEY) headers["Authorization"] = `Bearer ${process.env.JINA_API_KEY}`;
-
     const res = await fetch(jinaUrl, { headers, signal: AbortSignal.timeout(JINA_TIMEOUT_MS) });
     if (!res.ok) return null;
     const text = await res.text();
-    // Trim to 6000 chars — enough for a full article without burning tokens
-    const trimmed = text.slice(0, 6000).trim();
-    return trimmed.length >= JINA_MIN_LENGTH ? trimmed : null;
+    const trimmed = text.slice(0, MAX_LENGTH).trim();
+    return trimmed.length >= MIN_LENGTH ? trimmed : null;
   } catch {
     return null;
   }
+}
+
+// Try direct fetch first; fall back to Jina if result is empty or too short
+export async function fetchFullArticle(url: string): Promise<string | null> {
+  const direct = await fetchDirect(url);
+  if (direct) return direct;
+  return fetchJina(url);
 }
 
 export async function fetchOgImage(articleUrl: string): Promise<string | null> {
