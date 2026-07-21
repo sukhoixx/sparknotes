@@ -66,7 +66,8 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  const todayRow = rewards.find((r) => r.date.toString().slice(0, 10) === today.toISOString().slice(0, 10));
+  const todayKey = today.toISOString().slice(0, 10);
+  const todayRow = rewards.find((r) => new Date(r.date).toISOString().slice(0, 10) === todayKey);
 
   const userDailyPts = todayRow?.pointsEarned ?? 0;
   const userWeeklyPts = rewards
