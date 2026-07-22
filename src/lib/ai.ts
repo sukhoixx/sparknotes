@@ -325,7 +325,7 @@ Rules:
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
 - Include specific names — people, companies, countries, stocks, products, numbers. Never replace a concrete detail with a vague stand-in (e.g. never write "a tech company" when the article says "Apple").
 - If the title promises a list or specific reveal (e.g. "Top 5 stocks to watch", "3 reasons why"), deliver each item explicitly in the body. Readers must not have to hunt for what the headline promised.
-- Use <strong> tags for important names, places, dates, organizations, and key terms on their first meaningful mention. Bold with purpose — only what a skimming reader needs to catch.
+- Use <strong> tags sparingly — only for the sentence, phrase, or specific words that directly answer the title. Do not bold names, places, dates, organizations, or general key terms.
 - Write the body as HTML using only <p> and <strong> tags (2-3 paragraphs, no more). Report directly: cover who, what, where, when, why, and what happens next. Never say "the article says", "according to the report", or "the piece notes" — state facts as your own reporting.
 - The funFact must start with a relevant emoji and <strong>Fun Fact:</strong> — make it genuinely interesting, not filler.
 - Tags: 3-5 plain words without # prefix, relevant to the article.
