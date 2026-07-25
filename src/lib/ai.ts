@@ -505,23 +505,24 @@ ${articleList}
 Respond with ONLY valid JSON: {"headlines": ["headline 1", "headline 2", ...]}`;
 
   try {
-    const res = await client.chat.completions.create({
+    const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 800,
+      max_tokens: 1200,
       temperature: 0.3,
       messages: [
         { role: "system", content: "You are a senior news editor selecting the day's most important stories. Return only valid JSON." },
         { role: "user", content: userPrompt },
       ],
-    });
+    }));
 
     const raw = res.choices[0]?.message?.content?.trim() ?? "";
     const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    const parsed = JSON.parse(match[0]);
+    if (!match) { console.error("[headlines] no JSON in response:", raw); return null; }
+    const parsed = JSON.parse(jsonrepair(match[0]));
     if (!Array.isArray(parsed.headlines)) return null;
     return parsed.headlines.slice(0, 10).map((h: unknown) => String(h));
-  } catch {
+  } catch (err) {
+    console.error("[headlines] error:", err);
     return null;
   }
 }

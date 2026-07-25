@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     where: { createdAt: { gte: since } },
     select: { title: true, snippet: true, category: true },
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: 100,
   });
 
   if (posts.length === 0) {
