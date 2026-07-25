@@ -458,3 +458,51 @@ export async function pickMostNewsworthyPost(
     return posts[0].id;
   }
 }
+
+// Curate the top 10 headlines from today's articles that everyone should know.
+// Returns an array of clean headline strings, or null on failure.
+export async function generateHeadlines(
+  articles: { title: string; snippet: string; category: string }[]
+): Promise<string[] | null> {
+  if (articles.length === 0) return null;
+
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+
+  const articleList = articles
+    .map((a, i) => `${i + 1}. [${a.category}] ${a.title} — ${a.snippet}`)
+    .join("\n");
+
+  const userPrompt = `Here are today's news articles. Select and rewrite the 10 most important headlines that everyone should know about, regardless of category. These are the stories that matter globally.
+
+Rules:
+- Pick stories with broad significance — not niche, regional, or celebrity gossip unless it's major
+- Write each headline as a clean, direct news sentence (not a clickbait title)
+- Deduplicate: if multiple articles cover the same story, pick the best angle and write one headline
+- No bullet points or numbering in output — return JSON only
+
+Articles:
+${articleList}
+
+Respond with ONLY valid JSON: {"headlines": ["headline 1", "headline 2", ...]}`;
+
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      max_tokens: 800,
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: "You are a senior news editor selecting the day's most important stories. Return only valid JSON." },
+        { role: "user", content: userPrompt },
+      ],
+    });
+
+    const raw = res.choices[0]?.message?.content?.trim() ?? "";
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    const parsed = JSON.parse(match[0]);
+    if (!Array.isArray(parsed.headlines)) return null;
+    return parsed.headlines.slice(0, 10).map((h: unknown) => String(h));
+  } catch {
+    return null;
+  }
+}

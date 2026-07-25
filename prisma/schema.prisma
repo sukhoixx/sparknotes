@@ -179,3 +179,10 @@ model PushLog {
   topics    String?  @db.VarChar(500)
   sentAt    DateTime @default(now())
 }
+
+// One row per generation run — headlines is a JSON array of strings
+model DailyHeadlines {
+  id          Int      @id @default(autoincrement())
+  headlines   Json
+  generatedAt DateTime @default(now())
+}

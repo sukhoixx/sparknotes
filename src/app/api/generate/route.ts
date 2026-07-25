@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, extractTopicTags, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, extractTopicTags, generateHeadlines, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { sendBreakingNewsPush } from "@/lib/push";
 
@@ -194,6 +194,27 @@ async function runGeneration() {
         await prisma.pushLog.create({ data: { postId: topPost.id, title: topPost.title, topics } });
         await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);
       }
+    }
+    // Refresh global headlines from the last 24 hours of articles
+    try {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const todayPosts = await prisma.post.findMany({
+        where: { createdAt: { gte: since } },
+        select: { title: true, snippet: true, category: true },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      });
+      const headlines = await generateHeadlines(todayPosts.map((p) => ({
+        title: p.title,
+        snippet: p.snippet,
+        category: p.category,
+      })));
+      if (headlines && headlines.length > 0) {
+        await prisma.dailyHeadlines.create({ data: { headlines } });
+        console.log(`[headlines] generated ${headlines.length} headlines`);
+      }
+    } catch (err) {
+      console.error("[headlines] error:", err);
     }
   } catch (err) {
     console.error("[generate] error:", err);
