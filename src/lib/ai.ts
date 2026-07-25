@@ -7,6 +7,24 @@ const client = new OpenAI({
   baseURL: "https://api.deepseek.com/v1",
 });
 
+// Retry a function up to maxAttempts times on transient network errors (ECONNRESET, ETIMEDOUT, 5xx).
+async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 1500): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      const status = (err as { status?: number })?.status;
+      const isTransient = code === "ECONNRESET" || code === "ETIMEDOUT" || code === "ENOTFOUND" || (status !== undefined && status >= 500);
+      if (!isTransient || attempt === maxAttempts) throw err;
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, delayMs * attempt));
+    }
+  }
+  throw lastErr;
+}
+
 export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty", "asia"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -70,7 +88,7 @@ Respond with this exact JSON schema:
 {"zhTitle":"...","zhSnippet":"...","zhBody":"...","zhFunFact":"..."}`;
 
   try {
-    const res = await client.chat.completions.create({
+    const res = await withRetry(() => client.chat.completions.create({
       model,
       max_tokens: 4000,
       temperature: 0.5,
@@ -78,7 +96,7 @@ Respond with this exact JSON schema:
         { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。" },
         { role: "user", content: userPrompt },
       ],
-    });
+    }));
 
     const raw = res.choices[0]?.message?.content ?? "";
     const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
@@ -356,27 +374,28 @@ URL: ${article.link}`;
     // specific game stats, scores, and player details from thin source content.
     const temperature = category === "sports" ? 0.3 : 0.7;
 
-    const res = await client.chat.completions.create({
+    const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 1200,
+      max_tokens: 1800,
       temperature,
       messages: [
         { role: "system", content: buildSystemPrompt() },
         { role: "user", content: userPrompt },
       ],
-    });
+    }));
 
     const raw = res.choices[0]?.message?.content ?? "";
     const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    // Extract the JSON object if complete, otherwise attempt to repair truncated output
     const jsonMatch = stripped.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) { console.error("[summarize] no JSON object in response:", raw); return null; }
-    const parsed = JSON.parse(jsonrepair(jsonMatch[0])) as {
-      snippet: string;
-      body: string;
-      funFact: string;
-      tags: string[];
-      categories?: string[];
-    };
+    const jsonCandidate = jsonMatch ? jsonMatch[0] : stripped;
+    let parsed: { snippet: string; body: string; funFact: string; tags: string[]; categories?: string[] };
+    try {
+      parsed = JSON.parse(jsonrepair(jsonCandidate)) as typeof parsed;
+    } catch {
+      console.error("[summarize] no JSON object in response:", raw);
+      return null;
+    }
 
     const meta = CATEGORY_META[category] ?? CATEGORY_META["news"];
 
