@@ -354,6 +354,7 @@ Rules:
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
+  "title": "A clear, engaging English headline (max 100 chars). If the source title is not in English, translate it.",
   "snippet": "One sentence summarizing the key point of the article (max 150 chars, no hype)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
@@ -392,7 +393,7 @@ URL: ${article.link}`;
     // Extract the JSON object if complete, otherwise attempt to repair truncated output
     const jsonMatch = stripped.match(/\{[\s\S]*\}/);
     const jsonCandidate = jsonMatch ? jsonMatch[0] : stripped;
-    let parsed: { snippet: string; body: string; funFact: string; tags: string[]; categories?: string[] };
+    let parsed: { title?: string; snippet: string; body: string; funFact: string; tags: string[]; categories?: string[] };
     try {
       parsed = JSON.parse(jsonrepair(jsonCandidate)) as typeof parsed;
     } catch {
@@ -403,7 +404,7 @@ URL: ${article.link}`;
     const meta = CATEGORY_META[category] ?? CATEGORY_META["news"];
 
     return {
-      title: article.title,
+      title: parsed.title?.trim() || article.title,
       snippet: parsed.snippet,
       body: parsed.body,
       funFact: parsed.funFact,

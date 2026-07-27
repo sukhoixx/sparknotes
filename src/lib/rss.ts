@@ -423,11 +423,14 @@ async function fetchJina(url: string): Promise<string | null> {
   }
 }
 
-// Try direct fetch first; fall back to Jina if result is empty or too short
-export async function fetchFullArticle(url: string): Promise<string | null> {
+// Try direct fetch first; fall back to Jina if result is empty or too short.
+// Returns { text, method } so callers can log which path succeeded.
+export async function fetchFullArticle(url: string): Promise<{ text: string; method: "direct" | "jina" } | null> {
   const direct = await fetchDirect(url);
-  if (direct) return direct;
-  return fetchJina(url);
+  if (direct) return { text: direct, method: "direct" };
+  const jina = await fetchJina(url);
+  if (jina) return { text: jina, method: "jina" };
+  return null;
 }
 
 export async function fetchOgImage(articleUrl: string): Promise<string | null> {

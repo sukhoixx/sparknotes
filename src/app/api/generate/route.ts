@@ -107,13 +107,13 @@ async function runGeneration() {
         // Other categories fetch full article only when RSS didn't provide content:encoded.
         const needsFullFetch = category === "sports" || !article.fullContent;
         if (needsFullFetch) {
-          const fullText = await fetchFullArticle(article.link);
-          if (fullText) {
-            article.content = fullText;
+          const result = await fetchFullArticle(article.link);
+          if (result) {
+            article.content = result.text;
             article.fullContent = true;
-            console.log(`[generate] ${category}: fetched full article via Jina (${fullText.length} chars) for "${article.title.slice(0, 60)}"`);
+            console.log(`[generate] ${category}: fetched full article via ${result.method} (${result.text.length} chars) for "${article.title.slice(0, 60)}"`);
           } else {
-            console.log(`[generate] ${category}: Jina fetch failed, using RSS snippet for "${article.title.slice(0, 60)}"`);
+            console.log(`[generate] ${category}: full fetch failed (direct + Jina), using RSS snippet for "${article.title.slice(0, 60)}"`);
           }
         }
 
