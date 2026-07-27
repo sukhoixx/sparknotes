@@ -556,12 +556,14 @@ const TAIWAN_SCRAPERS: TaiwanScrapeConfig[] = [
   {
     source: "TVBS新聞",
     listUrl: "https://news.tvbs.com.tw/",
-    linkPattern: /href="(https:\/\/news\.tvbs\.com\.tw\/[a-z-]+\/\d{5,})"/gi,
+    linkPattern: /href="(\/[a-z-]+\/\d{6,})"/gi,
+    linkPrefix: "https://news.tvbs.com.tw",
   },
   {
     source: "中時電子報",
     listUrl: "https://www.chinatimes.com/realtimenews/?chdtv",
-    linkPattern: /href="(https:\/\/www\.chinatimes\.com\/realtimenews\/\d{14}-\d+)"/gi,
+    linkPattern: /href="(\/\/www\.chinatimes\.com\/realtimenews\/\d{6,}[^"]*)"/gi,
+    linkPrefix: "https:",
   },
 ];
 
