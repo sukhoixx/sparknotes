@@ -293,7 +293,7 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const articleList = filtered
-    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 400)}`)
+    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 600)}`)
     .join("\n\n");
 
   const userPrompt = `Here are ${filtered.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.
@@ -320,6 +320,8 @@ ALWAYS REJECT regardless of category:
     const match = raw.match(/\[[\d,\s]+\]/);
     if (!match) {
       console.error("[select] could not parse indices from response:", raw);
+      // For strict categories like taiwan, don't fall back — return empty rather than publish off-topic articles
+      if (category === "taiwan") return [];
       return filtered.slice(0, n);
     }
 
@@ -331,6 +333,7 @@ ALWAYS REJECT regardless of category:
     return selected.slice(0, n);
   } catch (err) {
     console.error("[select] error:", err);
+    if (category === "taiwan") return [];
     return filtered.slice(0, n);
   }
 }
