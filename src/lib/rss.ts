@@ -328,6 +328,17 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.taipeitimes.com/xml/index.rss",                                                      source: "Taipei Times" },
     { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311",             source: "CNA Singapore" },
   ],
+  taiwan: [
+    // RSS feeds (自由時報 + CNA Mandarin by topic)
+    { url: "https://news.ltn.com.tw/rss/all.xml",                        source: "自由時報" },
+    { url: "https://feeds.feedburner.com/rsscna/politics",               source: "CNA 政治" },
+    { url: "https://feeds.feedburner.com/rsscna/intworld",               source: "CNA 國際" },
+    { url: "https://feeds.feedburner.com/rsscna/finance",                source: "CNA 財經" },
+    { url: "https://feeds.feedburner.com/rsscna/technology",             source: "CNA 科技" },
+    { url: "https://feeds.feedburner.com/rsscna/lifehealth",             source: "CNA 生活" },
+    { url: "https://feeds.feedburner.com/rsscna/mainland",               source: "CNA 兩岸" },
+    // ETtoday, 三立, TVBS, 中時 are scraped via TAIWAN_SCRAPERS in rss.ts
+  ],
   inventions: [
     { url: "https://www.popularmechanics.com/rss/all.xml/",        source: "Popular Mechanics" },
     { url: "https://hackaday.com/blog/feed/",                      source: "Hackaday" },
@@ -518,18 +529,118 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
   }
 }
 
+// --- Taiwan scrapers (for outlets with no usable RSS) ---
+
+interface TaiwanScrapeConfig {
+  source: string;
+  listUrl: string;
+  linkPattern: RegExp;
+  linkPrefix?: string;
+}
+
+const TAIWAN_SCRAPERS: TaiwanScrapeConfig[] = [
+  {
+    source: "ETtoday",
+    listUrl: "https://www.ettoday.net/",
+    linkPattern: /href="(https:\/\/(?:www|finance|star|sports)\.ettoday\.net\/news\/\d{8}\/\d+\.htm)"/gi,
+  },
+  {
+    source: "三立新聞",
+    listUrl: "https://www.setn.com/ViewAll.aspx?PageGroupID=0",
+    linkPattern: /href="(\/news\/\d+)"/gi,
+    linkPrefix: "https://www.setn.com",
+  },
+  {
+    source: "TVBS新聞",
+    listUrl: "https://news.tvbs.com.tw/",
+    linkPattern: /href="(https:\/\/news\.tvbs\.com\.tw\/[a-z-]+\/\d{5,})"/gi,
+  },
+  {
+    source: "中時電子報",
+    listUrl: "https://www.chinatimes.com/realtimenews/?chdtv",
+    linkPattern: /href="(https:\/\/www\.chinatimes\.com\/realtimenews\/\d{14}-\d+)"/gi,
+  },
+];
+
+async function scrapeTaiwanSite(config: TaiwanScrapeConfig, cutoff: Date): Promise<RawArticle[]> {
+  try {
+    const listRes = await fetch(config.listUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0)" },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!listRes.ok) return [];
+    const listHtml = await listRes.text();
+
+    // Extract unique article URLs
+    const seen = new Set<string>();
+    const urls: string[] = [];
+    let match;
+    const re = new RegExp(config.linkPattern.source, "gi");
+    while ((match = re.exec(listHtml)) !== null) {
+      const url = config.linkPrefix ? config.linkPrefix + match[1] : match[1];
+      if (!seen.has(url)) { seen.add(url); urls.push(url); }
+      if (urls.length >= 20) break;
+    }
+
+    const articles: RawArticle[] = [];
+    await Promise.allSettled(urls.map(async (url) => {
+      try {
+        const res = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; NewsBlock/1.0)" },
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+        if (!res.ok) return;
+        const html = await res.text();
+
+        // Extract title
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+        const rawTitle = (titleMatch?.[1] ?? "").replace(/\s*[-|｜─].*$/, "").trim();
+        if (!rawTitle || rawTitle.length < 5) return;
+
+        // Extract publish date from meta or structured data
+        const dateMatch = html.match(/(?:published_time|datePublished|pubdate)[^"]*"([^"]+)"/i)
+          ?? html.match(/<time[^>]+datetime="([^"]+)"/i);
+        const pubDate = dateMatch ? new Date(dateMatch[1]) : new Date();
+        if (pubDate < cutoff) return;
+
+        // Extract content
+        const content = stripHtml(html);
+        if (content.length < MIN_LENGTH) return;
+
+        articles.push({
+          title: rawTitle,
+          content: content.slice(0, MAX_LENGTH),
+          fullContent: content.length > 500,
+          link: url,
+          pubDate,
+          source: config.source,
+        });
+      } catch { /* skip individual article errors */ }
+    }));
+
+    return articles;
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchArticlesByCategory(category: Category, hours = 3): Promise<RawArticle[]> {
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
   const feeds = FEEDS[category];
 
-  const results = await Promise.allSettled(
+  const rssResults = await Promise.allSettled(
     feeds.map(({ url, source }) => fetchFeed(url, source, cutoff))
   );
+
+  // For taiwan category, also run the HTML scrapers
+  const scraperResults = category === "taiwan"
+    ? await Promise.allSettled(TAIWAN_SCRAPERS.map((c) => scrapeTaiwanSite(c, cutoff)))
+    : [];
 
   const articles: RawArticle[] = [];
   const seenUrls = new Set<string>();
 
-  for (const result of results) {
+  for (const result of [...rssResults, ...scraperResults]) {
     if (result.status === "fulfilled") {
       for (const article of result.value) {
         if (!seenUrls.has(article.link)) {

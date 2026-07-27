@@ -25,7 +25,7 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 150
   throw lastErr;
 }
 
-export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty", "asia"] as const;
+export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty", "asia", "taiwan"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
@@ -48,6 +48,7 @@ export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: strin
   beauty:        { badge: "💄 Beauty",        authorEmoji: "💄", authorBg: "linear-gradient(135deg,#ee9ca7,#ffdde1)",      emoji: "💄", gradient: "linear-gradient(135deg,#ee9ca7,#ffdde1)" },
   celebrity:     { badge: "⭐ Celebrity",     authorEmoji: "⭐", authorBg: "linear-gradient(135deg,#c471ed,#f64f59)",      emoji: "⭐", gradient: "linear-gradient(135deg,#c471ed,#f64f59)" },
   asia:          { badge: "🌏 Asia",          authorEmoji: "🌏", authorBg: "linear-gradient(135deg,#c0392b,#e67e22)",      emoji: "🌏", gradient: "linear-gradient(135deg,#c0392b,#e67e22)" },
+  taiwan:        { badge: "🇹🇼 Taiwan",       authorEmoji: "🇹🇼", authorBg: "linear-gradient(135deg,#1b4fa0,#e3001e)",     emoji: "🇹🇼", gradient: "linear-gradient(135deg,#1b4fa0,#e3001e)" },
 };
 
 export interface GeneratedPost {
