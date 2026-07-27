@@ -559,12 +559,7 @@ const TAIWAN_SCRAPERS: TaiwanScrapeConfig[] = [
     linkPattern: /href="(\/[a-z-]+\/\d{6,})"/gi,
     linkPrefix: "https://news.tvbs.com.tw",
   },
-  {
-    source: "中時電子報",
-    listUrl: "https://www.chinatimes.com/realtimenews/?chdtv",
-    linkPattern: /href="(\/\/www\.chinatimes\.com\/realtimenews\/\d{6,}[^"]*)"/gi,
-    linkPrefix: "https:",
-  },
+  // 中時電子報 blocked by Cloudflare — omitted
 ];
 
 async function scrapeTaiwanSite(config: TaiwanScrapeConfig, cutoff: Date): Promise<RawArticle[]> {
