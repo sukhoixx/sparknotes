@@ -84,6 +84,10 @@ async function runGeneration() {
       let topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
       console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${clustered.length} clustered → ${topArticles.length} AI-selected`);
       if (category === "taiwan") {
+        console.log(`[generate] taiwan clustered:\n${clustered.map((a, i) => `  [${i + 1}] [${a.source}] ${a.title}`).join("\n")}`);
+        console.log(`[generate] taiwan selected:\n${topArticles.length === 0 ? "  (none)" : topArticles.map((a) => `  • ${a.title}`).join("\n")}`);
+      }
+      if (category === "taiwan") {
         console.log(`[generate] taiwan clustered titles:\n${clustered.map((a, i) => `  [${i + 1}] [${a.source}] ${a.title}`).join("\n")}`);
         console.log(`[generate] taiwan AI-selected:\n${topArticles.length === 0 ? "  (none)" : topArticles.map((a) => `  • ${a.title}`).join("\n")}`);
       }
