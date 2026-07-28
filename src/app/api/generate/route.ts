@@ -83,6 +83,10 @@ async function runGeneration() {
       const clustered = selectTopArticles(deduped, perRun * 3);
       let topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
       console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${clustered.length} clustered → ${topArticles.length} AI-selected`);
+      if (category === "taiwan") {
+        console.log(`[generate] taiwan clustered titles:\n${clustered.map((a, i) => `  [${i + 1}] [${a.source}] ${a.title}`).join("\n")}`);
+        console.log(`[generate] taiwan AI-selected:\n${topArticles.length === 0 ? "  (none)" : topArticles.map((a) => `  • ${a.title}`).join("\n")}`);
+      }
 
       // Guarantee at least WORLD_CUP_MIN World Cup articles in sports during the tournament
       if (category === "sports" && new Date() <= WORLD_CUP_END) {
@@ -195,23 +199,40 @@ async function runGeneration() {
         await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);
       }
     }
-    // Refresh global headlines from the last 24 hours of articles
+    // Generate headlines twice per day: 6–8am PST and 4–6pm PST
     try {
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const todayPosts = await prisma.post.findMany({
-        where: { createdAt: { gte: since } },
-        select: { title: true, snippet: true, category: true },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-      });
-      const headlines = await generateHeadlines(todayPosts.map((p) => ({
-        title: p.title,
-        snippet: p.snippet,
-        category: p.category,
-      })));
-      if (headlines && headlines.length > 0) {
-        await prisma.dailyHeadlines.create({ data: { headlines } });
-        console.log(`[headlines] generated ${headlines.length} headlines`);
+      const nowPST = new Date(Date.now() - 8 * 60 * 60 * 1000); // UTC-8 (PST)
+      const hourPST = nowPST.getUTCHours();
+      const inMorningWindow = hourPST >= 6 && hourPST < 8;
+      const inEveningWindow = hourPST >= 16 && hourPST < 18;
+      if (inMorningWindow || inEveningWindow) {
+        // Find the start of the current window in UTC
+        const windowStartPST = new Date(nowPST);
+        windowStartPST.setUTCHours(inMorningWindow ? 6 : 16, 0, 0, 0);
+        const windowStartUTC = new Date(windowStartPST.getTime() + 8 * 60 * 60 * 1000);
+        const lastHeadlines = await prisma.dailyHeadlines.findFirst({ orderBy: { generatedAt: "desc" }, select: { generatedAt: true } });
+        if (!lastHeadlines || lastHeadlines.generatedAt < windowStartUTC) {
+          const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          const todayPosts = await prisma.post.findMany({
+            where: { createdAt: { gte: since } },
+            select: { title: true, snippet: true, category: true },
+            orderBy: { createdAt: "desc" },
+            take: 100,
+          });
+          const headlines = await generateHeadlines(todayPosts.map((p) => ({
+            title: p.title,
+            snippet: p.snippet,
+            category: p.category,
+          })));
+          if (headlines && headlines.length > 0) {
+            await prisma.dailyHeadlines.create({ data: { headlines } });
+            console.log(`[headlines] generated ${headlines.length} headlines (${inMorningWindow ? "morning" : "evening"} window)`);
+          }
+        } else {
+          console.log(`[headlines] skipped — already generated this window`);
+        }
+      } else {
+        console.log(`[headlines] skipped — outside windows (current hour PST: ${hourPST})`);
       }
     } catch (err) {
       console.error("[headlines] error:", err);
