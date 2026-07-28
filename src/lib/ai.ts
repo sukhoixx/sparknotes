@@ -308,7 +308,7 @@ ALWAYS REJECT regardless of category:
   try {
     const res = await client.chat.completions.create({
       model,
-      max_tokens: 100,
+      max_tokens: 200,
       temperature: 0.2,
       messages: [
         { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] },
@@ -317,6 +317,7 @@ ALWAYS REJECT regardless of category:
     });
 
     const raw = res.choices[0]?.message?.content ?? "";
+    if (category === "taiwan") console.log(`[select] taiwan raw response: ${raw}`);
     const match = raw.match(/\[[\d,\s]+\]/);
     if (!match) {
       console.error("[select] could not parse indices from response:", raw);
