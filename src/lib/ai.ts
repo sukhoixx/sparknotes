@@ -28,6 +28,28 @@ function sanitize(text: string): string {
   return result;
 }
 
+// Patterns that cause DeepSeek to silently refuse the entire request
+const CONTENT_FILTER_PATTERNS = [
+  /換妻/,
+  /成人派對/,
+  /A片/,
+  /色情/,
+  /裸體/,
+  /性愛/,
+  /做愛/,
+  /嫖/,
+  /賣春/,
+  /援交/,
+  /屁滾尿流/,
+  /幹你娘/,
+  /國二初體驗/,
+  /戀童/,
+];
+
+export function isSensitiveContent(title: string): boolean {
+  return CONTENT_FILTER_PATTERNS.some((p) => p.test(title));
+}
+
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: "https://api.deepseek.com/v1",
@@ -316,8 +338,8 @@ function isMetaRoundup(title: string): boolean {
 export async function selectArticlesForCategory(articles: RawArticle[], category: Category, n: number): Promise<RawArticle[]> {
   if (articles.length === 0) return [];
 
-  // Pre-filter obvious meta-roundup articles before sending to AI
-  const filtered = articles.filter((a) => !isMetaRoundup(a.title));
+  // Pre-filter meta-roundups and sensitive content that causes DeepSeek to refuse
+  const filtered = articles.filter((a) => !isMetaRoundup(a.title) && !isSensitiveContent(a.title));
 
   if (filtered.length === 0) return [];
   if (filtered.length <= n) return filtered;

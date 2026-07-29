@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
 import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
-import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, extractTopicTags, generateHeadlines, CATEGORIES } from "@/lib/ai";
+import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, extractTopicTags, generateHeadlines, isSensitiveContent, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { sendBreakingNewsPush } from "@/lib/push";
 
@@ -78,7 +78,7 @@ async function runGeneration() {
       console.log(`[generate] ${category}: generating ${perRun} new posts`);
 
       const articles = await fetchArticlesByCategory(category as Category, 2);
-      const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title));
+      const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title) && !isSensitiveContent(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
       const clustered = selectTopArticles(deduped, perRun * 3);
       let topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
