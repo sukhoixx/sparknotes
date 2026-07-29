@@ -88,10 +88,6 @@ async function runGeneration() {
         console.log(`[generate] taiwan clustered:\n${clustered.map((a, i) => `  [${i + 1}] [${a.source}] ${a.title}`).join("\n")}`);
         console.log(`[generate] taiwan selected:\n${topArticles.length === 0 ? "  (none)" : topArticles.map((a) => `  • ${a.title}`).join("\n")}`);
       }
-      if (category === "taiwan") {
-        console.log(`[generate] taiwan clustered titles:\n${clustered.map((a, i) => `  [${i + 1}] [${a.source}] ${a.title}`).join("\n")}`);
-        console.log(`[generate] taiwan AI-selected:\n${topArticles.length === 0 ? "  (none)" : topArticles.map((a) => `  • ${a.title}`).join("\n")}`);
-      }
 
       // Guarantee at least WORLD_CUP_MIN World Cup articles in sports during the tournament
       if (category === "sports" && new Date() <= WORLD_CUP_END) {
