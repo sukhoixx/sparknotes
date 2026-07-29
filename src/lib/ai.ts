@@ -12,7 +12,14 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 150
   let lastErr: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await fn();
+      const result = await fn();
+      // Retry on empty DeepSeek response (200 with empty content)
+      const content = (result as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content;
+      if (content !== undefined && content.trim() === "" && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, delayMs * attempt));
+        continue;
+      }
+      return result;
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
       const status = (err as { status?: number })?.status;
