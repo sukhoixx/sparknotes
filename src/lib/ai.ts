@@ -2,6 +2,32 @@ import OpenAI from "openai";
 import { jsonrepair } from "jsonrepair";
 import type { RawArticle } from "./rss";
 
+// Chinese and English profanity/vulgar terms to strip before sending to AI
+const PROFANITY_PATTERNS = [
+  /屁滾尿流/g,
+  /幹你娘/g,
+  /幹[他她你我]/g,
+  /媽的/g,
+  /他媽的/g,
+  /你媽/g,
+  /去你的/g,
+  /操你/g,
+  /fuck/gi,
+  /shit/gi,
+  /ass(?:hole)?/gi,
+  /bitch/gi,
+  /damn/gi,
+  /crap/gi,
+];
+
+function sanitize(text: string): string {
+  let result = text;
+  for (const pattern of PROFANITY_PATTERNS) {
+    result = result.replace(pattern, "***");
+  }
+  return result;
+}
+
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: "https://api.deepseek.com/v1",
@@ -299,7 +325,7 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const articleList = filtered
-    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${a.title}\nSnippet: ${a.content.slice(0, 600)}`)
+    .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${sanitize(a.title)}\nSnippet: ${sanitize(a.content.slice(0, 600))}`)
     .join("\n\n");
 
   const userPrompt = `Here are ${filtered.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.
@@ -378,8 +404,8 @@ export async function summarizeArticle(article: RawArticle, category: Category):
   const userPrompt = `Category: ${category}
 Source: ${article.source}
 Published: ${article.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-Title: ${article.title}
-Content: ${article.content.slice(0, 4000)}
+Title: ${sanitize(article.title)}
+Content: ${sanitize(article.content.slice(0, 4000))}
 URL: ${article.link}`;
 
   try {
