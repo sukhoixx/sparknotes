@@ -306,7 +306,7 @@ ALWAYS REJECT regardless of category:
 \n\n${articleList}`;
 
   try {
-    const res = await client.chat.completions.create({
+    const res = await withRetry(() => client.chat.completions.create({
       model,
       max_tokens: 200,
       temperature: 0.2,
@@ -314,7 +314,7 @@ ALWAYS REJECT regardless of category:
         { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] },
         { role: "user", content: userPrompt },
       ],
-    });
+    }));
 
     const raw = res.choices[0]?.message?.content ?? "";
     if (category === "taiwan") console.log(`[select] taiwan raw response: ${raw}`);
@@ -358,7 +358,6 @@ Rules:
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):
 {
-  "title": "A clear, engaging English headline (max 100 chars). If the source title is not in English, translate it.",
   "snippet": "One sentence summarizing the key point of the article (max 150 chars, no hype)",
   "body": "<p>HTML body...</p>",
   "funFact": "🔥 <strong>Fun Fact:</strong> ...",
@@ -387,7 +386,7 @@ URL: ${article.link}`;
       max_tokens: 1800,
       temperature,
       messages: [
-        { role: "system", content: buildSystemPrompt() },
+        { role: "system", content: category === "taiwan" ? buildSystemPrompt() + '\n\nIMPORTANT: The source title may be in Chinese. Add a "title" field to your JSON with a clear English headline (max 100 chars). Schema: {"title":"...","snippet":"...","body":"...","funFact":"...","tags":[...]}' : buildSystemPrompt() },
         { role: "user", content: userPrompt },
       ],
     }));
@@ -486,11 +485,10 @@ export async function pickMostNewsworthyPost(
   }
 }
 
-// Curate the top 10 headlines from today's articles that everyone should know.
-// Returns an array of clean headline strings, or null on failure.
+// Curate the top 10 headlines in English, Traditional Chinese, and Simplified Chinese.
 export async function generateHeadlines(
   articles: { title: string; snippet: string; category: string }[]
-): Promise<string[] | null> {
+): Promise<{ headlines: string[]; headlinesZh: string[]; headlinesCn: string[] } | null> {
   if (articles.length === 0) return null;
 
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
@@ -505,20 +503,21 @@ Rules:
 - Pick stories with broad significance — not niche, regional, or celebrity gossip unless it's major
 - Write each headline as a clean, direct news sentence (not a clickbait title)
 - Deduplicate: if multiple articles cover the same story, pick the best angle and write one headline
-- No bullet points or numbering in output — return JSON only
+- Provide each headline in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
 
 Articles:
 ${articleList}
 
-Respond with ONLY valid JSON: {"headlines": ["headline 1", "headline 2", ...]}`;
+Respond with ONLY valid JSON:
+{"headlines": ["en1", "en2", ...], "headlinesZh": ["zh-TW1", "zh-TW2", ...], "headlinesCn": ["zh-CN1", "zh-CN2", ...]}`;
 
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 1200,
+      max_tokens: 2000,
       temperature: 0.3,
       messages: [
-        { role: "system", content: "You are a senior news editor selecting the day's most important stories. Return only valid JSON." },
+        { role: "system", content: "You are a senior news editor. Return only valid JSON." },
         { role: "user", content: userPrompt },
       ],
     }));
@@ -528,7 +527,11 @@ Respond with ONLY valid JSON: {"headlines": ["headline 1", "headline 2", ...]}`;
     if (!match) { console.error("[headlines] no JSON in response:", raw); return null; }
     const parsed = JSON.parse(jsonrepair(match[0]));
     if (!Array.isArray(parsed.headlines)) return null;
-    return parsed.headlines.slice(0, 10).map((h: unknown) => String(h));
+    return {
+      headlines: parsed.headlines.slice(0, 10).map((h: unknown) => String(h)),
+      headlinesZh: (parsed.headlinesZh ?? []).slice(0, 10).map((h: unknown) => String(h)),
+      headlinesCn: (parsed.headlinesCn ?? []).slice(0, 10).map((h: unknown) => String(h)),
+    };
   } catch (err) {
     console.error("[headlines] error:", err);
     return null;

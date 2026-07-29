@@ -229,9 +229,9 @@ async function runGeneration() {
             snippet: p.snippet,
             category: p.category,
           })));
-          if (headlines && headlines.length > 0) {
-            await prisma.dailyHeadlines.create({ data: { headlines } });
-            console.log(`[headlines] generated ${headlines.length} headlines (${inMorningWindow ? "morning" : "evening"} window)`);
+          if (headlines && headlines.headlines.length > 0) {
+            await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn } });
+            console.log(`[headlines] generated ${headlines.headlines.length} headlines (${inMorningWindow ? "morning" : "evening"} window)`);
           }
         } else {
           console.log(`[headlines] skipped — already generated this window`);

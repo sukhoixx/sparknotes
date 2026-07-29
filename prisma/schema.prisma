@@ -182,7 +182,9 @@ model PushLog {
 
 // One row per generation run — headlines is a JSON array of strings
 model DailyHeadlines {
-  id          Int      @id @default(autoincrement())
-  headlines   Json
-  generatedAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  headlines    Json
+  headlinesZh  Json     @default("[]")
+  headlinesCn  Json     @default("[]")
+  generatedAt  DateTime @default(now())
 }

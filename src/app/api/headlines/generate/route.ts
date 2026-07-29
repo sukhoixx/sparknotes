@@ -28,11 +28,11 @@ export async function POST(req: NextRequest) {
     category: p.category,
   })));
 
-  if (!headlines || headlines.length === 0) {
+  if (!headlines || headlines.headlines.length === 0) {
     return NextResponse.json({ error: "Failed to generate headlines" }, { status: 500 });
   }
 
-  await prisma.dailyHeadlines.create({ data: { headlines } });
+  await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn } });
 
-  return NextResponse.json({ headlines, count: headlines.length });
+  return NextResponse.json({ headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn, count: headlines.headlines.length });
 }
