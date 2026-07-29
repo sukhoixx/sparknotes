@@ -15,15 +15,14 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 150
       const result = await fn();
       // Retry on empty DeepSeek response (200 with empty content)
       const content = (result as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content;
-      if (content !== undefined && content.trim() === "" && attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, delayMs * attempt));
-        continue;
+      if (content !== undefined && content.trim() === "") {
+        throw Object.assign(new Error("Empty response from DeepSeek"), { code: "EMPTY_RESPONSE" });
       }
       return result;
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
       const status = (err as { status?: number })?.status;
-      const isTransient = code === "ECONNRESET" || code === "ETIMEDOUT" || code === "ENOTFOUND" || (status !== undefined && status >= 500);
+      const isTransient = code === "ECONNRESET" || code === "ETIMEDOUT" || code === "ENOTFOUND" || code === "EMPTY_RESPONSE" || (status !== undefined && status >= 500);
       if (!isTransient || attempt === maxAttempts) throw err;
       lastErr = err;
       await new Promise((r) => setTimeout(r, delayMs * attempt));
