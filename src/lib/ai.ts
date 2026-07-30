@@ -62,8 +62,10 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 150
     try {
       const result = await fn();
       // Retry on empty DeepSeek response (200 with empty content)
-      const content = (result as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content;
+      const choice = (result as { choices?: { message?: { content?: string }; finish_reason?: string }[] })?.choices?.[0];
+      const content = choice?.message?.content;
       if (content !== undefined && content.trim() === "") {
+        console.error(`[withRetry] empty content on attempt ${attempt}, finish_reason=${choice?.finish_reason}`);
         throw Object.assign(new Error("Empty response from DeepSeek"), { code: "EMPTY_RESPONSE" });
       }
       return result;
