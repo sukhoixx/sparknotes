@@ -361,10 +361,10 @@ Output format: [1, 4, 7]`;
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 2000,
+      max_tokens: 500,
       temperature: 0.2,
       messages: [
-        { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] },
+        { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] + "\n\nCRITICAL: Output ONLY a raw JSON array of integers with no explanation, no reasoning, no text before or after. Example: [1, 4, 7]" },
         { role: "user", content: userPrompt },
       ],
     }));
