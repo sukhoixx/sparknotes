@@ -204,13 +204,14 @@ async function runGeneration() {
     try {
       const nowPST = new Date(Date.now() - 8 * 60 * 60 * 1000); // UTC-8 (PST)
       const hourPST = nowPST.getUTCHours();
+      const inMidnightWindow = hourPST >= 0 && hourPST < 2;
       const inMorningWindow = hourPST >= 6 && hourPST < 8;
       const inNoonWindow = hourPST >= 12 && hourPST < 14;
       const inEveningWindow = hourPST >= 18 && hourPST < 20;
-      if (inMorningWindow || inNoonWindow || inEveningWindow) {
+      if (inMidnightWindow || inMorningWindow || inNoonWindow || inEveningWindow) {
         // Find the start of the current window in UTC
         const windowStartPST = new Date(nowPST);
-        windowStartPST.setUTCHours(inMorningWindow ? 6 : inNoonWindow ? 12 : 18, 0, 0, 0);
+        windowStartPST.setUTCHours(inMidnightWindow ? 0 : inMorningWindow ? 6 : inNoonWindow ? 12 : 18, 0, 0, 0);
         const windowStartUTC = new Date(windowStartPST.getTime() + 8 * 60 * 60 * 1000);
         const lastHeadlines = await prisma.dailyHeadlines.findFirst({ orderBy: { generatedAt: "desc" }, select: { generatedAt: true } });
         if (!lastHeadlines || lastHeadlines.generatedAt < windowStartUTC) {
@@ -228,13 +229,13 @@ async function runGeneration() {
           })));
           if (headlines && headlines.headlines.length > 0) {
             await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn } });
-            console.log(`[headlines] generated ${headlines.headlines.length} headlines (${inMorningWindow ? "morning" : inNoonWindow ? "noon" : "evening"} window)`);
+            console.log(`[headlines] generated ${headlines.headlines.length} headlines (${inMidnightWindow ? "midnight" : inMorningWindow ? "morning" : inNoonWindow ? "noon" : "evening"} window)`);
           }
         } else {
           console.log(`[headlines] skipped — already generated this window`);
         }
       } else {
-        console.log(`[headlines] skipped — outside windows (current hour PST: ${hourPST})`);
+        console.log(`[headlines] skipped — outside 12am-2am/6am-8am/12pm-2pm/6pm-8pm PST windows (current hour PST: ${hourPST})`);
       }
     } catch (err) {
       console.error("[headlines] error:", err);
