@@ -22,7 +22,6 @@ const CATEGORIES: CategoryItem[] = [
   { id: "business",      labels: { en: "💼 Business",      "zh-TW": "💼 商業",      "zh-CN": "💼 商业" } },
   { id: "gaming",        labels: { en: "🎮 Gaming",        "zh-TW": "🎮 電玩",      "zh-CN": "🎮 游戏" } },
   { id: "travel",        labels: { en: "✈️ Travel",        "zh-TW": "✈️ 旅遊",    "zh-CN": "✈️ 旅游" } },
-  { id: "animals",       labels: { en: "🐾 Animals",       "zh-TW": "🐾 動物",      "zh-CN": "🐾 动物" } },
   { id: "inventions",    labels: { en: "💡 Inventions",    "zh-TW": "💡 發明",      "zh-CN": "💡 发明" } },
   { id: "finance",       labels: { en: "💰 Finance",       "zh-TW": "💰 財經",      "zh-CN": "💰 财经" } },
   { id: "health",        labels: { en: "💊 Health",        "zh-TW": "💊 健康",      "zh-CN": "💊 健康" } },

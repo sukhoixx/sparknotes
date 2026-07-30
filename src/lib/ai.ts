@@ -81,7 +81,7 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 150
   throw lastErr;
 }
 
-export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "animals", "inventions", "health", "beauty", "asia", "taiwan"] as const;
+export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "inventions", "health", "beauty", "asia", "taiwan"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
