@@ -20,7 +20,7 @@ function cnField(s: string | null | undefined): string | null {
   return s ? toSimplified(s) : null;
 }
 
-const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia"]);
+const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia", "taiwan"]);
 const LOW_VOLUME_CATEGORIES = new Set(["entertainment", "beauty", "animals", "travel", "gaming", "celebrity"]);
 const NEW_PER_RUN = 5;
 const HIGH_VOLUME_PER_RUN = 8;
