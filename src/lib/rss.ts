@@ -252,10 +252,6 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://www.ricksteves.com/rss",                      source: "Rick Steves" },
     { url: "https://skift.com/feed/",                             source: "Skift" },
   ],
-  animals: [
-    { url: "https://news.mongabay.com/feed/",                     source: "Mongabay" },
-    { url: "https://janegoodall.org/feed/",                       source: "Jane Goodall Institute" },
-  ],
   finance: [
     { url: "https://feeds.marketwatch.com/marketwatch/topstories/", source: "MarketWatch" },
     { url: "https://www.investopedia.com/feedbuilder/feed/getfeed?feedName=rss_headline", source: "Investopedia" },
