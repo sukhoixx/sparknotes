@@ -464,7 +464,7 @@ URL: ${article.link}`;
       snippet: parsed.snippet,
       body: parsed.body,
       funFact: parsed.funFact,
-      tags: parsed.tags.map((t) => (t.startsWith("#") ? t : `#${t}`)),
+      tags: (parsed.tags ?? []).map((t) => (t.startsWith("#") ? t : `#${t}`)),
       category: category,
       categories: [category],
       emoji: meta.emoji,
