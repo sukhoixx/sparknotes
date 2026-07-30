@@ -352,19 +352,18 @@ export async function selectArticlesForCategory(articles: RawArticle[], category
     .map((a, i) => `[${i + 1}] Source: ${a.source}\nTitle: ${sanitize(a.title)}\nSnippet: ${sanitize(a.content.slice(0, 600))}`)
     .join("\n\n");
 
-  const userPrompt = `Here are ${filtered.length} articles published in the last 3 hours. Select the indices of the best ${n} to summarize and publish.
+  const userPrompt = `Select the best ${n} article indices from the list below. Output ONLY a JSON array of numbers, nothing else. No explanation, no reasoning, no text before or after the array.
 
-ALWAYS REJECT regardless of category:
-- Articles that are meta-roundups about what news outlets are covering (e.g. "Taiwan headline news", "What newspapers say today", "Morning headlines digest", "What to read today")
-- Articles whose subject is news organizations or media coverage rather than an actual event
-- RSS feed description pages or source introduction articles
+REJECT: meta-roundups, digest summaries, "what to read today" articles, and RSS description pages.
 
-\n\n${articleList}`;
+${articleList}
+
+Output format: [1, 4, 7]`;
 
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 500,
+      max_tokens: 2000,
       temperature: 0.2,
       messages: [
         { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] },
