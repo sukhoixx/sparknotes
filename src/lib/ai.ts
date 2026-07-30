@@ -364,7 +364,7 @@ ALWAYS REJECT regardless of category:
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 200,
+      max_tokens: 500,
       temperature: 0.2,
       messages: [
         { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] },
