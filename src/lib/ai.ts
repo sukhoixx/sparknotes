@@ -149,7 +149,7 @@ Respond with this exact JSON schema:
       max_tokens: 4000,
       temperature: 0.5,
       messages: [
-        { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。" },
+        { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。【重要】必須使用繁體中文字（Traditional Chinese characters），絕對不可使用簡體中文字（Simplified Chinese characters）。例如：應寫「臺灣」或「台灣」，不可寫「台湾」；應寫「國」，不可寫「国」。" },
         { role: "user", content: userPrompt },
       ],
     }));
