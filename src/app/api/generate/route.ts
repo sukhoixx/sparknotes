@@ -200,9 +200,14 @@ async function runGeneration() {
         await sendBreakingNewsPush(topPost.id, topPost.title, topPost.snippet);
       }
     }
-    // Generate headlines twice per day: 6–8am PST and 4–6pm PST
+    // Generate headlines 4x per day: 12am-2am, 6am-8am, 12pm-2pm, 6pm-8pm PT
+    // Use PT offset: PDT=UTC-7 (Mar-Nov), PST=UTC-8 (Nov-Mar)
     try {
-      const nowPST = new Date(Date.now() - 8 * 60 * 60 * 1000); // UTC-8 (PST)
+      const now = new Date();
+      const month = now.getUTCMonth(); // 0=Jan, 11=Dec
+      const isPDT = month >= 2 && month <= 10; // March–November
+      const offsetHours = isPDT ? 7 : 8;
+      const nowPST = new Date(Date.now() - offsetHours * 60 * 60 * 1000);
       const hourPST = nowPST.getUTCHours();
       const inMidnightWindow = hourPST >= 0 && hourPST < 2;
       const inMorningWindow = hourPST >= 6 && hourPST < 8;
