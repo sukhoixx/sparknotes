@@ -205,11 +205,11 @@ async function runGeneration() {
       const nowPST = new Date(Date.now() - 8 * 60 * 60 * 1000); // UTC-8 (PST)
       const hourPST = nowPST.getUTCHours();
       const inMorningWindow = hourPST >= 6 && hourPST < 8;
-      const inEveningWindow = hourPST >= 16 && hourPST < 18;
+      const inEveningWindow = hourPST >= 18 && hourPST < 20;
       if (inMorningWindow || inEveningWindow) {
         // Find the start of the current window in UTC
         const windowStartPST = new Date(nowPST);
-        windowStartPST.setUTCHours(inMorningWindow ? 6 : 16, 0, 0, 0);
+        windowStartPST.setUTCHours(inMorningWindow ? 6 : 18, 0, 0, 0);
         const windowStartUTC = new Date(windowStartPST.getTime() + 8 * 60 * 60 * 1000);
         const lastHeadlines = await prisma.dailyHeadlines.findFirst({ orderBy: { generatedAt: "desc" }, select: { generatedAt: true } });
         if (!lastHeadlines || lastHeadlines.generatedAt < windowStartUTC) {
