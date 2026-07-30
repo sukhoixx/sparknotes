@@ -567,7 +567,7 @@ Respond with ONLY valid JSON:
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 2000,
+      max_tokens: 4000,
       temperature: 0.3,
       messages: [
         { role: "system", content: "You are a senior news editor. Return only valid JSON." },
