@@ -488,6 +488,11 @@ URL: ${article.link}`;
       return null;
     }
 
+    if (!parsed.body || !parsed.snippet) {
+      console.error("[summarize] missing required fields (body/snippet):", JSON.stringify(parsed).slice(0, 200));
+      return null;
+    }
+
     const meta = CATEGORY_META[category] ?? CATEGORY_META["news"];
 
     return {
