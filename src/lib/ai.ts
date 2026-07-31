@@ -436,7 +436,7 @@ URL: ${article.link}`;
 
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 1800,
+      max_tokens: 4000,
       temperature,
       messages: [
         { role: "system", content: category === "taiwan" ? buildSystemPrompt() + '\n\nIMPORTANT: The source title may be in Chinese. Add a "title" field to your JSON with a clear English headline (max 100 chars). Schema: {"title":"...","snippet":"...","body":"...","funFact":"...","tags":[...]}' : buildSystemPrompt() },
