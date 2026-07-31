@@ -77,7 +77,15 @@ export async function POST(req: NextRequest) {
     const post = await summarizeArticle(article, category as Category);
     if (!post) continue;
 
-    const zh = await translateToTraditionalChinese(post);
+    let zh = await translateToTraditionalChinese(post);
+    if (!zh) {
+      console.log(`[generate/category] ${category}: translation failed, retrying...`);
+      zh = await translateToTraditionalChinese(post);
+    }
+    if (!zh) {
+      console.error(`[generate/category] ${category}: translation failed after 2 attempts, skipping "${post.title.slice(0, 60)}"`);
+      continue;
+    }
 
     const imageUrl = post.imageUrl ?? (await fetchOgImage(article.link).catch(() => null)) ?? undefined;
 

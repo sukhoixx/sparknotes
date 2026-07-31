@@ -130,6 +130,10 @@ async function runGeneration() {
           console.log(`[generate] ${category}: translation failed, retrying...`);
           zh = await translateToTraditionalChinese(post);
         }
+        if (!zh) {
+          console.error(`[generate] ${category}: translation failed after 2 attempts, skipping "${post.title.slice(0, 60)}"`);
+          continue;
+        }
 
         const created = await prisma.post.create({
           data: {
