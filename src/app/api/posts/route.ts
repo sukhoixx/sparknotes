@@ -7,9 +7,9 @@ import type { Category } from "@/lib/ai";
 
 type MappedPost = ReturnType<typeof mapRaw>[number];
 
-// Sort by recency, then shuffle posts within 3-hour windows so the feed
+// Sort by recency, then shuffle posts within 2-hour windows so the feed
 // varies on each refresh while older posts never leapfrog newer ones.
-const BUCKET_MS = 3 * 60 * 60 * 1000;
+const BUCKET_MS = 2 * 60 * 60 * 1000;
 function bucketShuffle(posts: MappedPost[]): MappedPost[] {
   const sorted = [...posts].sort((a, b) => b.id - a.id);
   const result: MappedPost[] = [];
@@ -210,7 +210,7 @@ export async function GET(req: NextRequest) {
       // Serve from the shuffled recent pool
       posts = recent.slice(page * LIMIT, (page + 1) * LIMIT);
     } else {
-      // Older posts: use bucketShuffle to mix categories within 3-hour windows
+      // Older posts: use bucketShuffle to mix categories within 2-hour windows
       const olderPage = page - recentPages;
       const olderRaw = await prisma.$queryRaw<RawRow[]>`
         SELECT ${selectCols} FROM \`Post\` p
