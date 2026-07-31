@@ -463,7 +463,7 @@ async function summarizeArticleInChinese(
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 4000,
+      max_tokens: 8000,
       temperature: 0.6,
       messages: [
         { role: "system", content: `你是台灣資深新聞記者，為高中生撰寫新聞摘要。請用流暢自然的繁體中文撰寫，不要使用簡體中文。保留所有 HTML 標籤不變。只回傳 JSON 物件，不要有其他文字。
@@ -532,7 +532,7 @@ Schema: {"title":"...","snippet":"...","body":"...","funFact":"..."}`;
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      max_tokens: 4000,
+      max_tokens: 8000,
       temperature: 0.6,
       messages: [
         { role: "system", content: "You are a journalist translating Traditional Chinese news into clear English for high schoolers. Preserve all HTML tags. Return only valid JSON." },
