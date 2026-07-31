@@ -20,6 +20,13 @@ const PROFANITY_PATTERNS = [
   /crap/gi,
 ];
 
+// Characters that exist only in Simplified Chinese (not in Traditional)
+const SIMPLIFIED_ONLY = /[国来东时们产业电话带书说话问题现实际关图书这东风长头发学经济设备资产长时间变发展]/;
+
+function isSimplifiedChinese(text: string): boolean {
+  return SIMPLIFIED_ONLY.test(text);
+}
+
 function sanitize(text: string): string {
   let result = text;
   for (const pattern of PROFANITY_PATTERNS) {
@@ -160,6 +167,30 @@ Respond with this exact JSON schema:
     if (!jsonMatch) { console.error("[translate] no JSON in response:", raw); return null; }
     const parsed = JSON.parse(jsonrepair(jsonMatch[0]));
     if (!parsed.zhTitle || !parsed.zhBody) return null;
+
+    // Detect if DeepSeek returned Simplified Chinese instead of Traditional — retry once
+    if (isSimplifiedChinese(parsed.zhTitle + parsed.zhBody)) {
+      console.warn("[translate] detected Simplified Chinese output, retrying...");
+      const res2 = await withRetry(() => client.chat.completions.create({
+        model,
+        max_tokens: 4000,
+        temperature: 0.3,
+        messages: [
+          { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。【重要】必須使用繁體中文字（Traditional Chinese characters），絕對不可使用簡體中文字（Simplified Chinese characters）。例如：應寫「臺灣」或「台灣」，不可寫「台湾」；應寫「國」，不可寫「国」。" },
+          { role: "user", content: userPrompt + "\n\n【再次提醒】請務必使用繁體中文，不可使用簡體中文。" },
+        ],
+      }));
+      const raw2 = res2.choices[0]?.message?.content ?? "";
+      const stripped2 = raw2.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      const match2 = stripped2.match(/\{[\s\S]*\}/);
+      if (match2) {
+        const parsed2 = JSON.parse(jsonrepair(match2[0]));
+        if (parsed2.zhTitle && parsed2.zhBody) {
+          return parsed2 as { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string };
+        }
+      }
+    }
+
     return parsed as { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string };
   } catch (err) {
     console.error("[translate] error:", err);
