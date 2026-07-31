@@ -449,7 +449,150 @@ Respond ONLY with valid JSON matching this exact schema (no extra text, no markd
 }`;
 }
 
+// Summarize a Taiwanese-source article directly in Traditional Chinese.
+async function summarizeArticleInChinese(
+  article: RawArticle
+): Promise<{ zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string; tags: string[] } | null> {
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+
+  const userPrompt = `來源：${article.source}
+發布日期：${article.pubDate.toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" })}
+標題：${sanitize(article.title)}
+內容：${sanitize(article.content.slice(0, 4000))}`;
+
+  try {
+    const res = await withRetry(() => client.chat.completions.create({
+      model,
+      max_tokens: 4000,
+      temperature: 0.6,
+      messages: [
+        { role: "system", content: `你是台灣資深新聞記者，為高中生撰寫新聞摘要。請用流暢自然的繁體中文撰寫，不要使用簡體中文。保留所有 HTML 標籤不變。只回傳 JSON 物件，不要有其他文字。
+
+規則：
+- 用繁體中文直接陳述事實，不要說「根據報導」或「文章指出」
+- 首句必須直接回應標題
+- body 使用 <p> 和 <strong> 標籤，2-3 段
+- funFact 必須以相關 emoji 開頭，接著 <strong>有趣冷知識：</strong>
+- tags 填 3-5 個中文或英文關鍵詞，不加 # 號
+- 【重要】必須使用繁體中文字，絕對不可使用簡體中文字
+
+回傳格式：{"zhTitle":"...","zhSnippet":"...","zhBody":"<p>...</p>","zhFunFact":"🔥 <strong>有趣冷知識：</strong>...","tags":["tag1","tag2"]}` },
+        { role: "user", content: userPrompt },
+      ],
+    }));
+
+    const raw = res.choices[0]?.message?.content ?? "";
+    const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+    const jsonCandidate = jsonMatch ? jsonMatch[0] : stripped;
+    let parsed: { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string; tags?: string[] };
+    try {
+      parsed = JSON.parse(jsonrepair(jsonCandidate)) as typeof parsed;
+    } catch {
+      console.error("[summarize-zh] no JSON in response:", raw.slice(0, 200));
+      return null;
+    }
+
+    if (!parsed.zhBody || !parsed.zhSnippet || !parsed.zhTitle) return null;
+
+    // Retry once if Simplified Chinese detected
+    if (isSimplifiedChinese(parsed.zhTitle + parsed.zhBody)) {
+      console.warn("[summarize-zh] detected Simplified Chinese, retrying...");
+      return summarizeArticleInChinese(article);
+    }
+
+    return {
+      zhTitle: parsed.zhTitle,
+      zhSnippet: parsed.zhSnippet,
+      zhBody: parsed.zhBody,
+      zhFunFact: parsed.zhFunFact,
+      tags: parsed.tags ?? [],
+    };
+  } catch (err) {
+    console.error("[summarize-zh] error:", err);
+    return null;
+  }
+}
+
+// Translate Traditional Chinese article fields to English.
+async function translateToEnglish(
+  zh: { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string }
+): Promise<{ title: string; snippet: string; body: string; funFact: string } | null> {
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+
+  const userPrompt = `Translate the following Traditional Chinese news article fields into natural English for a high school audience. Write clear, direct sentences. Preserve all HTML tags exactly. Return ONLY valid JSON.
+
+Title: ${zh.zhTitle}
+Snippet: ${zh.zhSnippet}
+Body (HTML): ${zh.zhBody}
+FunFact (HTML): ${zh.zhFunFact}
+
+Schema: {"title":"...","snippet":"...","body":"...","funFact":"..."}`;
+
+  try {
+    const res = await withRetry(() => client.chat.completions.create({
+      model,
+      max_tokens: 4000,
+      temperature: 0.6,
+      messages: [
+        { role: "system", content: "You are a journalist translating Traditional Chinese news into clear English for high schoolers. Preserve all HTML tags. Return only valid JSON." },
+        { role: "user", content: userPrompt },
+      ],
+    }));
+
+    const raw = res.choices[0]?.message?.content ?? "";
+    const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) { console.error("[translate-en] no JSON in response:", raw.slice(0, 200)); return null; }
+    const parsed = JSON.parse(jsonrepair(jsonMatch[0]));
+    if (!parsed.title || !parsed.body) return null;
+    return { title: parsed.title, snippet: parsed.snippet, body: parsed.body, funFact: parsed.funFact };
+  } catch (err) {
+    console.error("[translate-en] error:", err);
+    return null;
+  }
+}
+
 export async function summarizeArticle(article: RawArticle, category: Category): Promise<GeneratedPost | null> {
+  const meta = CATEGORY_META[category] ?? CATEGORY_META["news"];
+
+  // Taiwan: Chinese-first pipeline — summarize in Traditional Chinese, then translate to English
+  if (category === "taiwan") {
+    console.log(`[summarize] taiwan: using Chinese-first pipeline for "${article.title.slice(0, 60)}"`);
+
+    const zh = await summarizeArticleInChinese(article);
+    if (!zh) { console.error("[summarize] taiwan: Chinese summarization failed"); return null; }
+
+    const en = await translateToEnglish(zh);
+    if (!en) { console.error("[summarize] taiwan: English translation failed"); return null; }
+
+    const Converter = (await import("opencc-js")).Converter;
+    const toSimp = Converter({ from: "tw", to: "cn" });
+    const cnField = (s: string) => s ? toSimp(s) : s;
+
+    return {
+      title: en.title,
+      snippet: en.snippet,
+      body: en.body,
+      funFact: en.funFact,
+      tags: zh.tags.map((t) => (t.startsWith("#") ? t : `#${t}`)),
+      category,
+      categories: [category],
+      emoji: meta.emoji,
+      gradient: meta.gradient,
+      badge: meta.badge,
+      authorEmoji: meta.authorEmoji,
+      authorBg: meta.authorBg,
+      sourceUrl: article.link,
+      imageUrl: article.imageUrl,
+      zhTitle: zh.zhTitle,
+      zhSnippet: zh.zhSnippet,
+      zhBody: zh.zhBody,
+      zhFunFact: zh.zhFunFact,
+      // Simplified Chinese derived from Traditional
+      ...({ zhTitleCn: cnField(zh.zhTitle), zhSnippetCn: cnField(zh.zhSnippet), zhBodyCn: cnField(zh.zhBody), zhFunFactCn: cnField(zh.zhFunFact) } as Record<string, string>),
+    };
+  }
 
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
@@ -470,7 +613,7 @@ URL: ${article.link}`;
       max_tokens: 4000,
       temperature,
       messages: [
-        { role: "system", content: category === "taiwan" ? buildSystemPrompt() + '\n\nIMPORTANT: The source title may be in Chinese. Add a "title" field to your JSON with a clear English headline (max 100 chars). Schema: {"title":"...","snippet":"...","body":"...","funFact":"...","tags":[...]}' : buildSystemPrompt() },
+        { role: "system", content: buildSystemPrompt() },
         { role: "user", content: userPrompt },
       ],
     }));
@@ -492,8 +635,6 @@ URL: ${article.link}`;
       console.error("[summarize] missing required fields (body/snippet):", JSON.stringify(parsed).slice(0, 200));
       return null;
     }
-
-    const meta = CATEGORY_META[category] ?? CATEGORY_META["news"];
 
     return {
       title: parsed.title?.trim() || article.title,

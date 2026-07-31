@@ -20,7 +20,7 @@ function cnField(s: string | null | undefined): string | null {
   return s ? toSimplified(s) : null;
 }
 
-const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia", "taiwan"]);
+const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia"]);
 const LOW_VOLUME_CATEGORIES = new Set(["entertainment", "beauty", "animals", "travel", "gaming", "celebrity"]);
 const NEW_PER_RUN = 5;
 const HIGH_VOLUME_PER_RUN = 8;
@@ -77,14 +77,20 @@ export async function POST(req: NextRequest) {
     const post = await summarizeArticle(article, category as Category);
     if (!post) continue;
 
-    let zh = await translateToTraditionalChinese(post);
-    if (!zh) {
-      console.log(`[generate/category] ${category}: translation failed, retrying...`);
+    // Taiwan: Chinese-first pipeline already populated zh* on the post.
+    let zh: { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string } | null = null;
+    if (post.zhBody) {
+      zh = { zhTitle: post.zhTitle!, zhSnippet: post.zhSnippet!, zhBody: post.zhBody!, zhFunFact: post.zhFunFact! };
+    } else {
       zh = await translateToTraditionalChinese(post);
-    }
-    if (!zh) {
-      console.error(`[generate/category] ${category}: translation failed after 2 attempts, skipping "${post.title.slice(0, 60)}"`);
-      continue;
+      if (!zh) {
+        console.log(`[generate/category] ${category}: translation failed, retrying...`);
+        zh = await translateToTraditionalChinese(post);
+      }
+      if (!zh) {
+        console.error(`[generate/category] ${category}: translation failed after 2 attempts, skipping "${post.title.slice(0, 60)}"`);
+        continue;
+      }
     }
 
     const imageUrl = post.imageUrl ?? (await fetchOgImage(article.link).catch(() => null)) ?? undefined;

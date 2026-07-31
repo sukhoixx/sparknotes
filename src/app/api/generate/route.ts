@@ -35,7 +35,7 @@ function stripHtml(s: string | null | undefined): string | null {
 }
 
 const NEW_PER_RUN = 5;
-const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia", "taiwan"]);
+const HIGH_VOLUME_CATEGORIES = new Set(["news", "us", "world", "technology", "asia"]);
 const HIGH_VOLUME_PER_RUN = 8;
 const LOW_VOLUME_CATEGORIES = new Set(["entertainment", "beauty", "animals", "travel", "gaming", "celebrity"]);
 const LOW_VOLUME_PER_RUN = 3;
@@ -125,14 +125,21 @@ async function runGeneration() {
         const post = await summarizeArticle(article, category as Category);
         if (!post) continue;
 
-        let zh = await translateToTraditionalChinese(post);
-        if (!zh) {
-          console.log(`[generate] ${category}: translation failed, retrying...`);
+        // Taiwan articles: summarizeArticle already populated zh* fields via Chinese-first pipeline.
+        // All other categories: translate English output to Traditional Chinese.
+        let zh: { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string } | null = null;
+        if (post.zhBody) {
+          zh = { zhTitle: post.zhTitle!, zhSnippet: post.zhSnippet!, zhBody: post.zhBody!, zhFunFact: post.zhFunFact! };
+        } else {
           zh = await translateToTraditionalChinese(post);
-        }
-        if (!zh) {
-          console.error(`[generate] ${category}: translation failed after 2 attempts, skipping "${post.title.slice(0, 60)}"`);
-          continue;
+          if (!zh) {
+            console.log(`[generate] ${category}: translation failed, retrying...`);
+            zh = await translateToTraditionalChinese(post);
+          }
+          if (!zh) {
+            console.error(`[generate] ${category}: translation failed after 2 attempts, skipping "${post.title.slice(0, 60)}"`);
+            continue;
+          }
         }
 
         const created = await prisma.post.create({
