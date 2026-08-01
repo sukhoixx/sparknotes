@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 import { jsonrepair } from "jsonrepair";
+import { Converter } from "opencc-js";
 import type { RawArticle } from "./rss";
+
+const _cnToTw = Converter({ from: "cn", to: "tw" });
 
 // Chinese and English profanity/vulgar terms to strip before sending to AI
 const PROFANITY_PATTERNS = [
@@ -20,12 +23,15 @@ const PROFANITY_PATTERNS = [
   /crap/gi,
 ];
 
-// Unambiguous Simplified-only characters (Traditional equivalents are completely different glyphs)
-// 国=國 来=來 东=東 时=時 们=們 产=產 电=電 话=話 书=書 说=說 问=問 题=題 现=現 际=際 关=關 这=這 风=風 长=長 发=發 学=學 济=濟 设=設 备=備 资=資 变=變 线=線 质=質 员=員 实=實 华=華 务=務 车=車 见=見 联=聯 热=熱 转=轉 论=論 气=氣 义=義 认=認 归=歸
-const SIMPLIFIED_ONLY = /[国来东们产电话书说问题现际关这风长发济设备资变线质员实华务车见联热转论气义认归]/;
-
+// Detect Simplified Chinese by converting cn→tw and counting changed characters.
+// If more than 5 characters differ, the input was likely Simplified.
 function isSimplifiedChinese(text: string): boolean {
-  return SIMPLIFIED_ONLY.test(text);
+  const converted = _cnToTw(text);
+  let diffs = 0;
+  for (let i = 0; i < Math.min(text.length, converted.length); i++) {
+    if (text[i] !== converted[i]) diffs++;
+  }
+  return diffs > 5;
 }
 
 function sanitize(text: string): string {
