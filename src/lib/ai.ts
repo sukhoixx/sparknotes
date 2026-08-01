@@ -54,9 +54,39 @@ export function isSensitiveContent(title: string): boolean {
   return CONTENT_FILTER_PATTERNS.some((p) => p.test(title));
 }
 
-const client = new OpenAI({
+const _rawClient = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: "https://api.deepseek.com/v1",
+});
+
+// Wrap client to disable DeepSeek thinking mode on all calls, eliminating reasoning token overhead.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const client = new Proxy(_rawClient, {
+  get(target, prop) {
+    if (prop === "chat") {
+      return new Proxy(target.chat, {
+        get(chatTarget, chatProp) {
+          if (chatProp === "completions") {
+            return new Proxy(chatTarget.completions, {
+              get(compTarget, compProp) {
+                if (compProp === "create") {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  return (body: any, opts?: any) =>
+                    (compTarget.create as any)(
+                      { ...body },
+                      { ...opts, body: { ...opts?.body, thinking: { type: "disabled" } } }
+                    );
+                }
+                return (compTarget as any)[compProp];
+              },
+            });
+          }
+          return (chatTarget as any)[chatProp];
+        },
+      });
+    }
+    return (target as any)[prop];
+  },
 });
 
 // Retry a function up to maxAttempts times on transient network errors (ECONNRESET, ETIMEDOUT, 5xx).
@@ -150,7 +180,6 @@ Respond with this exact JSON schema:
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       temperature: 0.5,
       messages: [
         { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。【重要】必須使用繁體中文字（Traditional Chinese characters），絕對不可使用簡體中文字（Simplified Chinese characters）。例如：應寫「臺灣」或「台灣」，不可寫「台湾」；應寫「國」，不可寫「国」。" },
@@ -216,7 +245,6 @@ Return ONLY valid JSON. If no story qualifies (score < 8), return {"score":0}. O
   try {
     const res = await client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       max_tokens: 300,
       temperature: 0.2,
       messages: [
@@ -249,7 +277,6 @@ export async function filterRelevantArticles(
   try {
     const res = await client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       max_tokens: 300,
       temperature: 0,
       messages: [
@@ -277,7 +304,6 @@ export async function translateLabel(label: string): Promise<string | null> {
   try {
     const res = await client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       max_tokens: 80,
       temperature: 0.3,
       messages: [
@@ -375,7 +401,6 @@ Output format: [1, 4, 7]`;
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       temperature: 0.2,
       messages: [
         { role: "system", content: CATEGORY_SELECTION_PROMPTS[category] + "\n\nCRITICAL: Output ONLY a raw JSON array of integers with no explanation, no reasoning, no text before or after. Example: [1, 4, 7]" },
@@ -450,7 +475,6 @@ async function summarizeArticleInChinese(
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       temperature: 0.6,
       messages: [
         { role: "system", content: `你是台灣資深新聞記者，為高中生撰寫新聞摘要。請用流暢自然的繁體中文撰寫，不要使用簡體中文。保留所有 HTML 標籤不變。只回傳 JSON 物件，不要有其他文字。
@@ -514,7 +538,6 @@ Schema: {"title":"...","snippet":"...","body":"...","funFact":"..."}`;
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       temperature: 0.6,
       messages: [
         { role: "system", content: "You are a journalist translating Traditional Chinese news into clear English for high schoolers. Preserve all HTML tags. Return only valid JSON." },
@@ -592,7 +615,6 @@ URL: ${article.link}`;
 
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       max_tokens: 4000,
       temperature,
       messages: [
@@ -646,7 +668,6 @@ export async function extractTopicTags(title: string, snippet: string): Promise<
   try {
     const res = await client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       max_tokens: 20,
       temperature: 0,
       messages: [
@@ -679,7 +700,6 @@ export async function pickMostNewsworthyPost(
   try {
     const res = await client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       max_tokens: 10,
       temperature: 0,
       messages: [
@@ -729,7 +749,6 @@ Respond with ONLY valid JSON:
   try {
     const res = await withRetry(() => client.chat.completions.create({
       model,
-      extra_body: { thinking: { type: "disabled" } },
       temperature: 0.3,
       messages: [
         { role: "system", content: "You are a senior news editor. Return only valid JSON." },
