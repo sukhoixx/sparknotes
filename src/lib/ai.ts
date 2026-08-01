@@ -402,15 +402,19 @@ Output format: [1, 4, 7]`;
 
     const raw = res.choices[0]?.message?.content ?? "";
     if (category === "taiwan") console.log(`[select] taiwan raw response: ${raw}`);
-    const match = raw.match(/\[[\d,\s]+\]/);
+    const match = raw.match(/\[[\d,\s]*\]/);
     if (!match) {
       console.error("[select] could not parse indices from response:", raw);
-      // For strict categories like taiwan, don't fall back — return empty rather than publish off-topic articles
       if (category === "taiwan") return [];
       return filtered.slice(0, n);
     }
 
     const indices: number[] = JSON.parse(match[0]);
+    if (indices.length === 0) {
+      console.log(`[select] ${category}: AI selected 0 articles (empty array)`);
+      if (category === "taiwan") return [];
+      return filtered.slice(0, n);
+    }
     const selected = indices
       .filter((i) => i >= 1 && i <= filtered.length)
       .map((i) => filtered[i - 1]);

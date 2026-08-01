@@ -516,6 +516,11 @@ async function fetchFeed(url: string, source: string, cutoff: Date): Promise<Raw
       /watch.{0,20}bulletin/i,
       /bulletin.{0,30}euronews/i,
       /access.{0,30}full.{0,20}bulletin/i,
+      /coupon/i,
+      /promo code/i,
+      /discount code/i,
+      /\bsale\b.{0,20}\boff\b/i,
+      /\d+%.{0,10}off\b/i,
     ];
     const BLOCKED_DOMAINS = ["telemundo.com"];
     return articles.filter((a) =>
