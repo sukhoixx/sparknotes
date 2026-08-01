@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ChatCompletion, ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import { jsonrepair } from "jsonrepair";
 import { Converter } from "opencc-js";
 import type { RawArticle } from "./rss";
@@ -60,8 +61,9 @@ const client = new OpenAI({
 });
 
 // Helper to call DeepSeek with thinking disabled — avoids reasoning token overhead.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const deepseekCreate = (client.chat.completions.create as any).bind(client.chat.completions);
+const deepseekCreate = (params: ChatCompletionCreateParamsNonStreaming & { thinking?: unknown }): Promise<ChatCompletion> =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client.chat.completions.create as any)(params) as Promise<ChatCompletion>;
 
 // Retry a function up to maxAttempts times on transient network errors (ECONNRESET, ETIMEDOUT, 5xx).
 async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 1500): Promise<T> {
