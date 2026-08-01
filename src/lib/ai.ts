@@ -20,8 +20,9 @@ const PROFANITY_PATTERNS = [
   /crap/gi,
 ];
 
-// Characters that exist only in Simplified Chinese (not in Traditional)
-const SIMPLIFIED_ONLY = /[国来东时们产业电话带书说话问题现实际关图书这东风长头发学经济设备资产长时间变发展]/;
+// Unambiguous Simplified-only characters (Traditional equivalents are completely different glyphs)
+// 国=國 来=來 东=東 时=時 们=們 产=產 电=電 话=話 书=書 说=說 问=問 题=題 现=現 际=際 关=關 这=這 风=風 长=長 发=發 学=學 济=濟 设=設 备=備 资=資 变=變 线=線 质=質 员=員 实=實 华=華 务=務 车=車 见=見 联=聯 热=熱 转=轉 论=論 气=氣 义=義 认=認 归=歸
+const SIMPLIFIED_ONLY = /[国来东们产电话书说问题现际关这风长发济设备资变线质员实华务车见联热转论气义认归]/;
 
 function isSimplifiedChinese(text: string): boolean {
   return SIMPLIFIED_ONLY.test(text);
@@ -499,10 +500,10 @@ async function summarizeArticleInChinese(
 
     if (!parsed.zhBody || !parsed.zhSnippet || !parsed.zhTitle) return null;
 
-    // Retry once if Simplified Chinese detected
+    // If Simplified Chinese detected, return null — caller will skip this article
     if (isSimplifiedChinese(parsed.zhTitle + parsed.zhBody)) {
-      console.warn("[summarize-zh] detected Simplified Chinese, retrying...");
-      return summarizeArticleInChinese(article);
+      console.warn("[summarize-zh] detected Simplified Chinese in output, skipping article");
+      return null;
     }
 
     return {
