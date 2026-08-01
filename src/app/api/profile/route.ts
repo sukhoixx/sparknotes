@@ -18,6 +18,8 @@ export async function GET() {
       where: { userId_date: { userId, date: today } },
       create: { userId, date: today },
       update: {},
+    }).catch((e: { code?: string }) => {
+      if (e.code !== "P2002") throw e;
     }),
   ]);
 
