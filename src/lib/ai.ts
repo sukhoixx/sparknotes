@@ -723,7 +723,8 @@ export async function generateHeadlines(
 Rules:
 - Pick stories with broad significance — not niche, regional, or celebrity gossip unless it's major
 - Write each headline as a clean, direct news sentence (not a clickbait title)
-- Deduplicate: if multiple articles cover the same story, pick the best angle and write one headline
+- Deduplicate: if multiple articles cover the same story, pick the best angle and write ONE headline — never repeat the same story twice
+- Each of the 10 headlines must be about a different story
 - Provide each headline in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
 
 Articles:
@@ -748,10 +749,22 @@ Respond with ONLY valid JSON:
     if (!match) { console.error("[headlines] no JSON in response:", raw); return null; }
     const parsed = JSON.parse(jsonrepair(match[0]));
     if (!Array.isArray(parsed.headlines)) return null;
+
+    // Deduplicate by removing entries whose EN headline is identical to a prior one
+    const seen = new Set<string>();
+    const indices: number[] = [];
+    const en: string[] = parsed.headlines.map((h: unknown) => String(h));
+    for (let i = 0; i < en.length; i++) {
+      if (!seen.has(en[i])) { seen.add(en[i]); indices.push(i); }
+    }
+
+    const zh: string[] = (parsed.headlinesZh ?? []).map((h: unknown) => String(h));
+    const cn: string[] = (parsed.headlinesCn ?? []).map((h: unknown) => String(h));
+
     return {
-      headlines: parsed.headlines.slice(0, 10).map((h: unknown) => String(h)),
-      headlinesZh: (parsed.headlinesZh ?? []).slice(0, 10).map((h: unknown) => String(h)),
-      headlinesCn: (parsed.headlinesCn ?? []).slice(0, 10).map((h: unknown) => String(h)),
+      headlines: indices.slice(0, 10).map((i) => en[i]),
+      headlinesZh: indices.slice(0, 10).map((i) => zh[i] ?? ""),
+      headlinesCn: indices.slice(0, 10).map((i) => cn[i] ?? ""),
     };
   } catch (err) {
     console.error("[headlines] error:", err);
