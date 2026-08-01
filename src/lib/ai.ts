@@ -23,16 +23,6 @@ const PROFANITY_PATTERNS = [
   /crap/gi,
 ];
 
-// Detect Simplified Chinese by converting cn→tw and counting changed characters.
-// If more than 5 characters differ, the input was likely Simplified.
-function isSimplifiedChinese(text: string): boolean {
-  const converted = _cnToTw(text);
-  let diffs = 0;
-  for (let i = 0; i < Math.min(text.length, converted.length); i++) {
-    if (text[i] !== converted[i]) diffs++;
-  }
-  return diffs > 5;
-}
 
 function sanitize(text: string): string {
   let result = text;
@@ -175,30 +165,13 @@ Respond with this exact JSON schema:
     const parsed = JSON.parse(jsonrepair(jsonMatch[0]));
     if (!parsed.zhTitle || !parsed.zhBody) return null;
 
-    // Detect if DeepSeek returned Simplified Chinese instead of Traditional — retry once
-    if (isSimplifiedChinese(parsed.zhTitle + parsed.zhBody)) {
-      console.warn("[translate] detected Simplified Chinese output, retrying...");
-      const res2 = await withRetry(() => client.chat.completions.create({
-        model,
-        max_tokens: 4000,
-        temperature: 0.3,
-        messages: [
-          { role: "system", content: "你是台灣資深新聞記者，擅長將國際新聞以流暢自然的繁體中文重新撰寫。讀者來自台灣、中國大陸、香港及海外華人社區，請使用台灣慣用繁體中文，同時避免過於本土化的用語，確保大多數華語讀者都能理解。保留所有 HTML 標籤不變。只回傳 JSON 物件。【重要】必須使用繁體中文字（Traditional Chinese characters），絕對不可使用簡體中文字（Simplified Chinese characters）。例如：應寫「臺灣」或「台灣」，不可寫「台湾」；應寫「國」，不可寫「国」。" },
-          { role: "user", content: userPrompt + "\n\n【再次提醒】請務必使用繁體中文，不可使用簡體中文。" },
-        ],
-      }));
-      const raw2 = res2.choices[0]?.message?.content ?? "";
-      const stripped2 = raw2.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-      const match2 = stripped2.match(/\{[\s\S]*\}/);
-      if (match2) {
-        const parsed2 = JSON.parse(jsonrepair(match2[0]));
-        if (parsed2.zhTitle && parsed2.zhBody) {
-          return parsed2 as { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string };
-        }
-      }
-    }
-
-    return parsed as { zhTitle: string; zhSnippet: string; zhBody: string; zhFunFact: string };
+    // Always convert through cn→tw to fix any Simplified characters that slipped in
+    return {
+      zhTitle: _cnToTw(parsed.zhTitle),
+      zhSnippet: _cnToTw(parsed.zhSnippet ?? ""),
+      zhBody: _cnToTw(parsed.zhBody),
+      zhFunFact: _cnToTw(parsed.zhFunFact ?? ""),
+    };
   } catch (err) {
     console.error("[translate] error:", err);
     return null;
@@ -506,17 +479,12 @@ async function summarizeArticleInChinese(
 
     if (!parsed.zhBody || !parsed.zhSnippet || !parsed.zhTitle) return null;
 
-    // If Simplified Chinese detected, return null — caller will skip this article
-    if (isSimplifiedChinese(parsed.zhTitle + parsed.zhBody)) {
-      console.warn("[summarize-zh] detected Simplified Chinese in output, skipping article");
-      return null;
-    }
-
+    // Always convert through cn→tw to fix any Simplified characters that slipped in
     return {
-      zhTitle: parsed.zhTitle,
-      zhSnippet: parsed.zhSnippet,
-      zhBody: parsed.zhBody,
-      zhFunFact: parsed.zhFunFact,
+      zhTitle: _cnToTw(parsed.zhTitle),
+      zhSnippet: _cnToTw(parsed.zhSnippet),
+      zhBody: _cnToTw(parsed.zhBody),
+      zhFunFact: _cnToTw(parsed.zhFunFact),
       tags: parsed.tags ?? [],
     };
   } catch (err) {
