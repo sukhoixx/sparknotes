@@ -41,7 +41,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
-    const res = await deepseekCreate({
+
+    const answerPromise = deepseekCreate({
       model,
       thinking: { type: "disabled" },
       temperature: 0.5,
@@ -51,11 +52,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       ],
     });
 
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), 30000)
+    );
+
+    const res = await Promise.race([answerPromise, timeoutPromise]);
     const answer = res.choices[0]?.message?.content?.trim() ?? "";
     if (!answer) return NextResponse.json({ error: "Failed to generate answer" }, { status: 500 });
 
     return NextResponse.json({ answer });
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === "timeout") {
+      return NextResponse.json({ error: "timeout" }, { status: 408 });
+    }
     console.error("[answer] error:", err);
     return NextResponse.json({ error: "Failed to generate answer" }, { status: 500 });
   }
