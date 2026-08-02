@@ -803,7 +803,7 @@ Return ONLY valid JSON:
       thinking: { type: "disabled" },
       temperature: 0.7,
       messages: [
-        { role: "system", content: "You are a helpful reading assistant. Generate thoughtful questions readers may have after reading a news article. Return only valid JSON." },
+        { role: "system", content: "You are a helpful reading assistant. Generate thoughtful but concise questions readers may have after reading a news article. Return only valid JSON." },
         { role: "user", content: userPrompt },
       ],
     });
