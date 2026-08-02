@@ -61,7 +61,7 @@ const client = new OpenAI({
 });
 
 // Helper to call DeepSeek with thinking disabled — avoids reasoning token overhead.
-const deepseekCreate = (params: ChatCompletionCreateParamsNonStreaming & { thinking?: unknown }): Promise<ChatCompletion> =>
+export const deepseekCreate = (params: ChatCompletionCreateParamsNonStreaming & { thinking?: unknown }): Promise<ChatCompletion> =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (client.chat.completions.create as any)(params) as Promise<ChatCompletion>;
 
@@ -768,6 +768,59 @@ Respond with ONLY valid JSON:
     };
   } catch (err) {
     console.error("[headlines] error:", err);
+    return null;
+  }
+}
+
+// Generate 1-2 questions a reader might naturally ask after reading an article.
+// Questions are cached server-side; answers are generated on-demand per user tap.
+export async function generateQuestions(
+  title: string,
+  body: string // plain text, HTML already stripped
+): Promise<{ questions: string[]; questionsZh: string[]; questionsCn: string[] } | null> {
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+
+  const userPrompt = `Article title: ${title}
+
+Article body: ${body.slice(0, 2000)}
+
+Generate 1-2 natural questions that a reader might want answered after reading this article. These could be:
+- Background questions (e.g. "What is [term] and why does it matter?")
+- Context questions (e.g. "How does [X] relate to [Y]?")
+- Follow-up questions (e.g. "What are the implications of [Z]?")
+- Clarifying questions about anything that might be unclear
+
+Choose questions that are genuinely useful and varied based on the article content. Do not always ask the same type of question.
+
+Provide each question in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文).
+
+Return ONLY valid JSON:
+{"questions":["Q1","Q2"],"questionsZh":["Q1zh","Q2zh"],"questionsCn":["Q1cn","Q2cn"]}`;
+
+  try {
+    const res = await deepseekCreate({
+      model,
+      thinking: { type: "disabled" },
+      temperature: 0.7,
+      messages: [
+        { role: "system", content: "You are a helpful reading assistant. Generate thoughtful questions readers may have after reading a news article. Return only valid JSON." },
+        { role: "user", content: userPrompt },
+      ],
+    });
+
+    const raw = res.choices[0]?.message?.content?.trim() ?? "";
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    const parsed = JSON.parse(jsonrepair(match[0]));
+    if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) return null;
+
+    return {
+      questions: parsed.questions.slice(0, 2).map((q: unknown) => String(q)),
+      questionsZh: (parsed.questionsZh ?? []).slice(0, 2).map((q: unknown) => String(q)),
+      questionsCn: (parsed.questionsCn ?? []).slice(0, 2).map((q: unknown) => String(q)),
+    };
+  } catch (err) {
+    console.error("[questions] error:", err);
     return null;
   }
 }
