@@ -431,6 +431,7 @@ Rules:
 - Write the body as HTML using only <p> and <strong> tags (2-3 paragraphs, no more). Report directly: cover who, what, where, when, why, and what happens next. Never say "the article says", "according to the report", or "the piece notes" — state facts as your own reporting.
 - The funFact must start with a relevant emoji and <strong>Fun Fact:</strong> — make it genuinely interesting, not filler.
 - Tags: 3-5 plain words without # prefix, relevant to the article.
+- NEVER invent specific dates, numbers, statistics, or factual details not explicitly present in the provided content — even if you know them from prior knowledge. Only use facts from the source article.
 - For sports articles: NEVER invent scores, stats, player performance details, or game events not explicitly stated in the provided content. If the source only gives you the headline and no game details, write about the significance of the result or the broader storyline — do NOT fabricate who scored, when, or how. Invented sports facts are worse than no facts.
 
 Respond ONLY with valid JSON matching this exact schema (no extra text, no markdown fences):

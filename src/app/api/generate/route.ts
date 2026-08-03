@@ -118,7 +118,8 @@ async function runGeneration() {
             article.fullContent = true;
             console.log(`[generate] ${category}: fetched full article via ${result.method} (${result.text.length} chars) for "${article.title.slice(0, 60)}"`);
           } else {
-            console.log(`[generate] ${category}: full fetch failed (direct + Jina), using RSS snippet for "${article.title.slice(0, 60)}"`);
+            console.log(`[generate] ${category}: full fetch failed (direct + Jina), skipping "${article.title.slice(0, 60)}"`);
+            continue; // skip — RSS snippet alone risks hallucination
           }
         }
 

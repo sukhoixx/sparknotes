@@ -71,6 +71,9 @@ export async function POST(req: NextRequest) {
       if (result) {
         article.content = result.text;
         article.fullContent = true;
+      } else {
+        console.log(`[generate/category] ${category}: full fetch failed, skipping "${article.title.slice(0, 60)}"`);
+        continue;
       }
     }
 
