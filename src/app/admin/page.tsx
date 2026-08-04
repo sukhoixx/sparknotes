@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 
-const CATEGORIES = ["news","us","world","politics","military","science","technology","finance","entertainment","celebrity","sports","business","gaming","travel","animals","inventions","health","beauty","asia"];
+const CATEGORIES = ["news","us","world","politics","military","science","technology","finance","entertainment","celebrity","sports","business","gaming","travel","inventions","health","beauty","asia","taiwan"];
 
 type DauPoint = { date: string; count: number };
 
