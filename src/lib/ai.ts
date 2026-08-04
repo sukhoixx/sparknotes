@@ -762,6 +762,14 @@ Respond with ONLY valid JSON:
     const zh: string[] = (parsed.headlinesZh ?? []).map((h: unknown) => String(h));
     const cn: string[] = (parsed.headlinesCn ?? []).map((h: unknown) => String(h));
 
+    // Validate Chinese arrays are populated — empty means truncated response
+    const zhValid = zh.filter(Boolean).length > 0;
+    const cnValid = cn.filter(Boolean).length > 0;
+    if (!zhValid || !cnValid) {
+      console.error("[headlines] Chinese arrays empty — response was likely truncated, returning null to trigger retry");
+      return null;
+    }
+
     return {
       headlines: indices.slice(0, 10).map((i) => en[i]),
       headlinesZh: indices.slice(0, 10).map((i) => zh[i] ?? ""),
