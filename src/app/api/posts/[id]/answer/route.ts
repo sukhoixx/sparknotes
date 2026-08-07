@@ -32,8 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const isTW = lang === "zh-TW";
 
   const systemPrompt = isZh
-    ? `你是一位知識淵博的新聞助理。根據文章內容或相關知識，用${isTW ? "繁體中文" : "简体中文"}以一段話回答讀者的問題。回答應清晰、準確，適合高中生閱讀程度。若問題與文章提及的事件或人物完全無關，只需用一句話拒絕，不作任何解釋。`
-    : "You are a knowledgeable news assistant. Answer the reader's question based on the article or using existing knowledge if applicable in one clear paragraph. Write for a high school reading level. If the question is completely unrelated to the event or persons mentioned in the article, reject it in one sentence only — no explanation.";
+    ? `你是一位知識淵博的新聞助理。根據文章內容回答讀者的問題；若文章未涵蓋，可運用相關知識補充，以一段話作答。不要重複問題。回答應清晰、準確，用${isTW ? "繁體中文" : "简体中文"}撰寫，適合高中生閱讀程度。若問題與文章提及的事件或人物完全無關，只需用一句話拒絕，不作任何解釋。`
+    : "You are a knowledgeable news assistant. Answer the reader's question based on the article or using existing knowledge if not addressed by the article in one clear paragraph. Do not restate the question. Write for a high school reading level. If the question is completely unrelated to the event or persons mentioned in the article, reject it in one sentence only — no explanation.";
 
   const userPrompt = isZh
     ? `文章：${post.title}\n\n${body.slice(0, 2000)}\n\n問題：${question}`
