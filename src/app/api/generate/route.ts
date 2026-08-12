@@ -182,14 +182,14 @@ async function runGeneration() {
 
     // Let AI pick the most newsworthy article from this run, avoiding topics pushed today
     if (generatedPostIds.length > 0) {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
       const [candidates, recentPushes] = await Promise.all([
         prisma.post.findMany({
           where: { id: { in: generatedPostIds } },
           select: { id: true, title: true, snippet: true, category: true },
         }),
         prisma.pushLog.findMany({
-          where: { sentAt: { gte: oneDayAgo } },
+          where: { sentAt: { gte: twoDaysAgo } },
           select: { title: true, topics: true },
           orderBy: { sentAt: "desc" },
         }),
