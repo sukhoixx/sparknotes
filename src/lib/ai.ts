@@ -16,12 +16,12 @@ const PROFANITY_PATTERNS = [
   /你媽/g,
   /去你的/g,
   /操你/g,
-  /fuck/gi,
-  /shit/gi,
-  /ass(?:hole)?/gi,
-  /bitch/gi,
-  /damn/gi,
-  /crap/gi,
+  /\bfuck\b/gi,
+  /\bshit\b/gi,
+  /\bass(?:hole)?\b/gi,
+  /\bbitch\b/gi,
+  /\bdamn\b/gi,
+  /\bcrap\b/gi,
 ];
 
 
