@@ -561,6 +561,18 @@ const TAIWAN_SCRAPERS: TaiwanScrapeConfig[] = [
     linkPrefix: "https://news.tvbs.com.tw",
   },
   // 中時電子報 blocked by Cloudflare — omitted
+  {
+    source: "風傳媒",
+    listUrl: "https://www.storm.mg/",
+    linkPattern: /href="(\/article\/\d+)"/gi,
+    linkPrefix: "https://www.storm.mg",
+  },
+  {
+    source: "Newtalk新聞",
+    listUrl: "https://newtalk.tw/",
+    linkPattern: /href="(\/news\/view\/\d{4}-\d{2}-\d{2}\/\d+)"/gi,
+    linkPrefix: "https://newtalk.tw",
+  },
 ];
 
 async function scrapeTaiwanSite(config: TaiwanScrapeConfig, cutoff: Date): Promise<RawArticle[]> {
@@ -723,7 +735,7 @@ export function filterSimilarTitles(
 export function filterRecentDuplicates(
   articles: RawArticle[],
   recentTitles: string[],
-  threshold = 0.6,
+  threshold = 0.3,
 ): RawArticle[] {
   const recentWordSets = recentTitles.map(titleWords);
   return articles.filter((article) => {
