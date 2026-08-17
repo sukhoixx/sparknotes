@@ -735,7 +735,7 @@ export function filterSimilarTitles(
 export function filterRecentDuplicates(
   articles: RawArticle[],
   recentTitles: string[],
-  threshold = 0.3,
+  threshold = 0.4,
 ): RawArticle[] {
   const recentWordSets = recentTitles.map(titleWords);
   return articles.filter((article) => {
