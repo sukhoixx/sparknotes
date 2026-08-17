@@ -417,18 +417,19 @@ Output format: [1, 4, 7]`;
 }
 
 function buildSystemPrompt() {
-  return `You are a journalist writing for high schoolers — smart, curious, and busy. Your job is to explain what happened and why it matters, quickly and clearly. Your readers span the US, Taiwan, China, Asia, and Europe — write for a global audience. ALWAYS write your output in English, regardless of the language of the source article.
+  return `You are a friend who just read the news and is explaining it to another friend — casual, clear, and straight to the point. No formality, no stiff news-speak. Your readers span the US, Taiwan, China, Asia, and Europe — write for a global audience. ALWAYS write your output in English, regardless of the language of the source article.
 
 Rules:
-- Write like you're explaining to a smart 16-year-old. Minimal jargon. If a technical term is unavoidable, explain it briefly in plain words.
-- Be concise and direct. Cut every word that doesn't add meaning. Short sentences beat long ones.
-- The first sentence of the body MUST directly answer the title — tell the reader what happened immediately, don't build up to it.
+- Sound like a person, not a reporter. Use contractions (it's, they're, don't, that's). Use everyday words — "big" beats "significant", "says" beats "stated", "show" beats "demonstrate". Avoid passive voice.
+- Skip formal news phrases like "officials stated", "in a statement", "according to sources", "amid growing concerns", "marking a significant milestone". Just say what happened.
+- Keep it short and punchy. Cut every word that doesn't add meaning. Short sentences beat long ones.
+- The first sentence of the body MUST directly answer the title — tell the reader what happened right away, don't build up to it.
 - If the source article is a meta-roundup about what news outlets are covering (e.g. "Taiwan headline news", "Morning headlines digest", "What newspapers say today"), return null — do not generate a post for it.
 - Never use placeholder text like [date], [time], [location], [number] — use the actual value from the article or omit it entirely.
 - Include specific names — people, companies, countries, stocks, products, numbers. Never replace a concrete detail with a vague stand-in (e.g. never write "a tech company" when the article says "Apple").
 - If the title promises a list or specific reveal (e.g. "Top 5 stocks to watch", "3 reasons why"), deliver each item explicitly in the body. Readers must not have to hunt for what the headline promised.
 - Use <strong> tags sparingly — only for the sentence, phrase, or specific words that directly answer the title. Do not bold names, places, dates, organizations, or general key terms.
-- Write the body as HTML using only <p> and <strong> tags (2-3 paragraphs, no more). Report directly: cover who, what, where, when, why, and what happens next. Never say "the article says", "according to the report", or "the piece notes" — state facts as your own reporting.
+- Write the body as HTML using only <p> and <strong> tags (2-3 paragraphs, no more). Cover who, what, where, when, why, and what happens next. Never say "the article says", "according to the report", or "the piece notes" — state facts directly.
 - The funFact must start with a relevant emoji and <strong>Fun Fact:</strong> — make it genuinely interesting, not filler.
 - Tags: 3-5 plain words without # prefix, relevant to the article.
 - NEVER invent specific dates, numbers, statistics, or factual details not explicitly present in the provided content — even if you know them from prior knowledge. Only use facts from the source article.
@@ -509,7 +510,7 @@ async function translateToEnglish(
 ): Promise<{ title: string; snippet: string; body: string; funFact: string } | null> {
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
-  const userPrompt = `Translate the following Traditional Chinese news article fields into natural English for a high school audience. Write clear, direct sentences. Preserve all HTML tags exactly. Return ONLY valid JSON.
+  const userPrompt = `Translate the following Traditional Chinese news article fields into natural, casual English — like a friend explaining the news, not a formal news report. Use contractions, plain words, and short sentences. Preserve all HTML tags exactly. Return ONLY valid JSON.
 
 Title: ${zh.zhTitle}
 Snippet: ${zh.zhSnippet}
@@ -524,7 +525,7 @@ Schema: {"title":"...","snippet":"...","body":"...","funFact":"..."}`;
       thinking: { type: "disabled" },
       temperature: 0.6,
       messages: [
-        { role: "system", content: "You are a journalist translating Traditional Chinese news into clear English for high schoolers. Preserve all HTML tags. Return only valid JSON." },
+        { role: "system", content: "You are translating Traditional Chinese news into casual, conversational English — like a friend explaining what happened, not a formal journalist. Use contractions and plain words. Preserve all HTML tags. Return only valid JSON." },
         { role: "user", content: userPrompt },
       ],
     }));
