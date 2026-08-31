@@ -52,11 +52,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       ],
     });
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), 30000)
-    );
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("timeout")), 30000);
+    });
 
-    const res = await Promise.race([answerPromise, timeoutPromise]);
+    let res;
+    try {
+      res = await Promise.race([answerPromise, timeoutPromise]);
+    } finally {
+      clearTimeout(timeoutId!);
+    }
     const answer = res.choices[0]?.message?.content?.trim() ?? "";
     if (!answer) return NextResponse.json({ error: "Failed to generate answer" }, { status: 500 });
 

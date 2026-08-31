@@ -27,11 +27,14 @@ function decodeHtml(s: string): string {
     .replace(/&#x([0-9a-fA-F]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
 }
 
-let isRunning = false;
+const g = globalThis as typeof globalThis & { __eventGenerateRunning?: boolean };
+function isRunning() { return g.__eventGenerateRunning ?? false; }
+function setRunning(v: boolean) { g.__eventGenerateRunning = v; }
 
 async function runEventGenerate(eventSlug: string, eventLabel: string, maxPosts: number) {
   try {
-    const existing = await prisma.post.findMany({ select: { sourceUrl: true, title: true } });
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const existing = await prisma.post.findMany({ where: { createdAt: { gte: thirtyDaysAgo } }, select: { sourceUrl: true, title: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
     const existingTitles = new Set(existing.map((p) => p.title));
 
@@ -43,7 +46,7 @@ async function runEventGenerate(eventSlug: string, eventLabel: string, maxPosts:
     const matching = relevantIndices.map((i) => candidates[i]);
     console.log(`[event-generate] ${matching.length}/${candidates.length} articles judged relevant by AI`);
 
-    const recentTitles = existing.map((p) => p.title);
+    const recentTitles = existing.map((p) => p.title as string);
     const deduped = filterRecentDuplicates(matching, recentTitles);
     const top = selectTopArticles(deduped, maxPosts);
     console.log(`[event-generate] generating ${top.length} posts for event "${eventSlug}"`);
@@ -93,7 +96,7 @@ async function runEventGenerate(eventSlug: string, eventLabel: string, maxPosts:
   } catch (err) {
     console.error("[event-generate] error:", err);
   } finally {
-    isRunning = false;
+    setRunning(false);
   }
 }
 
@@ -126,11 +129,11 @@ export async function POST(req: NextRequest) {
     update: { slug, label, labelZh, description: description ?? null, query, score: score ?? 10 },
   });
 
-  if (isRunning) {
+  if (isRunning()) {
     return NextResponse.json({ message: "Generation already running, event saved" });
   }
 
-  isRunning = true;
+  setRunning(true);
   runEventGenerate(slug, label, maxPosts);
   return NextResponse.json({ message: `Event "${slug}" saved and generation started` });
 }
@@ -165,7 +168,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (!isRunning) {
-    isRunning = true;
+    setRunning(true);
     runEventGenerate(event.slug, event.label, 5);
   }
 

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-let isRunning = false;
+const g = globalThis as typeof globalThis & { __cleanupRunning?: boolean };
+function isRunning() { return g.__cleanupRunning ?? false; }
+function setRunning(v: boolean) { g.__cleanupRunning = v; }
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-generate-secret");
@@ -14,11 +16,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "days must be >= 7" }, { status: 400 });
   }
 
-  if (isRunning) {
+  if (isRunning()) {
     return NextResponse.json({ message: "Cleanup already in progress" });
   }
 
-  isRunning = true;
+  setRunning(true);
 
   (async () => {
     try {
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error("[cleanup] error:", err);
     } finally {
-      isRunning = false;
+      setRunning(false);
     }
   })();
 

@@ -44,7 +44,9 @@ const WORLD_CUP_END = new Date("2026-07-18T23:59:59Z");
 const WORLD_CUP_PATTERN = /world cup|fifa|worldcup/i;
 const WORLD_CUP_MIN = 2;
 
-let isRunning = false;
+const g = globalThis as typeof globalThis & { __generateRunning?: boolean };
+function isRunning() { return g.__generateRunning ?? false; }
+function setRunning(v: boolean) { g.__generateRunning = v; }
 
 async function runGeneration() {
   const generatedPostIds: number[] = [];
@@ -55,8 +57,9 @@ async function runGeneration() {
       WHERE JSON_LENGTH(categories) = 0
     `;
 
-    // Get existing source URLs to avoid duplicates
-    const existing = await prisma.post.findMany({ select: { sourceUrl: true } });
+    // Get existing source URLs to avoid duplicates — only look back 30 days (RSS articles are never older)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const existing = await prisma.post.findMany({ where: { createdAt: { gte: thirtyDaysAgo } }, select: { sourceUrl: true } });
     const existingUrls = new Set(existing.map((p) => p.sourceUrl).filter(Boolean) as string[]);
 
     // Fetch titles of posts from the last 2 weeks for exact-title dedup
@@ -260,7 +263,7 @@ async function runGeneration() {
   } catch (err) {
     console.error("[generate] error:", err);
   } finally {
-    isRunning = false;
+    setRunning(false);
     console.log("[generate] done");
   }
 }
@@ -271,11 +274,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (isRunning) {
+  if (isRunning()) {
     return NextResponse.json({ message: "Generation already in progress" });
   }
 
-  isRunning = true;
+  setRunning(true);
   runGeneration(); // fire and forget — returns response immediately
   return NextResponse.json({ message: "Generation started" });
 }

@@ -29,7 +29,9 @@ function stripHtml(s: string | null | undefined): string | null {
 
 const BATCH = 5;
 
-let isRunning = false;
+const g = globalThis as typeof globalThis & { __backfillZhRunning?: boolean };
+function isRunning() { return g.__backfillZhRunning ?? false; }
+function setRunning(v: boolean) { g.__backfillZhRunning = v; }
 
 async function runBackfill() {
   try {
@@ -79,7 +81,7 @@ async function runBackfill() {
   } catch (err) {
     console.error("[backfill-zh] error:", err);
   } finally {
-    isRunning = false;
+    setRunning(false);
   }
 }
 
@@ -89,11 +91,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (isRunning) {
+  if (isRunning()) {
     return NextResponse.json({ message: "Backfill already in progress" });
   }
 
-  isRunning = true;
+  setRunning(true);
   runBackfill();
   return NextResponse.json({ message: "Backfill started" });
 }
