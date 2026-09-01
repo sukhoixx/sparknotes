@@ -5,6 +5,7 @@ import { Converter } from "opencc-js";
 import type { RawArticle } from "./rss";
 
 const _cnToTw = Converter({ from: "cn", to: "tw" });
+const _twToCn = Converter({ from: "tw", to: "cn" });
 
 // Chinese and English profanity/vulgar terms to strip before sending to AI
 const PROFANITY_PATTERNS = [
@@ -557,9 +558,7 @@ export async function summarizeArticle(article: RawArticle, category: Category):
     const en = await translateToEnglish(zh);
     if (!en) { console.error("[summarize] taiwan: English translation failed"); return null; }
 
-    const Converter = (await import("opencc-js")).Converter;
-    const toSimp = Converter({ from: "tw", to: "cn" });
-    const cnField = (s: string) => s ? toSimp(s) : s;
+    const cnField = (s: string) => s ? _twToCn(s) : s;
 
     return {
       title: en.title,

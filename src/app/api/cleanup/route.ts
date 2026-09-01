@@ -25,10 +25,11 @@ export async function POST(req: NextRequest) {
   (async () => {
     try {
       const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-      const { count } = await prisma.post.deleteMany({
-        where: { createdAt: { lt: cutoff } },
-      });
-      console.log(`[cleanup] deleted ${count} posts older than ${days} days`);
+      const [{ count: postCount }, { count: sessionCount }] = await Promise.all([
+        prisma.post.deleteMany({ where: { createdAt: { lt: cutoff } } }),
+        prisma.session.deleteMany({ where: { expires: { lt: new Date() } } }),
+      ]);
+      console.log(`[cleanup] deleted ${postCount} posts older than ${days} days, ${sessionCount} expired sessions`);
     } catch (err) {
       console.error("[cleanup] error:", err);
     } finally {
