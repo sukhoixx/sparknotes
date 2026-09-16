@@ -6,7 +6,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const id = parseInt(params.id);
   if (isNaN(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
-  const userId = await getAuthUserId();
+  const userId = (await getAuthUserId()) ?? req.headers.get("x-guest-id") ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
@@ -21,11 +21,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({});
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const id = parseInt(params.id);
   if (isNaN(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
-  const userId = await getAuthUserId();
+  const userId = (await getAuthUserId()) ?? req.headers.get("x-guest-id") ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await prisma.like.deleteMany({ where: { userId, postId: id } });

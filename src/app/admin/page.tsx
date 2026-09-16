@@ -141,12 +141,6 @@ export default function AdminPage() {
     }
   }
 
-  useEffect(() => {
-    if (authed) {
-      const id = setInterval(() => loadStats(secret), 30000);
-      return () => clearInterval(id);
-    }
-  }, [authed, secret, loadStats]);
 
   if (!authed) {
     return (
