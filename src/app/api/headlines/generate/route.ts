@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const posts = await prisma.post.findMany({
     where: { createdAt: { gte: since } },
-    select: { title: true, snippet: true, category: true },
+    select: { id: true, title: true, snippet: true, category: true },
     orderBy: { createdAt: "desc" },
     take: 100,
   });
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   const headlines = await generateHeadlines(posts.map((p) => ({
+    id: p.id,
     title: p.title,
     snippet: p.snippet,
     category: p.category,
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to generate headlines" }, { status: 500 });
   }
 
-  await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn } });
+  await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn, postIds: headlines.postIds } });
 
-  return NextResponse.json({ headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn, count: headlines.headlines.length });
+  return NextResponse.json({ headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn, postIds: headlines.postIds, count: headlines.headlines.length });
 }

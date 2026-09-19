@@ -198,5 +198,6 @@ model DailyHeadlines {
   headlines    Json
   headlinesZh  Json     @default("[]")
   headlinesCn  Json     @default("[]")
+  postIds      Json     @default("[]")
   generatedAt  DateTime @default(now())
 }

@@ -710,14 +710,14 @@ export async function pickMostNewsworthyPost(
 
 // Curate the top 10 headlines in English, Traditional Chinese, and Simplified Chinese.
 export async function generateHeadlines(
-  articles: { title: string; snippet: string; category: string }[]
-): Promise<{ headlines: string[]; headlinesZh: string[]; headlinesCn: string[] } | null> {
+  articles: { id: number; title: string; snippet: string; category: string }[]
+): Promise<{ headlines: string[]; headlinesZh: string[]; headlinesCn: string[]; postIds: number[] } | null> {
   if (articles.length === 0) return null;
 
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const articleList = articles
-    .map((a, i) => `${i + 1}. [${a.category}] ${a.title} — ${a.snippet}`)
+    .map((a, i) => `${i + 1}. [ID:${a.id}] [${a.category}] ${a.title} — ${a.snippet}`)
     .join("\n");
 
   const userPrompt = `Here are today's news articles. Select and rewrite the 10 most important headlines that everyone should know about, regardless of category. These are the stories that matter globally.
@@ -728,12 +728,13 @@ Rules:
 - Deduplicate: if multiple articles cover the same story, pick the best angle and write ONE headline — never repeat the same story twice
 - Each of the 10 headlines must be about a different story
 - Provide each headline in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
+- For each headline, include the ID of the article it is primarily based on
 
 Articles:
 ${articleList}
 
 Respond with ONLY valid JSON:
-{"headlines": ["en1", "en2", ...], "headlinesZh": ["zh-TW1", "zh-TW2", ...], "headlinesCn": ["zh-CN1", "zh-CN2", ...]}`;
+{"headlines": ["en1", "en2", ...], "headlinesZh": ["zh-TW1", "zh-TW2", ...], "headlinesCn": ["zh-CN1", "zh-CN2", ...], "postIds": [id1, id2, ...]}`;
 
   try {
     const res = await withRetry(() => deepseekCreate({
@@ -771,10 +772,13 @@ Respond with ONLY valid JSON:
       return null;
     }
 
+    const pids: number[] = (parsed.postIds ?? []).map((id: unknown) => Number(id));
+
     return {
       headlines: indices.slice(0, 10).map((i) => en[i]),
       headlinesZh: indices.slice(0, 10).map((i) => zh[i] ?? ""),
       headlinesCn: indices.slice(0, 10).map((i) => cn[i] ?? ""),
+      postIds: indices.slice(0, 10).map((i) => pids[i] ?? 0),
     };
   } catch (err) {
     console.error("[headlines] error:", err);
