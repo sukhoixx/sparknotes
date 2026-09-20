@@ -238,17 +238,18 @@ async function runGeneration() {
           const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
           const todayPosts = await prisma.post.findMany({
             where: { createdAt: { gte: since } },
-            select: { title: true, snippet: true, category: true },
+            select: { id: true, title: true, snippet: true, category: true },
             orderBy: { createdAt: "desc" },
             take: 100,
           });
           const headlines = await generateHeadlines(todayPosts.map((p) => ({
+            id: p.id,
             title: p.title,
             snippet: p.snippet,
             category: p.category,
           })));
           if (headlines && headlines.headlines.length > 0) {
-            await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn } });
+            await prisma.dailyHeadlines.create({ data: { headlines: headlines.headlines, headlinesZh: headlines.headlinesZh, headlinesCn: headlines.headlinesCn, postIds: headlines.postIds } });
             console.log(`[headlines] generated ${headlines.headlines.length} headlines (${inMidnightWindow ? "midnight" : inMorningWindow ? "morning" : inNoonWindow ? "noon" : "evening"} window)`);
           }
         } else {
