@@ -192,6 +192,12 @@ model PushLog {
   sentAt    DateTime @default(now())
 }
 
+model AppOpenLog {
+  id    Int      @id @default(autoincrement())
+  date  DateTime @unique
+  count Int      @default(1)
+}
+
 // One row per generation run — headlines is a JSON array of strings
 model DailyHeadlines {
   id           Int      @id @default(autoincrement())
