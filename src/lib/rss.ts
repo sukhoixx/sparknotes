@@ -333,6 +333,10 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://feeds.feedburner.com/rsscna/technology",             source: "CNA 科技" },
     { url: "https://feeds.feedburner.com/rsscna/lifehealth",             source: "CNA 生活" },
     { url: "https://feeds.feedburner.com/rsscna/mainland",               source: "CNA 兩岸" },
+    // Yahoo News Taiwan
+    { url: "https://tw.news.yahoo.com/rss/",                             source: "Yahoo 新聞" },
+    { url: "https://tw.news.yahoo.com/rss/technology",                   source: "Yahoo 科技" },
+    { url: "https://tw.news.yahoo.com/rss/entertainment",                source: "Yahoo 娛樂" },
     // ETtoday, 三立, TVBS, 中時 are scraped via TAIWAN_SCRAPERS in rss.ts
   ],
   inventions: [
@@ -712,6 +716,18 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   let intersection = 0;
   a.forEach((w) => { if (b.has(w)) intersection++; });
   return intersection / (a.size + b.size - intersection || 1);
+}
+
+export const TAIWAN_SOURCE_CAPS: Record<string, number> = { "自由時報": 2, "三立新聞": 2 };
+
+export function capBySource(articles: RawArticle[], caps: Record<string, number>): RawArticle[] {
+  const counts: Record<string, number> = {};
+  return articles.filter((a) => {
+    const cap = caps[a.source];
+    if (cap === undefined) return true;
+    counts[a.source] = (counts[a.source] ?? 0) + 1;
+    return counts[a.source] <= cap;
+  });
 }
 
 // Filter a list of post titles, returning only those not similar to any title in recentTitles.

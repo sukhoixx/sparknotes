@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Converter } from "opencc-js";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
+import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, capBySource, TAIWAN_SOURCE_CAPS, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, pickMostNewsworthyPost, extractTopicTags, generateHeadlines, isSensitiveContent, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { sendBreakingNewsPush } from "@/lib/push";
@@ -83,7 +83,7 @@ async function runGeneration() {
       const articles = await fetchArticlesByCategory(category as Category, 2);
       const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title) && !isSensitiveContent(a.title));
       const deduped = filterRecentDuplicates(fresh, recentTitles);
-      const clustered = selectTopArticles(deduped, perRun * 3);
+      const clustered = capBySource(selectTopArticles(deduped, perRun * 3), category === "taiwan" ? TAIWAN_SOURCE_CAPS : {});
       let topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
       console.log(`[generate] ${category}: ${articles.length} total → ${fresh.length} fresh → ${deduped.length} after dedup → ${clustered.length} clustered → ${topArticles.length} AI-selected`);
       if (category === "taiwan") {

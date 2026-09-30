@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
+import { fetchArticlesByCategory, filterRecentDuplicates, selectTopArticles, capBySource, TAIWAN_SOURCE_CAPS, fetchOgImage, fetchFullArticle, filterSimilarTitles } from "@/lib/rss";
 import { summarizeArticle, translateToTraditionalChinese, selectArticlesForCategory, isSensitiveContent, CATEGORIES } from "@/lib/ai";
 import type { Category } from "@/lib/ai";
 import { Converter } from "opencc-js";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   const articles = await fetchArticlesByCategory(category as Category, 2);
   const fresh = articles.filter((a) => !existingUrls.has(a.link) && !existingTitles.has(a.title) && !isSensitiveContent(a.title));
   const deduped = filterRecentDuplicates(fresh, recentTitles);
-  const clustered = selectTopArticles(deduped, perRun * 3);
+  const clustered = capBySource(selectTopArticles(deduped, perRun * 3), category === "taiwan" ? TAIWAN_SOURCE_CAPS : {});
   const topArticles = await selectArticlesForCategory(clustered, category as Category, perRun);
 
   console.log(`[generate/category] ${category}: ${articles.length} total → ${fresh.length} fresh → ${clustered.length} clustered → ${topArticles.length} AI-selected`);
