@@ -4,9 +4,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@prisma/client", "prisma"],
   },
   async redirects() {
-    return [
-      { source: "/", destination: "/web", permanent: false },
-    ];
+    return [];
   },
 };
 

@@ -1,74 +1,50 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Header from "@/components/Header";
-import Feed from "@/components/Feed";
-import ProfileModal from "@/components/ProfileModal";
-import SignInModal from "@/components/SignInModal";
-import { useProfile } from "@/hooks/useProfile";
-import { useAbVariant } from "@/hooks/useAbVariant";
+import { prisma } from "@/lib/prisma";
+import { CATEGORY_META } from "@/lib/ai";
+import type { Category } from "@/lib/ai";
+import WebFeed from "./WebFeed";
 import type { PostWithCount } from "@/components/Feed";
 
-export default function HomePage() {
-  const [category, setCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [signInOpen, setSignInOpen] = useState(false);
-  const { profile, loading, isAuthenticated, saveProfile } = useProfile();
-  const variant = useAbVariant();
+async function getInitialPosts(): Promise<PostWithCount[]> {
+  try {
+    const raw = await prisma.post.findMany({
+      orderBy: { id: "desc" },
+      take: 30,
+      select: {
+        id: true, title: true, snippet: true, body: true, funFact: true,
+        tags: true, category: true, categories: true, emoji: true,
+        gradient: true, badge: true, authorEmoji: true, authorBg: true,
+        sourceUrl: true, imageUrl: true, publishedAt: true, createdAt: true,
+        _count: { select: { comments: true } },
+      },
+    });
 
-  // Paint the full browser chrome (overscroll area, html/body) to match the variant
-  useEffect(() => {
-    const color = variant === "A" ? "#111111" : "#ffffff";
-    document.documentElement.style.background = color;
-    document.body.style.background = color;
-    return () => {
-      document.documentElement.style.background = "";
-      document.body.style.background = "";
-    };
-  }, [variant]);
-
-  // Auto-open profile setup after first sign-in
-  useEffect(() => {
-    if (!loading && isAuthenticated && !profile) setProfileOpen(true);
-  }, [loading, isAuthenticated, profile]);
-
-  function handleProfileClick() {
-    if (!isAuthenticated) setSignInOpen(true);
-    else setProfileOpen(true);
+    return raw.map((p) => {
+      const meta = CATEGORY_META[p.category as Category];
+      const cats: string[] = Array.isArray(p.categories)
+        ? p.categories as string[]
+        : typeof p.categories === "string"
+          ? JSON.parse(p.categories)
+          : [p.category];
+      return {
+        ...p,
+        gradient: meta?.gradient ?? p.gradient,
+        badge: meta?.badge ?? p.badge,
+        authorEmoji: meta?.authorEmoji ?? p.authorEmoji,
+        authorBg: meta?.authorBg ?? p.authorBg,
+        categories: cats,
+        tags: Array.isArray(p.tags) ? p.tags : JSON.parse(p.tags as string),
+        likes: 0,
+        reactions: {},
+        publishedAt: p.publishedAt,
+        createdAt: p.createdAt,
+      } as unknown as PostWithCount;
+    });
+  } catch {
+    return [];
   }
+}
 
-  return (
-    <div className={variant === "A" ? "min-h-screen bg-[#111111]" : "min-h-screen bg-white"}>
-      <Header
-        category={category}
-        onCategoryChange={(cat) => {
-          setCategory(cat);
-          setSearchQuery("");
-        }}
-        onSearch={setSearchQuery}
-        profile={profile}
-        onProfileClick={handleProfileClick}
-        variant={variant}
-      />
-      <Feed
-        category={category}
-        searchQuery={searchQuery}
-        initialPosts={[] as PostWithCount[]}
-        profile={profile}
-        isAuthenticated={isAuthenticated}
-        variant={variant}
-      />
-      {signInOpen && (
-        <SignInModal onClose={() => setSignInOpen(false)} />
-      )}
-      {profileOpen && isAuthenticated && (
-        <ProfileModal
-          profile={profile}
-          onSave={saveProfile}
-          onClose={() => setProfileOpen(false)}
-        />
-      )}
-    </div>
-  );
+export default async function WebPage() {
+  const initialPosts = await getInitialPosts();
+  return <WebFeed initialPosts={initialPosts} />;
 }
