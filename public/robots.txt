@@ -1,2 +1,11 @@
 User-agent: *
 Disallow: /
+
+# AdMob/AdSense's ads.txt crawler (and Googlebot, which it also honors) need
+# access to app-ads.txt regardless of the blanket Disallow above, or ad
+# verification fails - see https://support.google.com/admob/answer/10926281
+User-agent: Mediapartners-Google
+Allow: /app-ads.txt
+
+User-agent: Googlebot
+Allow: /app-ads.txt
