@@ -708,6 +708,27 @@ export async function pickMostNewsworthyPost(
   }
 }
 
+const HEADLINE_STOPWORDS = new Set([
+  "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
+  "is", "are", "was", "were", "be", "been", "has", "have", "had", "will", "would", "could",
+  "should", "may", "might", "it", "its", "this", "that", "as", "from", "not", "no", "up",
+]);
+
+function titleWordSet(title: string): Set<string> {
+  return new Set(
+    title.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/)
+      .filter((w) => w.length > 2 && !HEADLINE_STOPWORDS.has(w))
+  );
+}
+
+function titleOverlap(a: string, b: string): number {
+  const wa = titleWordSet(a);
+  const wb = titleWordSet(b);
+  let intersection = 0;
+  wa.forEach((w) => { if (wb.has(w)) intersection++; });
+  return intersection / (wa.size + wb.size - intersection || 1);
+}
+
 // Curate the top 10 headlines in English, Traditional Chinese, and Simplified Chinese.
 export async function generateHeadlines(
   articles: { id: number; title: string; snippet: string; category: string }[]
@@ -717,10 +738,10 @@ export async function generateHeadlines(
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
 
   const articleList = articles
-    .map((a, i) => `${i + 1}. [ID:${a.id}] [${a.category}] ${a.title} — ${a.snippet}`)
+    .map((a, i) => `${i + 1}. [${a.category}] ${a.title} — ${a.snippet}`)
     .join("\n");
 
-  const userPrompt = `Here are today's news articles. Select and rewrite the 10 most important headlines that everyone should know about, regardless of category. These are the stories that matter globally.
+  const userPrompt = `Here are today's news articles, numbered 1-${articles.length}. Select and rewrite the 10 most important headlines that everyone should know about, regardless of category. These are the stories that matter globally.
 
 Rules:
 - Pick stories with broad significance — not niche, regional, or celebrity gossip unless it's major
@@ -728,13 +749,13 @@ Rules:
 - Deduplicate: if multiple articles cover the same story, pick the best angle and write ONE headline — never repeat the same story twice
 - Each of the 10 headlines must be about a different story
 - Provide each headline in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
-- For each headline, include the ID of the article it is primarily based on
+- For each headline, include the number (1-${articles.length}) of the article above it is primarily based on, and copy that article's exact original title as written above
 
 Articles:
 ${articleList}
 
 Respond with ONLY valid JSON:
-{"headlines": ["en1", "en2", ...], "headlinesZh": ["zh-TW1", "zh-TW2", ...], "headlinesCn": ["zh-CN1", "zh-CN2", ...], "postIds": [id1, id2, ...]}`;
+{"headlines": ["en1", "en2", ...], "headlinesZh": ["zh-TW1", "zh-TW2", ...], "headlinesCn": ["zh-CN1", "zh-CN2", ...], "sourceIndices": [n1, n2, ...], "sourceTitles": ["exact title of article n1", "exact title of article n2", ...]}`;
 
   try {
     const res = await withRetry(() => deepseekCreate({
@@ -755,10 +776,10 @@ Respond with ONLY valid JSON:
 
     // Deduplicate by removing entries whose EN headline is identical to a prior one
     const seen = new Set<string>();
-    const indices: number[] = [];
+    const dedupedIndices: number[] = [];
     const en: string[] = parsed.headlines.map((h: unknown) => String(h));
     for (let i = 0; i < en.length; i++) {
-      if (!seen.has(en[i])) { seen.add(en[i]); indices.push(i); }
+      if (!seen.has(en[i])) { seen.add(en[i]); dedupedIndices.push(i); }
     }
 
     const zh: string[] = (parsed.headlinesZh ?? []).map((h: unknown) => String(h));
@@ -772,13 +793,30 @@ Respond with ONLY valid JSON:
       return null;
     }
 
-    const pids: number[] = (parsed.postIds ?? []).map((id: unknown) => Number(id));
+    // Map each headline back to a real article id via its 1-based position in the
+    // list we sent — never trust an id string echoed back by the model. A headline
+    // is only kept if its position reference is in range AND the model's echoed
+    // "sourceTitles" entry actually overlaps with that article's real title — this
+    // catches cases where the model points at the right-shaped but wrong article
+    // (e.g. array misalignment from mid-generation dedup/merging).
+    const srcIndices: number[] = (parsed.sourceIndices ?? []).map((n: unknown) => Number(n));
+    const srcTitles: string[] = (parsed.sourceTitles ?? []).map((t: unknown) => String(t));
+    const indices = dedupedIndices.filter((i) => {
+      const n = srcIndices[i];
+      if (!Number.isInteger(n) || n < 1 || n > articles.length) return false;
+      const echoedTitle = srcTitles[i] ?? "";
+      return titleOverlap(echoedTitle, articles[n - 1].title) >= 0.5;
+    });
+    if (indices.length === 0) {
+      console.error("[headlines] no valid sourceIndices/sourceTitles in response:", raw);
+      return null;
+    }
 
     return {
       headlines: indices.slice(0, 10).map((i) => en[i]),
       headlinesZh: indices.slice(0, 10).map((i) => zh[i] ?? ""),
       headlinesCn: indices.slice(0, 10).map((i) => cn[i] ?? ""),
-      postIds: indices.slice(0, 10).map((i) => pids[i] ?? 0),
+      postIds: indices.slice(0, 10).map((i) => articles[srcIndices[i] - 1].id),
     };
   } catch (err) {
     console.error("[headlines] error:", err);
