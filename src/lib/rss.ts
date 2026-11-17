@@ -317,6 +317,15 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://tw.news.yahoo.com/rss/entertainment",                source: "Yahoo 娛樂" },
     // ETtoday, 三立, TVBS, 中時 are scraped via TAIWAN_SCRAPERS in rss.ts
   ],
+  china: [
+    { url: "https://www.cgtn.com/subscribe/rss/section/china.xml",     source: "CGTN China" },
+    { url: "https://www.globaltimes.cn/rss/outbrain.xml",              source: "Global Times" },
+    { url: "https://www.ecns.cn/rss/rss.xml",                          source: "ECNS" },
+    { url: "https://www.scmp.com/rss/91/feed/",                        source: "SCMP News" },
+    { url: "https://www.scmp.com/rss/318421/feed/",                    source: "SCMP China Economy" },
+    { url: "https://feeds.bbci.co.uk/news/world/asia/china/rss.xml",   source: "BBC China" },
+    { url: "https://www.theguardian.com/world/china/rss",              source: "Guardian China" },
+  ],
   inventions: [
     { url: "https://www.popularmechanics.com/rss/all.xml/",        source: "Popular Mechanics" },
     { url: "https://hackaday.com/blog/feed/",                      source: "Hackaday" },

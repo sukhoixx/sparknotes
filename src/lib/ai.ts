@@ -92,7 +92,7 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 150
   throw lastErr;
 }
 
-export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "inventions", "health", "beauty", "asia", "taiwan"] as const;
+export const CATEGORIES = ["news", "us", "world", "politics", "military", "science", "technology", "finance", "entertainment", "celebrity", "sports", "business", "gaming", "travel", "inventions", "health", "beauty", "asia", "taiwan", "china"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: string; authorBg: string; emoji: string; gradient: string }> = {
@@ -115,6 +115,7 @@ export const CATEGORY_META: Record<Category, { badge: string; authorEmoji: strin
   celebrity:     { badge: "⭐ Celebrity",     authorEmoji: "⭐", authorBg: "linear-gradient(135deg,#c471ed,#f64f59)",      emoji: "⭐", gradient: "linear-gradient(135deg,#c471ed,#f64f59)" },
   asia:          { badge: "🌏 Asia",          authorEmoji: "🌏", authorBg: "linear-gradient(135deg,#c0392b,#e67e22)",      emoji: "🌏", gradient: "linear-gradient(135deg,#c0392b,#e67e22)" },
   taiwan:        { badge: "🇹🇼 Taiwan",       authorEmoji: "🇹🇼", authorBg: "linear-gradient(135deg,#1b4fa0,#e3001e)",     emoji: "🇹🇼", gradient: "linear-gradient(135deg,#1b4fa0,#e3001e)" },
+  china:         { badge: "🇨🇳 China",        authorEmoji: "🇨🇳", authorBg: "linear-gradient(135deg,#de2910,#ffde00)",     emoji: "🇨🇳", gradient: "linear-gradient(135deg,#de2910,#ffde00)" },
 };
 
 export interface GeneratedPost {
@@ -339,6 +340,8 @@ const CATEGORY_SELECTION_PROMPTS: Record<Category, string> = {
   asia: `You are the senior editor for Asia-Pacific coverage at a major international outlet. ${AUDIENCE} Select articles covering: major political or diplomatic developments across East Asia, Southeast Asia, or South Asia; economic policy decisions by China, Japan, South Korea, or ASEAN nations with regional or global impact; Taiwan Strait tensions, cross-strait relations, or Taiwan domestic politics; military or security developments in the Indo-Pacific; significant elections or leadership changes across Asia. Slightly prefer stories directly about China, Taiwan, or Hong Kong when choosing between similarly newsworthy articles. Reject purely local human-interest stories with no regional significance, generic travel or culture pieces, and entertainment news. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
 
   taiwan: `You are the senior editor for a Taiwan local news platform. Be inclusive — select any article that could plausibly be relevant to Taiwan or Taiwanese readers, even if borderline or unclear. Include: Taiwan politics, society, economy, crime, local events, Taiwanese people or companies abroad, cross-strait relations, and stories where Taiwan connection is implied but not explicit. Only reject articles that are CLEARLY about a foreign country with no Taiwan angle — e.g. Japan earthquake coverage with no Taiwan involvement, foreign celebrity gossip, non-Taiwan sports results, or stories purely about another country's domestic affairs. When in doubt, include it. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
+
+  china: `You are the senior editor for a China-focused news platform. Be inclusive — select any article that could plausibly be relevant to mainland China or Chinese readers, even if borderline or unclear. Include: China politics, economy, society, business, technology, culture, and foreign policy; Chinese companies or public figures abroad; Hong Kong and Macau affairs; and stories where a China connection is implied but not explicit. Only reject articles that are CLEARLY about a foreign country with no China angle. When in doubt, include it. Return ONLY a JSON array of selected indices (1-based). No explanation.`,
 };
 
 const META_ROUNDUP_PATTERNS = [

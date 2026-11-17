@@ -11,6 +11,7 @@ const CATEGORIES: CategoryItem[] = [
   { id: "us",            labels: { en: "🇺🇸 US",            "zh-TW": "🇺🇸 美國",    "zh-CN": "🇺🇸 美国" } },
   { id: "world",         labels: { en: "🌍 World",         "zh-TW": "🌍 世界",      "zh-CN": "🌍 世界" } },
   { id: "asia",          labels: { en: "🌏 Asia",          "zh-TW": "🌏 亞洲",      "zh-CN": "🌏 亚洲" } },
+  { id: "china",         labels: { en: "🇨🇳 China",         "zh-TW": "🇨🇳 中國",     "zh-CN": "🇨🇳 中国" } },
   { id: "politics",      labels: { en: "🏛️ Politics",      "zh-TW": "🏛️ 政治",    "zh-CN": "🏛️ 政治" } },
   { id: "military",      labels: { en: "🪖 Military",      "zh-TW": "🪖 軍事",      "zh-CN": "🪖 军事" } },
   { id: "science",       labels: { en: "🔬 Science",       "zh-TW": "🔬 科學",      "zh-CN": "🔬 科学" } },
