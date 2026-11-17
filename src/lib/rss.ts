@@ -50,6 +50,7 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://feeds.feedburner.com/rsscna/engnews/",             source: "Focus Taiwan" },
     { url: "https://www.scmp.com/rss/91/feed/",                        source: "SCMP" },
     { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311", source: "CNA Singapore" },
+    { url: "https://www.cgtn.com/subscribe/rss/section/world.xml",     source: "CGTN" },
   ],
   us: [
     { url: "https://feeds.npr.org/1003/rss.xml",                      source: "NPR US" },
@@ -86,6 +87,7 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://hongkongfp.com/feed/",                           source: "HK Free Press" },
     { url: "https://www.straitstimes.com/rss.xml",                   source: "Straits Times" },
     { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311", source: "CNA Singapore" },
+    { url: "https://www.cgtn.com/subscribe/rss/section/politics.xml", source: "CGTN Politics" },
     { url: "https://theintercept.com/feed/?rss",                     source: "The Intercept" },
     { url: "https://talkingpointsmemo.com/feed/",                    source: "Talking Points Memo" },
     { url: "https://www.huffpost.com/section/politics/feed",         source: "HuffPost Politics" },
@@ -323,6 +325,7 @@ export const FEEDS: Record<Category, { url: string; source: string }[]> = {
     { url: "https://feeds.feedburner.com/rsscna/engnews/",                                                   source: "Focus Taiwan" },
     { url: "https://www.taipeitimes.com/xml/index.rss",                                                      source: "Taipei Times" },
     { url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311",             source: "CNA Singapore" },
+    { url: "https://www.cgtn.com/subscribe/rss/section/china.xml",                                           source: "CGTN" },
   ],
   taiwan: [
     // RSS feeds (自由時報 + CNA Mandarin by topic)
